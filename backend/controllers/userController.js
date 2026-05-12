@@ -31,13 +31,33 @@ const authUser = asyncHandler(async (req, res) => {
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
-  const userExists = await User.findOne({ email });
+  // ✅ ADD: Validation 1 - Name check
+  if (!name || name.trim() === '') {
+    res.status(400);
+    throw new Error('Name is required');
+  }
 
+  // ✅ ADD: Validation 2 - Email format check (1 regex, không duplicate)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    res.status(400);
+    throw new Error('Invalid email format');
+  }
+
+  // ✅ ADD: Validation 3 - Password strength check
+  if (!password || password.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters');
+  }
+
+  // ✅ KEEP: Check if user already exists
+  const userExists = await User.findOne({ email });
   if (userExists) {
     res.status(400);
     throw new Error('User already exists');
   }
 
+  // ✅ KEEP: Create user
   const user = await User.create({
     name,
     email,
@@ -46,7 +66,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (user) {
     generateToken(res, user._id);
-
     res.status(201).json({
       _id: user._id,
       name: user.name,
@@ -97,6 +116,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     user.email = req.body.email || user.email;
 
     if (req.body.password) {
+      if (req.body.password.length < 6) {
+        res.status(400);
+        throw new Error('Password must be at least 6 characters');
+      }
       user.password = req.body.password;
     }
 
