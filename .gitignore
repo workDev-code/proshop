@@ -29,3 +29,21 @@ uploads/*jpg
 
 # API tests
 http
+
+# Deployment configs (filled by user manually)
+.vercel
+.vercelignore
+
+# Optional: backend uploads dir uploaded by users
+# (Render's disk is ephemeral so this isn't useful in prod anyway)
+/backend/uploads/*
+!/backend/uploads/.gitkeep
+
+# Optional: gitkeep for screenshots dir
+!docs/screenshots/.gitkeep
+
+# IDE / editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store

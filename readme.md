@@ -336,6 +336,46 @@ becomes the source of truth, so filter state is shareable and refresh-safe.
 /search/mouse                               # keyword "mouse"
 ```
 
-## License
+## 🚀 Deployment
+
+This project is **deploy-ready** with config files for the most common free tier stack.
+
+| Service | What | File |
+|---|---|---|
+| Vercel | Frontend (React SPA) | `vercel.json` |
+| Render | Backend (Node + Express API) | `render.yaml` |
+| MongoDB Atlas | Database (M0 free) | Manual setup |
+| GitHub Actions | CI (lint + test + build) | `.github/workflows/ci.yml` |
+
+Quick deploy (~36 min of user effort):
+
+1. **Push to GitHub**
+   ```bash
+   git remote add origin https://github.com/<you>/proshop-v2.git
+   git push -u origin main
+   ```
+2. **Create MongoDB Atlas M0 cluster** → get SRV connection string
+3. **Deploy backend on Render**
+   - Blueprint → point to repo
+   - Set env vars: `MONGO_URI`, `JWT_SECRET` (new), PayPal keys
+   - Run `node seeder.js` via Shell tab to seed
+4. **Deploy frontend on Vercel**
+   - Add New Project → import repo
+   - Root: `frontend` · Build: `npm run build` · Output: `build`
+   - Set `REACT_APP_API_URL` = your Render URL
+5. **Smoke test** the deployed URLs
+
+> 📖 Full step-by-step guide with troubleshooting → [`docs/DEPLOYMENT_PROPOSAL.md`](./docs/DEPLOYMENT_PROPOSAL.md)
+
+### Badges
+
+![Frontend: Vercel](https://img.shields.io/badge/frontend-Vercel-black?logo=vercel)
+![Backend: Render](https://img.shields.io/badge/backend-Render-46e3b7?logo=render)
+![Database: MongoDB Atlas](https://img.shields.io/badge/database-MongoDB%20Atlas-13aa52?logo=mongodb)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+
+> Replace the badges above with live URL badges after deploying.
+
+
 
 MIT
