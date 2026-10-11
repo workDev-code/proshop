@@ -2,18 +2,14 @@
 import { isValidObjectId } from 'mongoose';
 
 /**
- * Checks if the req.params.id is a valid Mongoose ObjectId.
- *
- * @param {import('express').Request} req - The Express request object.
- * @param {import('express').Response} res - The Express response object.
- * @param {import('express').NextFunction} next - The Express next middleware function.
- * @throws {Error} Throws an error if the ObjectId is invalid.
+ * Checks if req.params has a valid Mongoose ObjectId.
+ * Accepts either `id` or `productId` parameter names.
  */
-
 function checkObjectId(req, res, next) {
-  if (!isValidObjectId(req.params.id)) {
+  const paramId = req.params.id || req.params.productId;
+  if (!isValidObjectId(paramId)) {
     res.status(404);
-    throw new Error(`Invalid ObjectId of:  ${req.params.id}`);
+    throw new Error(`Invalid ObjectId of:  ${paramId}`);
   }
   next();
 }

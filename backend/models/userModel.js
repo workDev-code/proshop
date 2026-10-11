@@ -21,6 +21,13 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false,
     },
+    // ✅ ADD: Wishlist - embedded array of Product refs
+    wishlist: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+      },
+    ],
   },
   {
     timestamps: true,
