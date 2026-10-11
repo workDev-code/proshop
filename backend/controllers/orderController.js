@@ -1,6 +1,7 @@
 import asyncHandler from '../middleware/asyncHandler.js';
 import Order from '../models/orderModel.js';
 import Product from '../models/productModel.js';
+import Coupon from '../models/couponModel.js';
 import { calcPrices } from '../utils/calcPrices.js';
 import { verifyPayPalPayment, checkIfNewTransaction } from '../utils/paypal.js';
 
@@ -8,16 +9,14 @@ import { verifyPayPalPayment, checkIfNewTransaction } from '../utils/paypal.js';
 // @route   POST /api/orders
 // @access  Private
 const addOrderItems = asyncHandler(async (req, res) => {
-  const { orderItems, shippingAddress, paymentMethod } = req.body;
+  const { orderItems, shippingAddress, paymentMethod, couponCode } = req.body;
 
   if (orderItems && orderItems.length === 0) {
     res.status(400);
     throw new Error('No order items');
   } else {
     // NOTE: here we must assume that the prices from our client are incorrect.
-    // We must only trust the price of the item as it exists in
-    // our DB. This prevents a user paying whatever they want by hacking our client
-    // side code - https://gist.github.com/bushblade/725780e6043eaf59415fbaf6ca7376ff
+    // We must only trust the price of the item as it exists in our DB.
 
     // get the ordered items from our database
     const itemsFromDB = await Product.find({
@@ -37,9 +36,79 @@ const addOrderItems = asyncHandler(async (req, res) => {
       };
     });
 
-    // calculate prices
-    const { itemsPrice, taxPrice, shippingPrice, totalPrice } =
-      calcPrices(dbOrderItems);
+    // Calculate prices WITHOUT discount first
+    const basePrices = calcPrices(dbOrderItems, 0);
+    const itemsSubtotal = parseFloat(basePrices.itemsPrice);
+
+    // ✅ Coupon logic
+    let discountPrice = 0;
+    let couponSnapshot = undefined;
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase().trim(),
+      });
+
+      if (!coupon) {
+        res.status(404);
+        throw new Error('Coupon not found');
+      }
+
+      if (!coupon.isAvailable()) {
+        res.status(400);
+        throw new Error('Coupon is expired or reached usage limit');
+      }
+
+      if (itemsSubtotal < coupon.minOrderAmount) {
+        res.status(400);
+        throw new Error(
+          `Order must be at least $${coupon.minOrderAmount} to use this coupon`
+        );
+      }
+
+      // Per-user limit
+      if (coupon.perUserLimit) {
+        const used = await Order.countDocuments({
+          user: req.user._id,
+          'coupon.code': coupon.code,
+        });
+        if (used >= coupon.perUserLimit) {
+          res.status(400);
+          throw new Error('You have already used this coupon');
+        }
+      }
+
+      // Compute discount (server-side only - never trust client)
+      let discount = 0;
+      if (coupon.type === 'percentage') {
+        discount = (itemsSubtotal * coupon.value) / 100;
+        if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+          discount = coupon.maxDiscount;
+        }
+      } else {
+        discount = coupon.value;
+      }
+      if (discount > itemsSubtotal) discount = itemsSubtotal;
+      discount = Math.round(discount * 100) / 100;
+      discountPrice = discount;
+
+      couponSnapshot = {
+        code: coupon.code,
+        type: coupon.type,
+        value: coupon.value,
+        discount,
+      };
+
+      // Atomic increment usage
+      coupon.usageCount = (coupon.usageCount || 0) + 1;
+      await coupon.save();
+    }
+
+    // Recalculate with discount
+    const { itemsPrice, taxPrice, shippingPrice, totalPrice } = calcPrices(
+      dbOrderItems,
+      discountPrice
+    );
 
     const order = new Order({
       orderItems: dbOrderItems,
@@ -49,7 +118,9 @@ const addOrderItems = asyncHandler(async (req, res) => {
       itemsPrice,
       taxPrice,
       shippingPrice,
+      discountPrice,
       totalPrice,
+      coupon: couponSnapshot,
     });
 
     const createdOrder = await order.save();

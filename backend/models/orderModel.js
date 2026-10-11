@@ -51,10 +51,23 @@ const orderSchema = mongoose.Schema(
       required: true,
       default: 0.0,
     },
+    // ✅ ADD: discount price (after coupon)
+    discountPrice: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
     totalPrice: {
       type: Number,
       required: true,
       default: 0.0,
+    },
+    // ✅ ADD: Coupon snapshot
+    coupon: {
+      code: { type: String },
+      type: { type: String, enum: ['percentage', 'fixed'] },
+      value: { type: Number },
+      discount: { type: Number },
     },
     isPaid: {
       type: Boolean,
