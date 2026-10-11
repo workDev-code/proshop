@@ -20,6 +20,7 @@ import Rating from '../components/Rating';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import Meta from '../components/Meta';
+import WishlistButton from '../components/WishlistButton';
 import { addToCart } from '../slices/cartSlice';
 
 const ProductScreen = () => {
@@ -103,6 +104,14 @@ const ProductScreen = () => {
             <Col md={3}>
               <Card>
                 <ListGroup variant='flush'>
+                  {/* ✅ ADD: Wishlist row at top of card */}
+                  <ListGroup.Item>
+                    <div className='d-flex justify-content-between align-items-center'>
+                      <span>Wishlist</span>
+                      <WishlistButton productId={product._id} size='lg' />
+                    </div>
+                  </ListGroup.Item>
+
                   <ListGroup.Item>
                     <Row>
                       <Col>Price:</Col>
@@ -120,7 +129,6 @@ const ProductScreen = () => {
                     </Row>
                   </ListGroup.Item>
 
-                  {/* Qty Select */}
                   {product.countInStock > 0 && (
                     <ListGroup.Item>
                       <Row>
@@ -172,7 +180,7 @@ const ProductScreen = () => {
                   </ListGroup.Item>
                 ))}
                 <ListGroup.Item>
-                  <h2>Write a Customer Review</h2>
+                  <h2>Write a Customer review</h2>
 
                   {loadingProductReview && <Loader />}
 

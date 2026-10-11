@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './assets/styles/bootstrap.custom.css';
 import './assets/styles/index.css';
-// import 'bootstrap/dist/css/bootstrap.min.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {
@@ -24,6 +23,9 @@ import PaymentScreen from './screens/PaymentScreen';
 import PlaceOrderScreen from './screens/PlaceOrderScreen';
 import OrderScreen from './screens/OrderScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import WishlistScreen from './screens/WishlistScreen';       // ✅ ADD
+import CouponListScreen from './screens/admin/CouponListScreen';   // ✅ ADD
+import CouponEditScreen from './screens/admin/CouponEditScreen';   // ✅ ADD
 import OrderListScreen from './screens/admin/OrderListScreen';
 import ProductListScreen from './screens/admin/ProductListScreen';
 import ProductEditScreen from './screens/admin/ProductEditScreen';
@@ -54,6 +56,7 @@ const router = createBrowserRouter(
         <Route path='/placeorder' element={<PlaceOrderScreen />} />
         <Route path='/order/:id' element={<OrderScreen />} />
         <Route path='/profile' element={<ProfileScreen />} />
+        <Route path='/wishlist' element={<WishlistScreen />} />   {/* ✅ ADD */}
       </Route>
       {/* Admin users */}
       <Route path='' element={<AdminRoute />}>
@@ -66,6 +69,10 @@ const router = createBrowserRouter(
         <Route path='/admin/userlist' element={<UserListScreen />} />
         <Route path='/admin/product/:id/edit' element={<ProductEditScreen />} />
         <Route path='/admin/user/:id/edit' element={<UserEditScreen />} />
+        {/* ✅ ADD: Coupon admin routes */}
+        <Route path='/admin/couponlist' element={<CouponListScreen />} />
+        <Route path='/admin/coupon/:id/edit' element={<CouponEditScreen />} />
+        <Route path='/admin/coupon/create' element={<CouponEditScreen />} />
       </Route>
     </Route>
   )

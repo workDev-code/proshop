@@ -1,5 +1,5 @@
 import { Navbar, Nav, Container, NavDropdown, Badge } from 'react-bootstrap';
-import { FaShoppingCart, FaUser } from 'react-icons/fa';
+import { FaShoppingCart, FaUser, FaHeart } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLogoutMutation } from '../slices/usersApiSlice';
@@ -7,10 +7,15 @@ import { logout } from '../slices/authSlice';
 import SearchBox from './SearchBox';
 import logo from '../assets/logo.png';
 import { resetCart } from '../slices/cartSlice';
+import { useGetWishlistQuery } from '../slices/wishlistApiSlice';
 
 const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
   const { userInfo } = useSelector((state) => state.auth);
+
+  const { data: wishlist = [] } = useGetWishlistQuery(undefined, {
+    skip: !userInfo,
+  });
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -21,8 +26,6 @@ const Header = () => {
     try {
       await logoutApiCall().unwrap();
       dispatch(logout());
-      // NOTE: here we need to reset cart state for when a user logs out so the next
-      // user doesn't inherit the previous users cart and shipping
       dispatch(resetCart());
       navigate('/login');
     } catch (err) {
@@ -50,6 +53,19 @@ const Header = () => {
                   </Badge>
                 )}
               </Nav.Link>
+
+              {/* ✅ ADD: Wishlist link - only for logged in users */}
+              {userInfo && (
+                <Nav.Link as={Link} to='/wishlist'>
+                  <FaHeart /> Wishlist
+                  {wishlist.length > 0 && (
+                    <Badge pill bg='danger' style={{ marginLeft: '5px' }}>
+                      {wishlist.length}
+                    </Badge>
+                  )}
+                </Nav.Link>
+              )}
+
               {userInfo ? (
                 <>
                   <NavDropdown title={userInfo.name} id='username'>
@@ -78,6 +94,10 @@ const Header = () => {
                   </NavDropdown.Item>
                   <NavDropdown.Item as={Link} to='/admin/userlist'>
                     Users
+                  </NavDropdown.Item>
+                  <NavDropdown.Divider />
+                  <NavDropdown.Item as={Link} to='/admin/couponlist'>
+                    Coupons
                   </NavDropdown.Item>
                 </NavDropdown>
               )}
