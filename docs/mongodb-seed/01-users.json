@@ -1,0 +1,32 @@
+[
+  {
+    "_id": { "$oid": "0000000000000000000000aa" },
+    "name": "Admin User",
+    "email": "admin@email.com",
+    "password": "$2a$10$LpP3/YrdSund.S4x43WYHeCDoYpGhlAQ7KMuKJDokdEHui/ojkNMy",
+    "isAdmin": true,
+    "wishlist": [],
+    "createdAt": { "$date": "2025-01-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2025-01-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "0000000000000000000000bb" },
+    "name": "John Doe",
+    "email": "john@email.com",
+    "password": "$2a$10$LpP3/YrdSund.S4x43WYHeCDoYpGhlAQ7KMuKJDokdEHui/ojkNMy",
+    "isAdmin": false,
+    "wishlist": [],
+    "createdAt": { "$date": "2025-01-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2025-01-01T00:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "0000000000000000000000cc" },
+    "name": "Jane Doe",
+    "email": "jane@email.com",
+    "password": "$2a$10$LpP3/YrdSund.S4x43WYHeCDoYpGhlAQ7KMuKJDokdEHui/ojkNMy",
+    "isAdmin": false,
+    "wishlist": [],
+    "createdAt": { "$date": "2025-01-01T00:00:00.000Z" },
+    "updatedAt": { "$date": "2025-01-01T00:00:00.000Z" }
+  }
+]
