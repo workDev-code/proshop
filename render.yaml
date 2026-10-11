@@ -1,0 +1,39 @@
+# Render Blueprint — infrastructure as code
+# Deploy by:
+#   1. Push this file (and all project files) to GitHub
+#   2. In Render: New + → Blueprint → pick the GitHub repo
+#   3. Render reads this file and provisions the service
+
+services:
+  - type: web
+    name: proshop-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: oregon            # pick closest to your MongoDB Atlas region
+    branch: main
+
+    buildCommand: npm install
+    startCommand: node server.js
+
+    healthCheckPath: /
+
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: MONGO_URI
+        sync: false        # set in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true   # Render auto-generates secure secret
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_APP_SECRET
+        sync: false
+      - key: PAYPAL_API_URL
+        value: https://api-m.sandbox.paypal.com
+      - key: PAGINATION_LIMIT
+        value: "8"
