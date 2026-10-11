@@ -54,7 +54,6 @@ const Header = () => {
                 )}
               </Nav.Link>
 
-              {/* ✅ ADD: Wishlist link - only for logged in users */}
               {userInfo && (
                 <Nav.Link as={Link} to='/wishlist'>
                   <FaHeart /> Wishlist
@@ -72,6 +71,9 @@ const Header = () => {
                     <NavDropdown.Item as={Link} to='/profile'>
                       Profile
                     </NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to='/design-system'>
+                      🎨 Design System
+                    </NavDropdown.Item>
                     <NavDropdown.Item onClick={logoutHandler}>
                       Logout
                     </NavDropdown.Item>
@@ -83,7 +85,6 @@ const Header = () => {
                 </Nav.Link>
               )}
 
-              {/* Admin Links */}
               {userInfo && userInfo.isAdmin && (
                 <NavDropdown title='Admin' id='adminmenu'>
                   <NavDropdown.Item as={Link} to='/admin/productlist'>
@@ -98,6 +99,10 @@ const Header = () => {
                   <NavDropdown.Divider />
                   <NavDropdown.Item as={Link} to='/admin/couponlist'>
                     Coupons
+                  </NavDropdown.Item>
+                  <NavDropdown.Divider />
+                  <NavDropdown.Item as={Link} to='/design-system'>
+                    🎨 Design System
                   </NavDropdown.Item>
                 </NavDropdown>
               )}
