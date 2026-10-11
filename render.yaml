@@ -1,20 +1,24 @@
 # Render Blueprint — infrastructure as code
-# Deploy by:
-#   1. Push this file (and all project files) to GitHub
-#   2. In Render: New + → Blueprint → pick the GitHub repo
-#   3. Render reads this file and provisions the service
+#
+# SETUP:
+#   1. Push this repo to GitHub (must be public OR connect Render to private repo)
+#   2. In Render: New + → Blueprint → connect GitHub repo
+#   3. Render reads this file and provisions service automatically
+#   4. Add the secret env vars (MONGO_URI, PayPal keys) via dashboard
+#   5. Open Shell tab → run `cd backend && node seeder.js` to seed DB
 
 services:
   - type: web
     name: proshop-api
     runtime: node
-    rootDir: backend
     plan: free
-    region: oregon            # pick closest to your MongoDB Atlas region
+    region: oregon                    # pick closest to your MongoDB Atlas region
     branch: main
 
-    buildCommand: npm install
-    startCommand: node server.js
+    # IMPORTANT: package.json is at project root, NOT inside backend/
+    # Backend deps live in root package.json; build only needs root install
+    buildCommand: npm install --omit=dev
+    startCommand: node backend/server.js
 
     healthCheckPath: /
 
@@ -24,11 +28,11 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: "10000"
+        value: "10000"               # Render uses port 10000 internally
       - key: MONGO_URI
-        sync: false        # set in Render dashboard
+        sync: false                  # ⚠ set in Render dashboard (do NOT commit)
       - key: JWT_SECRET
-        generateValue: true   # Render auto-generates secure secret
+        generateValue: true          # Render auto-generates secure secret
       - key: PAYPAL_CLIENT_ID
         sync: false
       - key: PAYPAL_APP_SECRET
