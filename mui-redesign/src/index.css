@@ -1,0 +1,16 @@
+/* Inter font weight 800 (extra bold) — MUI only ships 400-700 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Smooth scrolling for in-page anchors */
+html { scroll-behavior: smooth; }
+
+/* Section anchor offset (topbar + breathing room) */
+section[id] { scroll-margin-top: 96px; }
+
+/* Body — let MUI CssBaseline handle base, but keep transition smooth */
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}

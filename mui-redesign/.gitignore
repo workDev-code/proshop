@@ -1,0 +1,19 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+*.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.vite
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vite generated config (vite build compiles .ts → .js + .d.ts)
+vite.config.js
+vite.config.d.ts
