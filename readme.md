@@ -3,22 +3,25 @@
 > A full-featured eCommerce platform built with the MERN stack (MongoDB, Express, React, Node.js) & Redux Toolkit.
 
 <p align="center">
-  <img src="./docs/screenshots/01-home.png" alt="Home page" width="49%">
-  <img src="./docs/screenshots/02b-design-system-tall.png" alt="Design System" width="49%">
+  <img src="./docs/screenshots/01-home.png" alt="Home page with filter sidebar and 6 products" width="32%">
+  <img src="./docs/screenshots/02-design-system.png" alt="Design System showcase page top view" width="32%">
+  <img src="./docs/screenshots/03-product.png" alt="Product detail with rating and wishlist button" width="32%">
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/07-home-filter-active.png" alt="Filter & Sort" width="49%">
-  <img src="./docs/screenshots/03-product.png" alt="Product detail" width="49%">
+  <img src="./docs/screenshots/07-home-filter-active.png" alt="Filter & Sort sidebar in action" width="32%">
+  <img src="./docs/screenshots/06-search-mouse.png" alt="Search results for mouse" width="32%">
+  <img src="./docs/screenshots/04-login.png" alt="Login page" width="32%">
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/06-search-mouse.png" alt="Search results" width="49%">
-  <img src="./docs/screenshots/04-login.png" alt="Login" width="49%">
+  <img src="./docs/screenshots/09-design-system-ecommerce.png" alt="Design System — product cards, coupons, wishlist" width="49%">
+  <img src="./docs/screenshots/08-design-system-cards.png" alt="Design System — cards, badges, tables" width="49%">
 </p>
 
-> **Above:** Home page · Design System Showcase · Filter & Sort · Product detail · Search · Login.
-> See [Screenshots section](#-screenshots) below for the full set.
+> **Above:** Storefront (top row) · Search & Filter (middle row) · Design System deep-dive (bottom row).
+> All screenshots were regenerated against the live **Render backend** + **MongoDB Atlas**.
+> See [Screenshots section](#-screenshots) below for the full set with notes.
 
 A complete eCommerce application featuring a shopping cart, product reviews, admin panel, and integrated PayPal & credit/debit card payments — plus a **Wishlist**, **coupon system**, **advanced filter+sort**, and a full **Design System Showcase** page.
 
@@ -201,32 +204,31 @@ jane@email.com (Customer) - 123456
 
 ## 📸 Screenshots
 
-Full app visual gallery:
+Full app visual gallery, regenerated against the live **Render backend** + **MongoDB Atlas**.
 
-### Storefront
+### 🛍️ Storefront
 
-| Page | Screenshot |
+| Page | Screenshot | Notes |
+|---|---|---|
+| **Home** (`/`) | ![Home](./docs/screenshots/01-home.png) | Carousel + filter sidebar + 6-product grid with wishlist hearts |
+| **Filter & Sort active** (`/?category=...`) | ![Filter](./docs/screenshots/07-home-filter-active.png) | Electronics + Apple + Amazon brands checked, sorted by price ↑ |
+| **Search results** (`/search/:keyword`) | ![Search](./docs/screenshots/06-search-mouse.png) | Keyword match in product names |
+| **Product detail** (`/product/:id`) | ![Product](./docs/screenshots/03-product.png) | Image, price, rating, wishlist toggle, reviews section |
+| **Login** (`/login`) | ![Login](./docs/screenshots/04-login.png) | Email + password, demo accounts hint |
+| **Register** (`/register`) | ![Register](./docs/screenshots/05-register.png) | Name + email + confirm-password |
+
+### 🎨 Design System Showcase (`/design-system`)
+
+A live UI kit documenting every component the team uses. Public route — open it before reviewing the source code.
+
+| Section | Screenshot |
 |---|---|
-| **Home (Carousel + Latest)** | ![Home](./docs/screenshots/01-home.png) |
-| **Filter & Sort Sidebar** | ![Filter](./docs/screenshots/07-home-filter-active.png) |
-| **Search results** (`/search/:keyword`) | ![Search](./docs/screenshots/06-search-mouse.png) |
-| **Product detail (with wishlist)** | ![Product](./docs/screenshots/03-product.png) |
-| **Login** | ![Login](./docs/screenshots/04-login.png) |
-| **Register** | ![Register](./docs/screenshots/05-register.png) |
+| **Top — Brand Identity & Forms** | ![DS top](./docs/screenshots/02-design-system.png) |
+| **Cards / Badges / Tables** | ![DS cards](./docs/screenshots/08-design-system-cards.png) |
+| **eCommerce-specific (Product cards, Coupons, Order Timeline, Filter)** | ![DS ecom](./docs/screenshots/09-design-system-ecommerce.png) |
 
-### Design System Showcase (`/design-system`)
-
-A live UI kit documenting every component the app uses:
-
-| View | Screenshot |
-|---|---|
-| **Top — Brand & Buttons** | ![DS top](./docs/screenshots/02b-design-system-tall.png) |
-| **Cards & Tables section** | ![DS cards](./docs/screenshots/08-design-system-cards.png) |
-| **eCommerce patterns (Product cards + coupons)** | ![DS ecom](./docs/screenshots/09-design-system-ecommerce.png) |
-| **Above-the-fold view** | ![DS main](./docs/screenshots/02-design-system.png) |
-
-> 💡 The Design System route (`/design-system`) is **public** — open it before
-> reviewing the source code to see all patterns the team uses.
+> 💡 The Design System route is **public** — share the URL with reviewers to
+> see the full UI toolkit before diving into source code.
 
 ## API Endpoints (Newly added)
 
