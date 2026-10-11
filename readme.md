@@ -2,14 +2,44 @@
 
 > A full-featured eCommerce platform built with the MERN stack (MongoDB, Express, React, Node.js) & Redux Toolkit.
 
-<img src="./frontend/public/images/screens.png">
+<p align="center">
+  <img src="./docs/screenshots/01-home.png" alt="Home page" width="49%">
+  <img src="./docs/screenshots/02b-design-system-tall.png" alt="Design System" width="49%">
+</p>
 
-This is a complete eCommerce application featuring a shopping cart, product reviews, admin panel, and integrated PayPal & credit/debit card payments.
+<p align="center">
+  <img src="./docs/screenshots/07-home-filter-active.png" alt="Filter & Sort" width="49%">
+  <img src="./docs/screenshots/03-product.png" alt="Product detail" width="49%">
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/06-search-mouse.png" alt="Search results" width="49%">
+  <img src="./docs/screenshots/04-login.png" alt="Login" width="49%">
+</p>
+
+> **Above:** Home page · Design System Showcase · Filter & Sort · Product detail · Search · Login.
+> See [Screenshots section](#-screenshots) below for the full set.
+
+A complete eCommerce application featuring a shopping cart, product reviews, admin panel, and integrated PayPal & credit/debit card payments — plus a **Wishlist**, **coupon system**, **advanced filter+sort**, and a full **Design System Showcase** page.
+
+### 🌟 Highlights
+
+- ⭐ **Wishlist** with heart toggle, dedicated page, header badge
+- 🎟️ **Discount Coupons** with server-side validation (per-user limits, max-discount cap, expiry)
+- 🔍 **Advanced Filter & Sort** by category, brand, price, rating, in-stock
+- 🎨 **Design System** showcase at `/design-system` (25+ components)
+- 💳 PayPal + credit/debit card checkout
 
 <!-- toc -->
 
+- [🌟 Highlights](#-highlights)
+- [📸 Screenshots](#-screenshots)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
+- [API Endpoints](#api-endpoints-newly-added)
+- [Database Schema](#database-schema-new-collections)
+- [Coupon Logic](#coupon-logic-server-side)
+- [Filter & Sort](#filter--sort-api)
 - [Usage](#usage)
   - [Env Variables](#env-variables)
   - [Install Dependencies](#install-dependencies)
@@ -22,33 +52,67 @@ This is a complete eCommerce application featuring a shopping cart, product revi
 
 ## Features
 
-- Full featured shopping cart
-- Product reviews and ratings
-- Top products carousel
+### 🛍️ Storefront
+- Full featured shopping cart (multi-item, qty update, persistence)
+- Product reviews and ratings (1-5 with comments)
+- Top products carousel on home page
 - Product pagination
-- Product search feature
-- User profile with orders
-- Admin product management
-- Admin user management
-- Admin Order details page
-- Mark orders as delivered option
-- Checkout process (shipping, payment method, etc)
-- PayPal / credit card integration
-- Database seeder (products & users)
+- Product keyword search via URL (`/search/:keyword`)
+- User profile with orders, name + email editable, password change
 
-### ⭐ Newly added
+### 🔍 Advanced Filter & Sort (NEW in v2)
+- Sort by: Newest, Price ↑/↓, Top Rated, Top Sellers, Name A→Z
+- Filter by: Category (radio), Brand (multi-select), Price min/max,
+  Minimum rating (1-4★+), In-stock only
+- **URL-driven state** — shareable / refresh-safe / browser-back friendly
+- Backend returns `facets` (available categories + brands) and `appliedFilters`
+- Empty-state UI with "Clear filters" CTA
+- See live at `/` (sidebar on the left)
 
-- **Wishlist** — heart toggle on every product card, dedicated wishlist page with
-  "move to cart" and "clear all" actions, header badge with item count
-  (Backend: `GET/POST/DELETE /api/users/wishlist[/:productId]`)
-- **Discount Coupons** — server-side validated coupons at checkout:
-  - Percentage or fixed discounts
-  - Min order amount, max discount cap, total + per-user usage limits
-  - Date windows (start/end) and active flag
-  - Admin CRUD at `/admin/couponlist`
-  - Sample codes after seeding: `WELCOME10` (10% off, min $50),
-    `SAVE20` (20% off capped $50, min $200), `FLAT15` ($15 off, min $30),
-    `EXPIRED50` (intentionally expired, used to test validation)
+### ⭐ Wishlist (NEW in v2)
+- Heart icon on every Product card + detail page
+- Dedicated `/wishlist` page with grid view + "move to cart" / "remove"
+- Header badge counter (auto-refreshed)
+- Optimistic UI + idempotent add (no duplicates)
+
+### 🎟️ Discount Coupons (NEW in v2)
+- Percentage or fixed-amount discounts
+- Min order amount, max discount cap, total usage limit, per-user limit
+- Date windows (start/end) + active/inactive flag
+- Server-side validation (never trust client discount value)
+- Coupon snapshot saved on every Order for auditability
+- Full admin CRUD at `/admin/couponlist`
+- Sample codes seeded: `WELCOME10` (10% off, min $50), `SAVE20` (20% off,
+  capped $50, min $200), `FLAT15` ($15 off, min $30), `EXPIRED50`
+  (expired, for testing validation)
+
+### 🎨 Design System Showcase (NEW in v2)
+- Public route at `/design-system` (no login required)
+- 25+ components across Brand, Core, eCommerce sections
+- Sticky TOC sidebar with active-section tracking
+- Click-to-copy code snippets
+- Reuses real components (Product, WishlistButton, FilterSidebar)
+  → always in sync with the actual app
+
+### 👨‍💼 Admin Panel
+- Admin product list, edit, create, delete
+- Admin user list, edit (toggle admin role), delete
+- Admin order list, mark order as delivered
+- Admin coupon list, create, edit, delete (full CRUD)
+
+### 💳 Checkout
+- Multi-step checkout: Shipping → Payment Method → Place Order
+- PayPal + credit card integration (`@paypal/react-paypal-js`)
+- Order history with status pills
+
+### 🛠️ Engineering
+- Database seeder (products, users, coupons)
+- 19 backend tests via Jest + supertest
+- JWT auth + cookie session
+- Multer file uploads
+- MongoDB ObjectId validation middleware
+- Centralized error handler
+- Code split per route (lazy-loading ready)
 
 
 ## Tech Stack
@@ -135,6 +199,35 @@ jane@email.com (Customer) - 123456
 ```
 
 
+## 📸 Screenshots
+
+Full app visual gallery:
+
+### Storefront
+
+| Page | Screenshot |
+|---|---|
+| **Home (Carousel + Latest)** | ![Home](./docs/screenshots/01-home.png) |
+| **Filter & Sort Sidebar** | ![Filter](./docs/screenshots/07-home-filter-active.png) |
+| **Search results** (`/search/:keyword`) | ![Search](./docs/screenshots/06-search-mouse.png) |
+| **Product detail (with wishlist)** | ![Product](./docs/screenshots/03-product.png) |
+| **Login** | ![Login](./docs/screenshots/04-login.png) |
+| **Register** | ![Register](./docs/screenshots/05-register.png) |
+
+### Design System Showcase (`/design-system`)
+
+A live UI kit documenting every component the app uses:
+
+| View | Screenshot |
+|---|---|
+| **Top — Brand & Buttons** | ![DS top](./docs/screenshots/02b-design-system-tall.png) |
+| **Cards & Tables section** | ![DS cards](./docs/screenshots/08-design-system-cards.png) |
+| **eCommerce patterns (Product cards + coupons)** | ![DS ecom](./docs/screenshots/09-design-system-ecommerce.png) |
+| **Above-the-fold view** | ![DS main](./docs/screenshots/02-design-system.png) |
+
+> 💡 The Design System route (`/design-system`) is **public** — open it before
+> reviewing the source code to see all patterns the team uses.
+
 ## API Endpoints (Newly added)
 
 ### Wishlist
@@ -196,6 +289,51 @@ the coupon code. This prevents price tampering.
    or fixed value, never exceeding subtotal
 5. Order stored with discountPrice + coupon snapshot
 6. Atomic usageCount++  (avoids race conditions)
+```
+
+## Filter & Sort API
+
+`GET /api/products` accepts the following query params (all optional):
+
+| Param        | Type   | Example              | Description |
+|--------------|--------|----------------------|-------------|
+| `keyword`    | string | `mouse`              | Regex match on product name (case-insensitive) |
+| `category`   | string | `Electronics`        | Single category radio |
+| `brand`      | string | `Apple,Sony`         | Multi-select (comma-separated) |
+| `priceMin`   | number | `50`                 | Minimum price (≥) |
+| `priceMax`   | number | `500`                | Maximum price (≤) |
+| `minRating`  | number | `4`                  | Minimum rating (≥) |
+| `inStock`    | string | `true`               | Filter out `countInStock=0` |
+| `sort`       | string | `price_asc`          | One of: `newest` (default), `price_asc`, `price_desc`, `rating`, `top_sellers`, `name` |
+| `pageNumber` | number | `2`                  | 1-based pagination |
+
+Response shape:
+```json
+{
+  "products": [...],
+  "page": 1,
+  "pages": 1,
+  "total": 6,
+  "facets": {
+    "categories": ["Electronics"],
+    "brands": ["Amazon", "Apple", "Cannon", "Logitech", "Sony"]
+  },
+  "appliedFilters": { "keyword": "", "category": "", "brand": "", ... }
+}
+```
+
+Frontend passes these params through `useSearchParams` — meaning the URL
+becomes the source of truth, so filter state is shareable and refresh-safe.
+
+### Example URLs (frontend)
+
+```
+/                                           # all products, newest first
+/?sort=price_asc                            # cheapest first
+/?category=Electronics                      # one category
+/?brand=Apple,Sony&sort=rating              # two brands, top-rated first
+/?priceMin=100&priceMax=500&inStock=true    # range + in-stock
+/search/mouse                               # keyword "mouse"
 ```
 
 ## License
