@@ -19,6 +19,8 @@ import {
 } from '../wishlistApi';
 import { useToast } from '../../../hooks/useToast';
 
+
+
 export const WishlistPage = () => {
   const toast = useToast();
   const { data, isLoading } = useGetWishlistQuery();

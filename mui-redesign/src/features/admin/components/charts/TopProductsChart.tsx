@@ -66,7 +66,7 @@ export const TopProductsChart = ({ products }: Props) => {
                 {
                   data: data.map((d) => d.value),
                   label: METRIC_AXIS[metric],
-                  color: '#4F46E5',
+                  color: '#d95d39',
                 },
               ]}
               layout="horizontal"

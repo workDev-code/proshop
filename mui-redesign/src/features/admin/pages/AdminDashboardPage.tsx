@@ -6,7 +6,6 @@ import {
   Typography,
   Grid2 as Grid,
   Stack,
-  Chip,
   Button,
   Alert,
 } from '@mui/material';
@@ -21,10 +20,13 @@ import {
   ArrowForward as ArrowIcon,
 } from '@mui/icons-material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { AdminSubNav } from '../components/AdminSubNav';
 import { StatCard } from '../components/StatCard';
 import { PriceDisplay } from '../../products/components/PriceDisplay';
 import { LoadingState } from '../../../components/feedback/LoadingState';
+import { PaidChip, PendingChip, OutOfStockChip, LowStockChip } from '../../../components/feedback';
+import { fmtDate } from '../../../utils/fmt';
 import { RevenueChart, OrdersChart, TopProductsChart, CategoryChart } from '../components/charts';
 import {
   useGetAllOrdersQuery,
@@ -33,6 +35,7 @@ import {
 import { useGetProductsQuery, useGetTopProductsQuery } from '../../products/productApi';
 import type { Product } from '../../products/types';
 import { formatCurrency } from '../../cart/cartUtils';
+
 
 export const AdminDashboardPage = () => {
   const { data: orders, isLoading: ordersLoading } = useGetAllOrdersQuery();
@@ -58,7 +61,7 @@ export const AdminDashboardPage = () => {
     .slice(0, 5) ?? [];
 
   return (
-    <Box>
+    <PageContainer>
       <PageHeader
         title="Admin Dashboard"
         subtitle="Overview of your store performance"
@@ -203,7 +206,7 @@ export const AdminDashboardPage = () => {
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 {userObj ? userObj.name : 'Unknown user'} ·{' '}
-                                {new Date(o.createdAt).toLocaleDateString()}
+                                {fmtDate(o.createdAt)}
                               </Typography>
                             </Box>
                             <PriceDisplay
@@ -211,12 +214,7 @@ export const AdminDashboardPage = () => {
                               variant="body2"
                               color="primary.main"
                             />
-                            <Chip
-                              label={o.isPaid ? 'Paid' : 'Pending'}
-                              color={o.isPaid ? 'success' : 'warning'}
-                              size="small"
-                              variant="outlined"
-                            />
+                            {o.isPaid ? <PaidChip /> : <PendingChip />}
                           </Box>
                         );
                       })}
@@ -338,12 +336,7 @@ export const AdminDashboardPage = () => {
                                   {p.brand}
                                 </Typography>
                               </Box>
-                              <Chip
-                                label={p.countInStock === 0 ? 'OUT' : `${p.countInStock} left`}
-                                color={p.countInStock === 0 ? 'error' : 'warning'}
-                                size="small"
-                                sx={{ fontWeight: 700, ml: 1 }}
-                              />
+                              {p.countInStock === 0 ? <OutOfStockChip label="OUT" /> : <LowStockChip label={`${p.countInStock} left`} />}
                             </Stack>
                           </Alert>
                         </Grid>
@@ -356,6 +349,6 @@ export const AdminDashboardPage = () => {
           </Grid>
         </>
       )}
-    </Box>
+    </PageContainer>
   );
 };

@@ -90,7 +90,7 @@ export const TopBar = ({ onMenuClick, showMenuButton, currentPath }: Props) => {
         backdropFilter: 'blur(8px)',
       }}
     >
-      <Toolbar sx={{ gap: 1 }}>
+      <Toolbar sx={{ gap: 0.5, pr: { xs: 1, sm: 2 } }}>
         {showMenuButton && (
           <IconButton onClick={onMenuClick} edge="start" aria-label="Open drawer">
             <MenuIcon />

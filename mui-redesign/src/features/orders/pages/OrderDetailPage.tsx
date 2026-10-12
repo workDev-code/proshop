@@ -5,7 +5,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Chip,
   Button,
   Grid2 as Grid,
   Alert,
@@ -27,7 +26,11 @@ import { PriceDisplay } from '../../products/components/PriceDisplay';
 import { OrderTimeline } from '../components/OrderTimeline';
 import { useGetOrderByIdQuery, usePayOrderMutation } from '../orderApi';
 import { useToast } from '../../../hooks/useToast';
+import { fmtDateTime } from '../../../utils/fmt';
+import { PaidChip, PendingChip, DeliveredChip } from '../../../components/feedback';
 import { formatCurrency } from '../../cart/cartUtils';
+
+
 
 export const OrderDetailPage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -70,11 +73,13 @@ export const OrderDetailPage = () => {
     );
   }
 
-  const statusChip = order.isDelivered
-    ? { label: 'Delivered', color: 'success' as const }
-    : order.isPaid
-    ? { label: 'Paid · shipping', color: 'info' as const }
-    : { label: 'Awaiting payment', color: 'warning' as const };
+  const statusNode = order.isDelivered ? (
+    <DeliveredChip label="Delivered" />
+  ) : order.isPaid ? (
+    <PaidChip label="Paid · shipping" status="info" />
+  ) : (
+    <PendingChip label="Awaiting payment" />
+  );
 
   return (
     <Box>
@@ -90,9 +95,9 @@ export const OrderDetailPage = () => {
 
       <PageHeader
         title={`Order #${order._id.slice(-8).toUpperCase()}`}
-        subtitle={new Date(order.createdAt).toLocaleString()}
+        subtitle={fmtDateTime(order.createdAt)}
         icon={<OrderIcon />}
-        actions={<Chip label={statusChip.label} color={statusChip.color} sx={{ fontWeight: 600 }} />}
+        actions={statusNode}
       />
 
       <Stack spacing={3}>

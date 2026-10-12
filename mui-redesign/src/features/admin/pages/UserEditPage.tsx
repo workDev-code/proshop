@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { ArrowBack as BackIcon, Group as UsersIcon, AdminPanelSettings as AdminIcon } from '@mui/icons-material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { AdminSubNav } from '../components/AdminSubNav';
 import { LoadingState } from '../../../components/feedback/LoadingState';
 import { useGetUserByIdQuery, useUpdateUserMutation } from '../adminApi';
@@ -74,7 +75,7 @@ export const UserEditPage = () => {
     .toUpperCase();
 
   return (
-    <Box>
+    <PageContainer>
       <Button
         component={RouterLink}
         to="/admin/users"
@@ -185,6 +186,6 @@ export const UserEditPage = () => {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </PageContainer>
   );
 };

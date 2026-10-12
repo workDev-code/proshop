@@ -5,6 +5,7 @@ import {
   CheckCircle as DeliveredIcon,
 } from '@mui/icons-material';
 import type { Order } from '../types';
+import { fmtDateTime } from '../../../utils/fmt';
 
 interface Props {
   order: Order;
@@ -41,10 +42,7 @@ export const OrderTimeline = ({ order }: Props) => {
             Placed on
           </Typography>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {new Date(order.createdAt).toLocaleString('en-US', {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-            })}
+            {fmtDateTime(order.createdAt)}
           </Typography>
         </Box>
         {order.paidAt && (

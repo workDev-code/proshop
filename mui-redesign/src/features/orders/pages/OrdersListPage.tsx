@@ -21,6 +21,9 @@ import { PageHeader } from '../../../components/layout/PageHeader';
 import { EmptyState } from '../../../components/feedback/EmptyState';
 import { PriceDisplay } from '../../products/components/PriceDisplay';
 import { useGetMyOrdersQuery } from '../orderApi';
+import { fmtDate } from '../../../utils/fmt';
+
+
 
 export const OrdersListPage = () => {
   const { data: orders, isLoading } = useGetMyOrdersQuery();
@@ -98,13 +101,7 @@ export const OrdersListPage = () => {
                       <Typography variant="caption" color="text.secondary">
                         Date
                       </Typography>
-                      <Typography variant="body2">
-                        {new Date(o.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </Typography>
+                      <Typography variant="body2">{fmtDate(o.createdAt)}</Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 2 }}>
                       <Typography variant="caption" color="text.secondary">

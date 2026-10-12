@@ -150,36 +150,38 @@ export const HeroCarousel = ({ products, interval = 5000 }: Props) => {
           <IconButton
             onClick={prev}
             aria-label="Previous slide"
+            size="small"
             sx={{
               position: 'absolute',
-              left: 8,
+              left: { xs: 8, sm: 16 },
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 2,
-              bgcolor: 'rgba(255,255,255,0.2)',
-              backdropFilter: 'blur(4px)',
-              color: 'common.white',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
+              zIndex: 3,
+              bgcolor: 'rgba(255,255,255,0.9)',
+              color: 'text.primary',
+              boxShadow: 2,
+              '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
             }}
           >
-            <PrevIcon />
+            <PrevIcon fontSize="small" />
           </IconButton>
           <IconButton
             onClick={next}
             aria-label="Next slide"
+            size="small"
             sx={{
               position: 'absolute',
-              right: 8,
+              right: { xs: 8, sm: 16 },
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 2,
-              bgcolor: 'rgba(255,255,255,0.2)',
-              backdropFilter: 'blur(4px)',
-              color: 'common.white',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
+              zIndex: 3,
+              bgcolor: 'rgba(255,255,255,0.9)',
+              color: 'text.primary',
+              boxShadow: 2,
+              '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
             }}
           >
-            <NextIcon />
+            <NextIcon fontSize="small" />
           </IconButton>
         </>
       )}

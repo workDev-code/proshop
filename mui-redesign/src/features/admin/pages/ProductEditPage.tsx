@@ -22,6 +22,7 @@ import {
   Inventory2 as ProductsIcon,
 } from '@mui/icons-material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { AdminSubNav } from '../components/AdminSubNav';
 import { ProductImage } from '../../products/components/ProductImage';
 import { LoadingState } from '../../../components/feedback/LoadingState';
@@ -128,7 +129,7 @@ export const ProductEditPage = () => {
   if (isEdit && loadingProduct) return <LoadingState variant="detail" />;
 
   return (
-    <Box>
+    <PageContainer>
       <Button
         component={RouterLink}
         to="/admin/products"
@@ -285,6 +286,6 @@ export const ProductEditPage = () => {
           </Grid>
         </Grid>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };

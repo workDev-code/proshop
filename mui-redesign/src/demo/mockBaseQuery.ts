@@ -68,11 +68,24 @@ const getCurrentUser = () => {
 export const mockBaseQuery: BaseQueryFn = async (args) => {
   await wait(120); // simulate network latency for nicer UX
 
-  const { url, method = 'GET', body } = args as {
+  // RTK Query: if a query function returns a string, that string is the URL.
+  // If it returns an object, that object has { url, method, body, params }.
+  // Normalize both shapes.
+  const normalizedArgs = typeof args === 'string' ? { url: args } : args;
+  const { url, method = 'GET', body, params } = normalizedArgs as {
     url: string;
     method?: string;
     body?: unknown;
+    params?: Record<string, unknown>;
   };
+
+  // Build a URLSearchParams-like helper from the params object (RTK Query separates query string from URL)
+  const qs = new URLSearchParams();
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== '') qs.append(k, String(v));
+    }
+  }
 
   // ===== AUTH =====
   if (url === '/api/users/auth' && method === 'POST') {
@@ -129,17 +142,16 @@ export const mockBaseQuery: BaseQueryFn = async (args) => {
 
   // ===== PRODUCTS =====
   if (url === '/api/products' && method === 'GET') {
-    const params = new URLSearchParams(url.split('?')[1] ?? '');
-    const keyword = params.get('keyword')?.toLowerCase() ?? '';
-    const category = params.get('category') ?? '';
-    const brand = params.get('brand') ?? '';
-    const minPrice = Number(params.get('priceMin') ?? 0);
-    const maxPrice = Number(params.get('priceMax') ?? Infinity);
-    const minRating = Number(params.get('minRating') ?? 0);
-    const inStock = params.get('inStock') === 'true';
-    const sort = params.get('sort') ?? 'newest';
-    const pageNumber = Number(params.get('pageNumber') ?? 1);
-    const pageSize = Number(params.get('pageSize') ?? 12);
+    const keyword = qs.get('keyword')?.toLowerCase() ?? '';
+    const category = qs.get('category') ?? '';
+    const brand = qs.get('brand') ?? '';
+    const minPrice = Number(qs.get('priceMin') ?? 0);
+    const maxPrice = Number(qs.get('priceMax') ?? Infinity);
+    const minRating = Number(qs.get('minRating') ?? 0);
+    const inStock = qs.get('inStock') === 'true';
+    const sort = qs.get('sort') ?? 'newest';
+    const pageNumber = Number(qs.get('pageNumber') ?? 1);
+    const pageSize = Number(qs.get('pageSize') ?? 12);
 
     let filtered = state.products.filter((p) => {
       if (keyword && !p.name.toLowerCase().includes(keyword)) return false;
@@ -176,14 +188,14 @@ export const mockBaseQuery: BaseQueryFn = async (args) => {
       total,
       facets: { categories: allCategories, brands: allBrands },
       appliedFilters: {
-        keyword: params.get('keyword') ?? '',
-        category: params.get('category') ?? '',
-        brand: params.get('brand') ?? '',
-        priceMin: params.get('priceMin') ?? '',
-        priceMax: params.get('priceMax') ?? '',
-        minRating: params.get('minRating') ?? '',
-        inStock: params.get('inStock') ?? '',
-        sort: params.get('sort') ?? 'newest',
+        keyword: qs.get('keyword') ?? '',
+        category: qs.get('category') ?? '',
+        brand: qs.get('brand') ?? '',
+        priceMin: qs.get('priceMin') ?? '',
+        priceMax: qs.get('priceMax') ?? '',
+        minRating: qs.get('minRating') ?? '',
+        inStock: qs.get('inStock') ?? '',
+        sort: qs.get('sort') ?? 'newest',
       },
     });
   }

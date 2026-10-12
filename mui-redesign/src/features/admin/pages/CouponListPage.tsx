@@ -3,7 +3,6 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  Chip,
   Typography,
 } from '@mui/material';
 import {
@@ -18,6 +17,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { AdminSubNav } from '../components/AdminSubNav';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import {
@@ -25,6 +25,8 @@ import {
   useDeleteCouponMutation,
 } from '../adminApi';
 import { useToast } from '../../../hooks/useToast';
+import { ActiveChip, InactiveChip } from '../../../components/feedback';
+
 
 export const CouponListPage = () => {
   const navigate = useNavigate();
@@ -94,15 +96,8 @@ export const CouponListPage = () => {
       width: 120,
       renderCell: ({ value, row }: any) => {
         const expired = row.expiresAt && new Date(row.expiresAt) < new Date();
-        if (expired) return <Chip label="Expired" color="error" size="small" />;
-        return (
-          <Chip
-            label={value ? 'Active' : 'Inactive'}
-            color={value ? 'success' : 'default'}
-            size="small"
-            variant={value ? 'filled' : 'outlined'}
-          />
-        );
+        if (expired) return <InactiveChip label="Expired" status="error" />;
+        return value ? <ActiveChip /> : <InactiveChip />;
       },
     },
     {
@@ -130,7 +125,7 @@ export const CouponListPage = () => {
   ];
 
   return (
-    <Box>
+    <PageContainer>
       <PageHeader
         title="Coupons"
         subtitle={`${coupons?.length ?? 0} active coupons`}
@@ -175,6 +170,6 @@ export const CouponListPage = () => {
         onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
         onCancel={() => setConfirmDelete(null)}
       />
-    </Box>
+    </PageContainer>
   );
 };

@@ -57,7 +57,7 @@ export const RevenueChart = ({ orders, days = 30 }: Props) => {
                 {
                   data: data.map((d) => d.revenue),
                   label: 'Revenue ($)',
-                  color: '#4F46E5',
+                  color: '#d95d39',
                   area: true,
                   showMark: true,
                   curve: 'monotoneX',

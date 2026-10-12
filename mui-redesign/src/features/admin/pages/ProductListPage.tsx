@@ -22,13 +22,15 @@ import {
   Inventory2 as ProductsIcon,
 } from '@mui/icons-material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { AdminSubNav } from '../components/AdminSubNav';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PriceDisplay } from '../../products/components/PriceDisplay';
-import { StockBadge } from '../../products/components/StockBadge';
+import { OutOfStockChip, LowStockChip, InStockChip } from '../../../components/feedback';
 import { useGetProductsQuery } from '../../products/productApi';
 import { useDeleteProductMutation } from '../adminApi';
 import { useToast } from '../../../hooks/useToast';
+
 
 export const ProductListPage = () => {
   const navigate = useNavigate();
@@ -100,7 +102,7 @@ export const ProductListPage = () => {
       field: 'countInStock',
       headerName: 'Stock',
       width: 140,
-      renderCell: ({ value }: any) => <StockBadge count={value} size="small" />,
+      renderCell: ({ value }: any) => value === 0 ? <OutOfStockChip /> : value <= 5 ? <LowStockChip label={`${value} left`} /> : <InStockChip />,
     },
     {
       field: 'rating',
@@ -139,7 +141,7 @@ export const ProductListPage = () => {
   ];
 
   return (
-    <Box>
+    <PageContainer>
       <PageHeader
         title="Products"
         subtitle={`${data?.products.length ?? 0} products in catalog`}
@@ -201,6 +203,6 @@ export const ProductListPage = () => {
         onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
         onCancel={() => setConfirmDelete(null)}
       />
-    </Box>
+    </PageContainer>
   );
 };

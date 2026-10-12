@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Stack } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { Inbox as InboxIcon } from '@mui/icons-material';
 import type { ReactNode } from 'react';
 
@@ -16,44 +16,43 @@ export const EmptyState = ({ title, description, icon, action }: Props) => (
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      py: 8,
+      py: { xs: 6, sm: 8 },
       px: 2,
       textAlign: 'center',
     }}
   >
     <Box
       sx={{
-        width: 72,
-        height: 72,
+        width: 64,
+        height: 64,
         borderRadius: '50%',
         display: 'grid',
         placeItems: 'center',
         bgcolor: 'action.hover',
         color: 'text.secondary',
         mb: 2,
-        fontSize: 36,
+        '& svg': { fontSize: 28 },
       }}
     >
       {icon ?? <InboxIcon fontSize="inherit" />}
     </Box>
-    <Typography variant="h6" sx={{ mb: 0.5 }}>
+    <Typography variant="h6" sx={{ mb: 0.5, fontWeight: 600 }}>
       {title}
     </Typography>
     {description && (
-      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mb: 3 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, mb: action ? 3 : 0 }}>
         {description}
       </Typography>
     )}
     {action && (
-      <Stack>
-        <Button
-          variant="contained"
-          onClick={action.onClick}
-          startIcon={action.icon ?? undefined}
-        >
-          {action.label}
-        </Button>
-      </Stack>
+      <Button
+        variant="contained"
+        onClick={action.onClick}
+        startIcon={action.icon}
+        sx={{ mt: 1 }}
+      >
+        {action.label}
+      </Button>
     )}
   </Box>
 );

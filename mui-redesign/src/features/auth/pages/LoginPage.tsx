@@ -80,7 +80,7 @@ export const LoginPage = ({ mode = 'login' }: Props) => {
 
   const fillDemoCredentials = (which: 'admin' | 'user') => {
     loginForm.reset({
-      email: which === 'admin' ? 'admin@email.com' : 'john@email.com',
+      email: which === 'admin' ? 'admin@proshop.com' : 'jane@proshop.com',
       password: '123456',
     });
     registerForm.reset();
@@ -121,8 +121,8 @@ export const LoginPage = ({ mode = 'login' }: Props) => {
         placeItems: 'center',
         background: (t) =>
           t.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%)'
-            : 'linear-gradient(135deg, #EEF2FF 0%, #F8FAFC 100%)',
+            ? `linear-gradient(135deg, ${t.palette.background.default} 0%, ${t.palette.grey[800]} 100%)`
+            : `linear-gradient(135deg, ${t.palette.background.default} 0%, #ffffff 100%)`,
         p: 2,
       }}
     >
@@ -252,7 +252,7 @@ export const LoginPage = ({ mode = 'login' }: Props) => {
                     onClick={() => fillDemoCredentials('admin')}
                     sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }}
                   >
-                    admin@email.com
+                    admin@proshop.com
                   </Button>
                   <Button
                     size="small"
@@ -261,7 +261,7 @@ export const LoginPage = ({ mode = 'login' }: Props) => {
                     onClick={() => fillDemoCredentials('user')}
                     sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }}
                   >
-                    john@email.com
+                    jane@proshop.com
                   </Button>
                 </Stack>
                 <Typography variant="caption" component="div" sx={{ fontFamily: 'monospace', mt: 1, color: 'text.secondary' }}>

@@ -19,6 +19,7 @@ import { CartSummary } from '../components/CartSummary';
 import { useCart } from '../hooks';
 import { useToast } from '../../../hooks/useToast';
 
+
 export const CartPage = () => {
   const navigate = useNavigate();
   const toast = useToast();

@@ -15,7 +15,7 @@ export const DemoBanner = () => {
         sx={{
           position: 'fixed',
           bottom: 16,
-          left: 16,
+          right: 16,
           zIndex: 9999,
           opacity: 0.85,
         }}

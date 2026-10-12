@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { ArrowBack as BackIcon, LocalOffer as CouponsIcon } from '@mui/icons-material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { AdminSubNav } from '../components/AdminSubNav';
 import { LoadingState } from '../../../components/feedback/LoadingState';
 import {
@@ -129,7 +130,7 @@ export const CouponEditPage = () => {
   const type = watch('type');
 
   return (
-    <Box>
+    <PageContainer>
       <Button
         component={RouterLink}
         to="/admin/coupons"
@@ -311,6 +312,6 @@ export const CouponEditPage = () => {
           </Grid>
         </Grid>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };

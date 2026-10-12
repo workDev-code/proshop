@@ -1,43 +1,53 @@
 import type { TypographyOptions } from '@mui/material/styles/createTypography';
 
 /**
- * Typography scale. Inter font, 8px base, semantic sizes.
+ * Editorial typography scale.
+ * - Manrope for display (headings, brand) — geometric sans
+ * - DM Sans for body — clean, highly readable
+ * - Larger display sizes for editorial feel
  */
 export const typography: TypographyOptions = {
-  fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", system-ui, sans-serif',
-  // Base font size: 14px (compact, denser UI)
-  htmlFontSize: 14,
+  fontFamily: '"DM Sans", "Inter", system-ui, -apple-system, sans-serif',
+  htmlFontSize: 16,
 
   h1: {
-    fontSize: '3.5rem',     // 49px
-    fontWeight: 700,
-    lineHeight: 1.1,
-    letterSpacing: '-0.02em',
+    fontFamily: '"Manrope", "Inter", sans-serif',
+    fontSize: 'clamp(2.5rem, 5vw, 4.25rem)',
+    fontWeight: 800,
+    lineHeight: 1.04,
+    letterSpacing: '-0.04em',
   },
   h2: {
-    fontSize: '2.5rem',     // 35px
-    fontWeight: 700,
-    lineHeight: 1.2,
-    letterSpacing: '-0.01em',
+    fontFamily: '"Manrope", "Inter", sans-serif',
+    fontSize: 'clamp(1.75rem, 3vw, 2.375rem)',
+    fontWeight: 800,
+    lineHeight: 1.1,
+    letterSpacing: '-0.03em',
   },
   h3: {
-    fontSize: '2rem',       // 28px
-    fontWeight: 600,
-    lineHeight: 1.25,
+    fontFamily: '"Manrope", "Inter", sans-serif',
+    fontSize: '1.75rem',
+    fontWeight: 700,
+    lineHeight: 1.2,
+    letterSpacing: '-0.02em',
   },
   h4: {
-    fontSize: '1.5rem',     // 21px
-    fontWeight: 600,
+    fontFamily: '"Manrope", "Inter", sans-serif',
+    fontSize: '1.375rem',
+    fontWeight: 700,
     lineHeight: 1.3,
+    letterSpacing: '-0.01em',
   },
   h5: {
-    fontSize: '1.25rem',    // 17.5px
-    fontWeight: 500,
+    fontFamily: '"Manrope", "Inter", sans-serif',
+    fontSize: '1.125rem',
+    fontWeight: 600,
     lineHeight: 1.4,
   },
   h6: {
-    fontSize: '1.125rem',   // 15.75px
-    fontWeight: 500,
+    fontFamily: '"Manrope", "Inter", sans-serif',
+    fontSize: '1rem',
+    fontWeight: 600,
     lineHeight: 1.4,
   },
   subtitle1: {
@@ -51,20 +61,20 @@ export const typography: TypographyOptions = {
     lineHeight: 1.4,
   },
   body1: {
-    fontSize: '1rem',
+    fontSize: '0.9375rem',
     fontWeight: 400,
-    lineHeight: 1.5,
+    lineHeight: 1.6,
   },
   body2: {
-    fontSize: '0.875rem',
+    fontSize: '0.8125rem',
     fontWeight: 400,
-    lineHeight: 1.5,
+    lineHeight: 1.55,
   },
   button: {
-    fontSize: '0.875rem',
+    fontSize: '0.8125rem',
     fontWeight: 600,
     lineHeight: 1.5,
-    letterSpacing: '0.02em',
+    letterSpacing: '0.04em',
     textTransform: 'none',
   },
   caption: {
@@ -74,10 +84,10 @@ export const typography: TypographyOptions = {
     letterSpacing: '0.02em',
   },
   overline: {
-    fontSize: '0.625rem',
-    fontWeight: 600,
+    fontSize: '0.6875rem',
+    fontWeight: 700,
     lineHeight: 1.4,
-    letterSpacing: '0.08em',
+    letterSpacing: '0.16em',
     textTransform: 'uppercase',
   },
 };

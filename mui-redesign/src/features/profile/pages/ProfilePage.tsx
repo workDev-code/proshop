@@ -33,6 +33,9 @@ import { useToast } from '../../../hooks/useToast';
 import { PriceDisplay } from '../../products/components/PriceDisplay';
 import { EmptyState } from '../../../components/feedback/EmptyState';
 import { LoadingState } from '../../../components/feedback/LoadingState';
+import { fmtDate } from '../../../utils/fmt';
+
+
 
 export const ProfilePage = () => {
   const toast = useToast();
@@ -256,9 +259,7 @@ const OrdersTab = () => {
                   <Typography variant="caption" color="text.secondary">
                     Date
                   </Typography>
-                  <Typography variant="body2">
-                    {new Date(o.createdAt).toLocaleDateString()}
-                  </Typography>
+                  <Typography variant="body2">{fmtDate(o.createdAt)}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6, sm: 2 }}>
                   <Typography variant="caption" color="text.secondary">

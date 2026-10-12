@@ -24,6 +24,11 @@ export const AppShell = () => {
         currentPath={location.pathname}
       />
 
+      {/*
+        SideNav is a flex item that takes its own width (240 or 64).
+        DO NOT also set margin-left or width on <main> — it would double-count
+        and push the content area way off to the right.
+      */}
       <SideNav
         variant={isDesktop ? 'permanent' : 'temporary'}
         open={isDesktop ? true : mobileOpen}
@@ -36,13 +41,13 @@ export const AppShell = () => {
       <Box
         component="main"
         sx={{
-          flexGrow: 1,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          mt: '64px',
-          p: { xs: 2, md: 3 },
-          transition: 'margin-left 200ms ease, width 200ms ease',
+          flexGrow: 1,                          // take remaining width
+          minWidth: 0,                          // prevent flex item overflow with long content
+          mt: '64px',                            // offset for fixed TopBar
+          p: { xs: 2, sm: 3, md: 4 },           // uniform padding
+          transition: 'padding 200ms ease',
           minHeight: 'calc(100vh - 64px)',
+          bgcolor: 'background.default',
         }}
       >
         <Outlet />

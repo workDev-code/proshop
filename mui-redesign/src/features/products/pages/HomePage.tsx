@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { Box, Stack, Typography, Grid2 as Grid } from '@mui/material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { ProductCard } from '../components/ProductCard';
 import { ProductFilters, paramsToQuery } from '../components/ProductFilters';
 import { HeroCarousel } from '../components/HeroCarousel';
@@ -36,7 +37,7 @@ export const HomePage = () => {
   };
 
   return (
-    <Box>
+    <PageContainer>
       <PageHeader
         title="Welcome to ProShop"
         subtitle="Discover top-rated products curated for you"
@@ -119,6 +120,6 @@ export const HomePage = () => {
           )}
         </Grid>
       </Grid>
-    </Box>
+    </PageContainer>
   );
 };

@@ -4,7 +4,7 @@ import { buildTheme } from './theme';
 
 type Mode = 'light' | 'dark';
 
-const STORAGE_KEY = 'proshop-theme-mode';
+const STORAGE_KEY = 'proshop-theme-mode-v2';
 
 interface ThemeCtx {
   mode: Mode;
@@ -23,7 +23,7 @@ const readInitial = (): Mode => {
   if (typeof window === 'undefined') return 'light';
   const stored = localStorage.getItem(STORAGE_KEY) as Mode | null;
   if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'light';
 };
 
 export const AppThemeProvider = ({ children }: { children: ReactNode }) => {

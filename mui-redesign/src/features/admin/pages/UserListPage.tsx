@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Chip,
   TextField,
   InputAdornment,
   Avatar,
@@ -22,10 +21,13 @@ import {
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { AdminSubNav } from '../components/AdminSubNav';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useGetAllUsersQuery, useDeleteUserMutation } from '../adminApi';
 import { useToast } from '../../../hooks/useToast';
+import { AdminChip } from '../../../components/feedback';
+
 
 export const UserListPage = () => {
   const navigate = useNavigate();
@@ -96,14 +98,8 @@ export const UserListPage = () => {
       field: 'isAdmin',
       headerName: 'Role',
       width: 120,
-      renderCell: ({ value }: any) => (
-        <Chip
-          label={value ? 'Admin' : 'Customer'}
-          color={value ? 'primary' : 'default'}
-          size="small"
-          variant={value ? 'filled' : 'outlined'}
-        />
-      ),
+      renderCell: ({ value }: any) =>
+        value ? <AdminChip /> : <Typography variant="body2" color="text.secondary">Customer</Typography>,
     },
     {
       field: '_id',
@@ -140,7 +136,7 @@ export const UserListPage = () => {
   ];
 
   return (
-    <Box>
+    <PageContainer>
       <PageHeader
         title="Users"
         subtitle={`${users?.length ?? 0} registered users`}
@@ -192,6 +188,6 @@ export const UserListPage = () => {
         onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
         onCancel={() => setConfirmDelete(null)}
       />
-    </Box>
+    </PageContainer>
   );
 };

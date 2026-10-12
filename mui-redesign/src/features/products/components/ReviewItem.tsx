@@ -1,6 +1,7 @@
 import { Box, Stack, Typography, Avatar, Divider } from '@mui/material';
 import type { Review } from '../types';
 import { ProductRating } from './ProductRating';
+import { fmtDate } from '../../../utils/fmt';
 
 interface Props {
   review: Review;
@@ -16,17 +17,7 @@ const initials = (name: string) =>
     .toUpperCase();
 
 /** Lightweight date formatter: "Oct 12, 2026" */
-const fmtDate = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return iso;
-  }
-};
+
 
 export const ReviewItem = ({ review }: Props) => (
   <Box sx={{ py: 2 }}>

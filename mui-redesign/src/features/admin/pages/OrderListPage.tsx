@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
-  Chip,
   TextField,
   InputAdornment,
   Typography,
@@ -19,6 +18,7 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { PageContainer } from '../../../components/layout/PageContainer';
 import { AdminSubNav } from '../components/AdminSubNav';
 import { PriceDisplay } from '../../products/components/PriceDisplay';
 import {
@@ -26,6 +26,9 @@ import {
   useMarkOrderDeliveredMutation,
 } from '../adminApi';
 import { useToast } from '../../../hooks/useToast';
+import { PaidChip, PendingChip, DeliveredChip } from '../../../components/feedback';
+import { fmtDate } from '../../../utils/fmt';
+
 
 export const OrderListPage = () => {
   const toast = useToast();
@@ -89,13 +92,7 @@ export const OrderListPage = () => {
       headerName: 'Date',
       width: 140,
       renderCell: ({ value }) => (
-        <Typography variant="body2">
-          {new Date(value).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          })}
-        </Typography>
+        <Typography variant="body2">{fmtDate(value)}</Typography>
       ),
     },
     {
@@ -108,23 +105,16 @@ export const OrderListPage = () => {
       field: 'isPaid',
       headerName: 'Paid',
       width: 100,
-      renderCell: ({ value }: any) => (
-        <Chip
-          label={value ? 'Paid' : 'Pending'}
-          color={value ? 'success' : 'warning'}
-          size="small"
-          variant="outlined"
-        />
-      ),
+      renderCell: ({ value }: any) => (value ? <PaidChip /> : <PendingChip />),
     },
     {
       field: 'isDelivered',
       headerName: 'Delivered',
       width: 120,
       renderCell: ({ value, row }: any) => {
-        if (value) return <Chip label="Delivered" color="info" size="small" />;
-        if (!row.isPaid) return <Chip label="Awaiting" color="default" size="small" />;
-        return <Chip label="Ready" color="warning" size="small" />;
+        if (value) return <DeliveredChip />;
+        if (!row.isPaid) return <PendingChip label="Awaiting payment" />;
+        return <DeliveredChip label="Ready to ship" />;
       },
     },
     {
@@ -157,7 +147,7 @@ export const OrderListPage = () => {
   ];
 
   return (
-    <Box>
+    <PageContainer>
       <PageHeader
         title="Orders"
         subtitle={`${orders?.length ?? 0} total orders`}
@@ -199,6 +189,6 @@ export const OrderListPage = () => {
           }}
         />
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
