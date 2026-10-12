@@ -13,6 +13,34 @@ interface Props {
   onBack: () => void;
 }
 
+const sectionSx = {
+  fontFamily: '"Manrope", sans-serif',
+  fontWeight: 800,
+  fontSize: 14,
+  letterSpacing: '-0.01em',
+  color: 'text.primary',
+};
+
+const pillPrimarySx = {
+  borderRadius: 999,
+  py: 1.5,
+  px: 3.5,
+  fontSize: 13,
+  fontWeight: 600,
+  textTransform: 'none' as const,
+};
+
+const ghostButtonSx = {
+  borderRadius: 999,
+  py: 1.5,
+  px: 3,
+  fontSize: 13,
+  fontWeight: 600,
+  textTransform: 'none' as const,
+  color: 'text.secondary',
+  '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
+};
+
 export const OrderReview = ({ onBack }: Props) => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -50,17 +78,23 @@ export const OrderReview = ({ onBack }: Props) => {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+      <Typography sx={sectionSx} component="h2" gutterBottom>
         Review your order
       </Typography>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, md: 8 }}>
           <Stack spacing={2}>
             {/* Items */}
-            <Card>
+            <Card
+              sx={{
+                border: '1px solid rgba(32,33,31,0.08)',
+                borderRadius: 2.5,
+                boxShadow: 'none',
+              }}
+            >
               <CardContent>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                <Typography sx={sectionSx} gutterBottom>
                   Items ({totals.itemsCount})
                 </Typography>
                 <Stack divider={<Divider />}>
@@ -77,23 +111,27 @@ export const OrderReview = ({ onBack }: Props) => {
             </Card>
 
             {/* Shipping */}
-            <Card>
+            <Card
+              sx={{
+                border: '1px solid rgba(32,33,31,0.08)',
+                borderRadius: 2.5,
+                boxShadow: 'none',
+              }}
+            >
               <CardContent>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                  <ShipIcon color="primary" fontSize="small" />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    Shipping to
-                  </Typography>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+                  <ShipIcon sx={{ color: 'secondary.main', fontSize: 18 }} />
+                  <Typography sx={sectionSx}>Shipping to</Typography>
                 </Stack>
                 {shippingAddress ? (
                   <Box sx={{ color: 'text.secondary' }}>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ fontSize: 13 }}>
                       {shippingAddress.address}
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ fontSize: 13 }}>
                       {shippingAddress.city}, {shippingAddress.postalCode}
                     </Typography>
-                    <Typography variant="body2">{shippingAddress.country}</Typography>
+                    <Typography variant="body2" sx={{ fontSize: 13 }}>{shippingAddress.country}</Typography>
                   </Box>
                 ) : (
                   <Alert severity="warning">No shipping address set.</Alert>
@@ -102,16 +140,20 @@ export const OrderReview = ({ onBack }: Props) => {
             </Card>
 
             {/* Payment */}
-            <Card>
+            <Card
+              sx={{
+                border: '1px solid rgba(32,33,31,0.08)',
+                borderRadius: 2.5,
+                boxShadow: 'none',
+              }}
+            >
               <CardContent>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                  <PayIcon color="primary" fontSize="small" />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    Payment method
-                  </Typography>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+                  <PayIcon sx={{ color: 'secondary.main', fontSize: 18 }} />
+                  <Typography sx={sectionSx}>Payment method</Typography>
                 </Stack>
                 {paymentMethod ? (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
                     {paymentMethod}
                   </Typography>
                 ) : (
@@ -121,9 +163,15 @@ export const OrderReview = ({ onBack }: Props) => {
             </Card>
 
             {/* Coupon */}
-            <Card>
+            <Card
+              sx={{
+                border: '1px solid rgba(32,33,31,0.08)',
+                borderRadius: 2.5,
+                boxShadow: 'none',
+              }}
+            >
               <CardContent>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                <Typography sx={sectionSx} gutterBottom>
                   Coupon
                 </Typography>
                 <CouponInput disabled={items.length === 0} />
@@ -154,11 +202,18 @@ export const OrderReview = ({ onBack }: Props) => {
                   <CheckIcon />
                 )
               }
+              sx={pillPrimarySx}
             >
               {isLoading ? 'Placing order…' : 'Place order'}
             </Button>
-            <Button fullWidth variant="text" onClick={onBack} disabled={isLoading}>
-              Back
+            <Button
+              fullWidth
+              variant="text"
+              onClick={onBack}
+              disabled={isLoading}
+              sx={ghostButtonSx}
+            >
+              ← Back
             </Button>
           </Stack>
         </Grid>

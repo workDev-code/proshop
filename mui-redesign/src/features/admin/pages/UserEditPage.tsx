@@ -5,26 +5,30 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Box,
-  Card,
-  CardContent,
   Stack,
   TextField,
   Button,
   Typography,
-  Grid2 as Grid,
   Switch,
-  FormControlLabel,
+  Divider,
   Alert,
   CircularProgress,
   Avatar,
 } from '@mui/material';
-import { ArrowBack as BackIcon, Group as UsersIcon, AdminPanelSettings as AdminIcon } from '@mui/icons-material';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { PageContainer } from '../../../components/layout/PageContainer';
-import { AdminSubNav } from '../components/AdminSubNav';
+import {
+  AdminPanelSettings as AdminIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+} from '@mui/icons-material';
 import { LoadingState } from '../../../components/feedback/LoadingState';
 import { useGetUserByIdQuery, useUpdateUserMutation } from '../adminApi';
 import { useToast } from '../../../hooks/useToast';
+import {
+  adminH1Sx,
+  adminPanelSx,
+  adminSubtitleSx,
+  adminTitleRowSx,
+} from '../components/adminStyles';
 
 const userSchema = z.object({
   name: z.string().min(2, 'Name is required').max(50),
@@ -32,6 +36,64 @@ const userSchema = z.object({
   isAdmin: z.boolean(),
 });
 type UserFormValues = z.infer<typeof userSchema>;
+
+/* ─── shared style tokens (admin edit pages) ─────────────────────── */
+
+const fieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    fontSize: 13,
+    bgcolor: '#fff',
+  },
+  '& .MuiOutlinedInput-input': {
+    py: 1.375,
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: 11,
+    fontWeight: 600,
+  },
+  '& .MuiFormHelperText-root': {
+    fontSize: 10,
+    mx: 0,
+    mt: 0.5,
+  },
+};
+
+const overlineSx = {
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
+  color: '#818999',
+  mb: 1.5,
+};
+
+const primaryBtnSx = {
+  bgcolor: '#e65f3b',
+  '&:hover': { bgcolor: '#d55634' },
+  borderRadius: '8px',
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: 'none' as const,
+  px: 2,
+  py: 1.125,
+  color: '#fff',
+  whiteSpace: 'nowrap' as const,
+};
+
+const secondaryBtnSx = {
+  border: '1px solid #e1e5eb',
+  bgcolor: '#fff',
+  color: '#303747',
+  '&:hover': { bgcolor: '#f7f7f9' },
+  borderRadius: '8px',
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: 'none' as const,
+  px: 2,
+  py: 1.125,
+  whiteSpace: 'nowrap' as const,
+};
 
 export const UserEditPage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -75,117 +137,237 @@ export const UserEditPage = () => {
     .toUpperCase();
 
   return (
-    <PageContainer>
-      <Button
-        component={RouterLink}
-        to="/admin/users"
-        startIcon={<BackIcon />}
-        size="small"
-        sx={{ mb: 2 }}
+    <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+      {/* Title row */}
+      <Box sx={adminTitleRowSx}>
+        <Box>
+          <Typography component="h1" sx={adminH1Sx}>
+            Edit user
+          </Typography>
+          <Typography sx={adminSubtitleSx}>
+            ID: {id} · Update account details and role.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <Button
+            component={RouterLink}
+            to="/admin/users"
+            variant="outlined"
+            sx={secondaryBtnSx}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={updating}
+            startIcon={updating ? <CircularProgress size={14} color="inherit" /> : null}
+            sx={primaryBtnSx}
+          >
+            Save changes
+          </Button>
+        </Stack>
+      </Box>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 8fr) minmax(0, 4fr)' },
+          gap: 2.125,
+        }}
       >
-        Back to users
-      </Button>
+        {/* LEFT — form fields */}
+        <Box sx={{ ...adminPanelSx, p: 0 }}>
+          <Box sx={{ p: 2.5 }}>
+            <Typography sx={overlineSx}>User details</Typography>
+            <Stack spacing={2}>
+              <TextField
+                {...register('name')}
+                label="Full name"
+                fullWidth
+                error={!!formState.errors.name}
+                helperText={formState.errors.name?.message}
+                disabled={updating}
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: '#818999',
+                        pr: 1,
+                      }}
+                    >
+                      <PersonIcon sx={{ fontSize: 18 }} />
+                    </Box>
+                  ),
+                }}
+              />
+              <TextField
+                {...register('email')}
+                label="Email"
+                type="email"
+                fullWidth
+                error={!!formState.errors.email}
+                helperText={formState.errors.email?.message}
+                disabled={updating}
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: '#818999',
+                        pr: 1,
+                      }}
+                    >
+                      <EmailIcon sx={{ fontSize: 18 }} />
+                    </Box>
+                  ),
+                }}
+              />
+            </Stack>
+          </Box>
 
-      <PageHeader
-        title="Edit user"
-        subtitle={`ID: ${id}`}
-        icon={<UsersIcon />}
-      />
+          <Divider />
 
-      <AdminSubNav />
+          <Box sx={{ p: 2.5 }}>
+            <Typography sx={overlineSx}>Permissions</Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                py: 1,
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <AdminIcon sx={{ fontSize: 16, color: isAdminValue ? '#e65f3b' : '#818999' }} />
+                  <Typography
+                    sx={{
+                      fontFamily: '"Manrope", sans-serif',
+                      fontWeight: 700,
+                      fontSize: 13,
+                      color: '#242b39',
+                    }}
+                  >
+                    Administrator
+                  </Typography>
+                </Stack>
+                <Typography sx={{ fontSize: 10, color: '#818999', mt: 0.5 }}>
+                  Admins can manage products, orders, users, and coupons.
+                </Typography>
+              </Box>
+              <Switch
+                {...register('isAdmin')}
+                defaultChecked={user.isAdmin}
+                disabled={updating}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': { color: '#e65f3b' },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    bgcolor: '#e65f3b',
+                  },
+                }}
+              />
+            </Box>
+          </Box>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent>
-              <Stack alignItems="center" spacing={2} sx={{ py: 2 }}>
-                <Avatar
+          <Divider />
+
+          <Box sx={{ p: 2.5 }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Button
+                onClick={() => navigate('/admin/users')}
+                disabled={updating}
+                sx={secondaryBtnSx}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={updating}
+                startIcon={updating ? <CircularProgress size={14} color="inherit" /> : null}
+                sx={primaryBtnSx}
+              >
+                Save changes
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
+
+        {/* RIGHT — meta panel */}
+        <Stack spacing={2.125}>
+          <Box sx={adminPanelSx}>
+            <Typography sx={overlineSx}>Profile</Typography>
+            <Stack alignItems="center" spacing={1.5} sx={{ py: 1.5 }}>
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  bgcolor: isAdminValue ? '#e65f3b' : '#5e6057',
+                  fontSize: 28,
+                  fontWeight: 800,
+                  fontFamily: '"Manrope", sans-serif',
+                }}
+              >
+                {initials || '?'}
+              </Avatar>
+              <Stack alignItems="center" spacing={0.25}>
+                <Typography
                   sx={{
-                    width: 96,
-                    height: 96,
-                    bgcolor: isAdminValue ? 'primary.main' : 'secondary.main',
-                    fontSize: 36,
-                    fontWeight: 700,
+                    fontFamily: '"Manrope", sans-serif',
+                    fontSize: 14,
+                    fontWeight: 800,
+                    color: '#242b39',
                   }}
                 >
-                  {initials}
-                </Avatar>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Typography variant="h6">{user.name}</Typography>
-                  {isAdminValue && <AdminIcon color="primary" />}
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
+                  {user.name}
+                </Typography>
+                <Typography sx={{ fontSize: 11, color: '#818999' }}>
                   {user.email}
                 </Typography>
               </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Stack>
+          </Box>
 
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card>
-            <CardContent>
-              <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-                  User details
+          <Box sx={adminPanelSx}>
+            <Typography sx={overlineSx}>Role</Typography>
+            <Stack spacing={1.25}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography sx={{ fontSize: 11, color: '#5e6057' }}>Status</Typography>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#242b39' }}>
+                  {isAdminValue ? 'Administrator' : 'Customer'}
                 </Typography>
-                <Stack spacing={2}>
-                  <TextField
-                    {...register('name')}
-                    label="Full name"
-                    fullWidth
-                    error={!!formState.errors.name}
-                    helperText={formState.errors.name?.message}
-                    disabled={updating}
-                  />
-                  <TextField
-                    {...register('email')}
-                    label="Email"
-                    type="email"
-                    fullWidth
-                    error={!!formState.errors.email}
-                    helperText={formState.errors.email?.message}
-                    disabled={updating}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        {...register('isAdmin')}
-                        defaultChecked={user.isAdmin}
-                        color="primary"
-                      />
-                    }
-                    label={
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          Administrator
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Admins can manage products, orders, users, and coupons.
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </Stack>
-                <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ mt: 3 }}>
-                  <Button onClick={() => navigate('/admin/users')} disabled={updating}>
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    disabled={updating}
-                    startIcon={updating ? <CircularProgress size={16} color="inherit" /> : null}
-                  >
-                    Save changes
-                  </Button>
-                </Stack>
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </PageContainer>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography sx={{ fontSize: 11, color: '#5e6057' }}>User ID</Typography>
+                <Typography
+                  sx={{
+                    fontSize: 10,
+                    fontFamily: 'monospace',
+                    color: '#5e6057',
+                    maxWidth: 180,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {user._id}
+                </Typography>
+              </Box>
+              <Divider />
+              <Typography sx={{ fontSize: 10, color: '#818999' }}>
+                Save to apply role changes immediately.
+              </Typography>
+            </Stack>
+          </Box>
+        </Stack>
+      </Box>
+    </Box>
   );
 };

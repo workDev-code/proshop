@@ -1,201 +1,281 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import {
   Box,
-  TextField,
-  InputAdornment,
-  Avatar,
   Stack,
-  Tooltip,
+  InputBase,
   Typography,
+  Avatar,
 } from '@mui/material';
+import { useGetAllUsersQuery } from '../adminApi';
+import { useGetAllOrdersQuery } from '../adminApi';
+import { LoadingState } from '../../../components/feedback/LoadingState';
+import { fmtDate, fmtMoney } from '../../../utils/fmt';
 import {
-  DataGrid,
-  type GridColDef,
-  GridActionsCellItem,
-} from '@mui/x-data-grid';
-import {
-  Group as UsersIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  AdminPanelSettings as AdminIcon,
-} from '@mui/icons-material';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { PageContainer } from '../../../components/layout/PageContainer';
-import { AdminSubNav } from '../components/AdminSubNav';
-import { ConfirmDialog } from '../components/ConfirmDialog';
-import { useGetAllUsersQuery, useDeleteUserMutation } from '../adminApi';
-import { useToast } from '../../../hooks/useToast';
-import { AdminChip } from '../../../components/feedback';
+  adminEmptyDescSx,
+  adminEmptySx,
+  adminEmptyTitleSx,
+  adminFilterRowSx,
+  adminH1Sx,
+  adminInputSx,
+  adminMiniCardSx,
+  adminMiniGridSx,
+  adminPanelDescSx,
+  adminPanelH2Sx,
+  adminPanelHeadSx,
+  adminPanelSx,
+  adminSubtitleSx,
+  adminTableSx,
+  adminTdFirstSx,
+  adminTdSx,
+  adminThSx,
+  adminTitleRowSx,
+} from '../components/adminStyles';
+import type { Order } from '../../orders/types';
+import type { User } from '../../auth/types';
 
+const initialsOf = (name: string): string => {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0 || !parts[0]) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+/** Extract the user id from an order regardless of `user` shape. */
+const orderUserId = (o: Order): string | null => {
+  if (typeof o.user === 'string') return o.user;
+  if (o.user && typeof o.user === 'object') return (o.user as { _id?: string })._id ?? null;
+  return null;
+};
+
+interface CustomerStats {
+  ordersCount: number;
+  totalSpent: number;
+}
+
+const computeCustomerStats = (orders: Order[] | undefined) => {
+  const map = new Map<string, CustomerStats>();
+  if (!orders) return map;
+  for (const o of orders) {
+    const id = orderUserId(o);
+    if (!id) continue;
+    const cur = map.get(id) ?? { ordersCount: 0, totalSpent: 0 };
+    cur.ordersCount += 1;
+    cur.totalSpent += o.totalPrice;
+    map.set(id, cur);
+  }
+  return map;
+};
 
 export const UserListPage = () => {
-  const navigate = useNavigate();
-  const toast = useToast();
+  const { data: users, isLoading: usersLoading } = useGetAllUsersQuery();
+  const { data: orders } = useGetAllOrdersQuery();
   const [search, setSearch] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const { data: users, isLoading } = useGetAllUsersQuery();
-  const [deleteUser, { isLoading: deleting }] = useDeleteUserMutation();
 
-  const filtered = users?.filter((u) =>
-    [u.name, u.email].some((f) => f.toLowerCase().includes(search.toLowerCase())),
-  );
+  const statsByUser = useMemo(() => computeCustomerStats(orders), [orders]);
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteUser(id).unwrap();
-      toast.success('User deleted');
-      setConfirmDelete(null);
-    } catch (err) {
-      const e = err as { data?: { message?: string } };
-      toast.error(e.data?.message ?? 'Failed to delete user');
-    }
-  };
+  if (usersLoading) {
+    return <LoadingState variant="card" count={3} />;
+  }
 
-  const initials = (name: string) =>
-    name
-      .trim()
-      .split(/\s+/)
-      .map((p) => p[0] ?? '')
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
+  const allUsers = users ?? [];
+  const totalCustomers = allUsers.length;
 
-  const columns: GridColDef[] = [
-    {
-      field: 'name',
-      headerName: 'User',
-      flex: 1,
-      minWidth: 240,
-      renderCell: ({ row }: any) => (
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ py: 0.5 }}>
-          <Avatar
-            sx={{
-              width: 36,
-              height: 36,
-              bgcolor: row.isAdmin ? 'primary.main' : 'secondary.main',
-              fontSize: 13,
-              fontWeight: 700,
-            }}
-          >
-            {initials(row.name)}
-          </Avatar>
-          <Box>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {row.name}
-              </Typography>
-              {row.isAdmin && <AdminIcon fontSize="small" color="primary" />}
-            </Stack>
-            <Typography variant="caption" color="text.secondary">
-              {row.email}
-            </Typography>
-          </Box>
-        </Stack>
-      ),
-    },
-    {
-      field: 'isAdmin',
-      headerName: 'Role',
-      width: 120,
-      renderCell: ({ value }: any) =>
-        value ? <AdminChip /> : <Typography variant="body2" color="text.secondary">Customer</Typography>,
-    },
-    {
-      field: '_id',
-      headerName: 'User ID',
-      width: 220,
-      renderCell: ({ value }: any) => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-          {value}
-        </Typography>
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      type: 'actions',
-      width: 100,
-      getActions: ({ row }) => [
-        <GridActionsCellItem
-          key="edit"
-          icon={
-            <Tooltip title="Edit user">
-              <EditIcon />
-            </Tooltip>
-          }
-          label="Edit"
-          onClick={() => navigate(`/admin/users/${row._id}/edit`)}
-          sx={{ color: 'primary.main' }}
-        />,
-        <GridActionsCellItem
-          key="delete"
-          icon={
-            <Tooltip title="Delete user">
-              <DeleteIcon />
-            </Tooltip>
-          }
-          label="Delete"
-          onClick={() => setConfirmDelete(row._id)}
-          sx={{ color: 'error.main' }}
-        />,
-      ],
-    },
-  ];
+  // "New this month" — derived from `createdAt` if the backend returns it.
+  // If the user model doesn't expose createdAt, fall back to "Data not
+  // available" rendering for that card.
+  const now = new Date();
+  const newThisMonth = allUsers.filter((u) => {
+    const u2 = u as User & { createdAt?: string };
+    if (!u2.createdAt) return false;
+    const d = new Date(u2.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  const filtered = allUsers.filter((u) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+  });
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Users"
-        subtitle={`${users?.length ?? 0} registered users`}
-        icon={<UsersIcon />}
-      />
-
-      <AdminSubNav />
-
-      <Box sx={{ mb: 2 }}>
-        <TextField
-          placeholder="Search by name or email…"
-          size="small"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: { xs: '100%', sm: 360 } }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+    <>
+      {/* Title row */}
+      <Box sx={adminTitleRowSx}>
+        <Box>
+          <Typography component="h1" sx={adminH1Sx}>
+            Customers
+          </Typography>
+          <Typography sx={adminSubtitleSx}>
+            Understand your audience and customer activity.
+          </Typography>
+        </Box>
       </Box>
 
-      <Box sx={{ height: 620, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-        <DataGrid
-          rows={filtered ?? []}
-          columns={columns}
-          getRowId={(r) => r._id}
-          loading={isLoading}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          disableRowSelectionOnClick
-          sx={{
-            border: 0,
-            '& .MuiDataGrid-cell:focus': { outline: 'none' },
-          }}
-        />
+      {/* Mini cards */}
+      <Box sx={adminMiniGridSx}>
+        <Box sx={adminMiniCardSx}>
+          <Typography sx={{ fontSize: 10, color: '#818999' }}>Total customers</Typography>
+          <Typography
+            component="strong"
+            sx={{
+              display: 'block',
+              fontFamily: '"Manrope", sans-serif',
+              fontSize: 22,
+              fontWeight: 800,
+              mt: '9px',
+              color: '#242b39',
+            }}
+          >
+            {totalCustomers}
+          </Typography>
+        </Box>
+        <Box sx={adminMiniCardSx}>
+          <Typography sx={{ fontSize: 10, color: '#818999' }}>New this month</Typography>
+          {allUsers.length > 0 && (allUsers[0] as User & { createdAt?: string }).createdAt ? (
+            <Typography
+              component="strong"
+              sx={{
+                display: 'block',
+                fontFamily: '"Manrope", sans-serif',
+                fontSize: 22,
+                fontWeight: 800,
+                mt: '9px',
+                color: '#242b39',
+              }}
+            >
+              {newThisMonth}
+            </Typography>
+          ) : (
+            <>
+              <Typography
+                component="strong"
+                sx={{
+                  display: 'block',
+                  fontFamily: '"Manrope", sans-serif',
+                  fontSize: 16,
+                  fontWeight: 700,
+                  mt: '9px',
+                  color: '#50596a',
+                }}
+              >
+                Data not available
+              </Typography>
+              <Typography sx={{ fontSize: 9, color: '#828b9b', mt: 0.5 }}>
+                Join dates aren't returned by the backend
+              </Typography>
+            </>
+          )}
+        </Box>
+        <Box sx={adminMiniCardSx}>
+          <Typography sx={{ fontSize: 10, color: '#818999' }}>Repeat purchase rate</Typography>
+          <Typography
+            component="strong"
+            sx={{
+              display: 'block',
+              fontFamily: '"Manrope", sans-serif',
+              fontSize: 16,
+              fontWeight: 700,
+              mt: '9px',
+              color: '#50596a',
+            }}
+          >
+            Data not available
+          </Typography>
+          <Typography sx={{ fontSize: 9, color: '#828b9b', mt: 0.5 }}>
+            Requires a dedicated analytics endpoint
+          </Typography>
+        </Box>
       </Box>
 
-      <ConfirmDialog
-        open={!!confirmDelete}
-        title="Delete user?"
-        message="This user will be permanently removed. Their orders and reviews will keep the snapshot data but the user account will be gone."
-        confirmLabel="Delete"
-        loading={deleting}
-        onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
-        onCancel={() => setConfirmDelete(null)}
-      />
-    </PageContainer>
+      {/* Customer directory */}
+      <Box sx={adminPanelSx}>
+        <Box sx={adminPanelHeadSx}>
+          <Box>
+            <Typography component="h2" sx={adminPanelH2Sx}>
+              Customer directory
+            </Typography>
+            <Typography sx={adminPanelDescSx}>
+              Customer accounts registered to your store
+            </Typography>
+          </Box>
+        </Box>
+
+        <Stack sx={adminFilterRowSx}>
+          <InputBase
+            placeholder="Search customer…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ ...adminInputSx, minWidth: 220 }}
+          />
+        </Stack>
+
+        {filtered.length === 0 ? (
+          <Box sx={adminEmptySx}>
+            <Typography sx={adminEmptyTitleSx}>No customers found</Typography>
+            <Typography sx={adminEmptyDescSx}>
+              Try adjusting the search.
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ overflowX: 'auto' }}>
+            <Box component="table" sx={adminTableSx}>
+              <Box component="thead">
+                <Box component="tr">
+                  {['Customer', 'Email', 'Orders', 'Total spent', 'Joined'].map((h) => (
+                    <Box component="th" key={h} sx={adminThSx}>
+                      {h}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+              <Box component="tbody">
+                {filtered.map((u) => {
+                  const stats = statsByUser.get(u._id);
+                  const uWithDate = u as User & { createdAt?: string };
+                  return (
+                    <Box component="tr" key={u._id}>
+                      <Box component="td" sx={adminTdFirstSx}>
+                        <Stack direction="row" alignItems="center" spacing={1.25}>
+                          <Avatar
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              bgcolor: u.isAdmin ? '#fff0eb' : '#eaf2ff',
+                              color: u.isAdmin ? '#dc6241' : '#326bc4',
+                              fontSize: 11,
+                              fontWeight: 800,
+                            }}
+                          >
+                            {initialsOf(u.name)}
+                          </Avatar>
+                          <Typography
+                            component="strong"
+                            sx={{ display: 'block', fontSize: 10, fontWeight: 700 }}
+                          >
+                            {u.name}
+                          </Typography>
+                        </Stack>
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {u.email}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {stats ? stats.ordersCount : 0}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {stats ? fmtMoney(stats.totalSpent) : '$0.00'}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {uWithDate.createdAt ? fmtDate(uWithDate.createdAt) : '—'}
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          </Box>
+        )}
+      </Box>
+    </>
   );
 };

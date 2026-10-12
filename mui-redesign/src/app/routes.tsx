@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { RequireAuth } from '../components/auth/RequireAuth';
 import { AdminRoute } from '../features/admin/guards/AdminRoute';
+import { AdminShell } from '../features/admin/components/AdminShell';
 import { DesignSystemPage } from '../features/design-system/pages/DesignSystemPage';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { HomePage } from '../features/products/pages/HomePage';
@@ -21,15 +22,26 @@ import { UserListPage } from '../features/admin/pages/UserListPage';
 import { UserEditPage } from '../features/admin/pages/UserEditPage';
 import { CouponListPage } from '../features/admin/pages/CouponListPage';
 import { CouponEditPage } from '../features/admin/pages/CouponEditPage';
+import { AdminAnalyticsPage } from '../features/admin/pages/AdminAnalyticsPage';
+import { AdminSettingsPage } from '../features/admin/pages/AdminSettingsPage';
 
+/**
+ * App router.
+ *
+ * Layouts:
+ *   - Storefront (/) -> <AppShell> = Announcement + TopBar + main + Footer
+ *   - Admin (/admin/*) -> <AdminShell> = dark sidebar + light topbar + max 1600
+ *
+ * Both are protected by <RequireAuth>. Admin additionally checks role.
+ */
 export const AppRouter = () => (
   <Routes>
-    {/* ============== PUBLIC ROUTES (no shell) ============== */}
+    {/* PUBLIC */}
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<LoginPage mode="register" />} />
     <Route path="/design-system" element={<DesignSystemPage />} />
 
-    {/* ============== PROTECTED ROUTES (with AppShell) ============== */}
+    {/* STOREFRONT (AppShell) */}
     <Route
       element={
         <RequireAuth>
@@ -46,30 +58,34 @@ export const AppRouter = () => (
       <Route path="/orders/:id" element={<OrderDetailPage />} />
       <Route path="/wishlist" element={<WishlistPage />} />
       <Route path="/profile" element={<ProfilePage />} />
-
-      {/* ============== ADMIN ROUTES (RequireAuth + AdminRoute) ============== */}
-      <Route
-        path="/admin"
-        element={
-          <AdminRoute>
-            <AppShell />
-          </AdminRoute>
-        }
-      >
-        <Route index element={<AdminDashboardPage />} />
-        <Route path="products" element={<ProductListPage />} />
-        <Route path="products/new" element={<ProductEditPage />} />
-        <Route path="products/:id/edit" element={<ProductEditPage />} />
-        <Route path="orders" element={<AdminOrderListPage />} />
-        <Route path="users" element={<UserListPage />} />
-        <Route path="users/:id/edit" element={<UserEditPage />} />
-        <Route path="coupons" element={<CouponListPage />} />
-        <Route path="coupons/new" element={<CouponEditPage />} />
-        <Route path="coupons/:id/edit" element={<CouponEditPage />} />
-      </Route>
     </Route>
 
-    {/* Catch-all → home */}
+    {/* ADMIN (AdminShell) */}
+    <Route
+      path="/admin"
+      element={
+        <RequireAuth>
+          <AdminRoute>
+            <AdminShell />
+          </AdminRoute>
+        </RequireAuth>
+      }
+    >
+      <Route index element={<AdminDashboardPage />} />
+      <Route path="products" element={<ProductListPage />} />
+      <Route path="products/new" element={<ProductEditPage />} />
+      <Route path="products/:id/edit" element={<ProductEditPage />} />
+      <Route path="orders" element={<AdminOrderListPage />} />
+      <Route path="users" element={<UserListPage />} />
+      <Route path="users/:id/edit" element={<UserEditPage />} />
+      <Route path="coupons" element={<CouponListPage />} />
+      <Route path="coupons/new" element={<CouponEditPage />} />
+      <Route path="coupons/:id/edit" element={<CouponEditPage />} />
+      <Route path="analytics" element={<AdminAnalyticsPage />} />
+      <Route path="settings" element={<AdminSettingsPage />} />
+    </Route>
+
+    {/* CATCH-ALL */}
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );

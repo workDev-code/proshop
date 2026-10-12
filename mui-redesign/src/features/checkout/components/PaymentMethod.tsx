@@ -29,6 +29,27 @@ const OPTIONS: { value: PaymentMethodType; label: string; description: string; i
   },
 ];
 
+const pillButtonSx = {
+  borderRadius: 999,
+  py: 1.5,
+  px: 3.5,
+  fontSize: 13,
+  fontWeight: 600,
+  textTransform: 'none' as const,
+  minWidth: 160,
+};
+
+const ghostButtonSx = {
+  borderRadius: 999,
+  py: 1.5,
+  px: 3,
+  fontSize: 13,
+  fontWeight: 600,
+  textTransform: 'none' as const,
+  color: 'text.secondary',
+  '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
+};
+
 export const PaymentMethod = ({ onNext, onBack }: Props) => {
   const { paymentMethod, savePayment } = useCart();
 
@@ -43,14 +64,30 @@ export const PaymentMethod = ({ onNext, onBack }: Props) => {
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-        <PaymentIcon color="primary" />
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
+        <PaymentIcon sx={{ color: 'secondary.main', fontSize: 20 }} />
+        <Typography
+          sx={{
+            fontFamily: '"Manrope", sans-serif',
+            fontWeight: 800,
+            fontSize: 18,
+            letterSpacing: '-0.01em',
+            color: 'text.primary',
+          }}
+        >
           Payment method
         </Typography>
       </Stack>
 
-      <Alert severity="info" sx={{ mb: 2 }}>
+      <Alert
+        severity="info"
+        sx={{
+          mb: 2.5,
+          borderRadius: 2,
+          fontSize: 12,
+          '& .MuiAlert-message': { lineHeight: 1.5 },
+        }}
+      >
         Demo mode: selecting a method will mark the order paid immediately after you place it.
         No real payment provider is invoked.
       </Alert>
@@ -65,24 +102,34 @@ export const PaymentMethod = ({ onNext, onBack }: Props) => {
               key={opt.value}
               variant="outlined"
               sx={{
-                borderColor: paymentMethod === opt.value ? 'primary.main' : 'divider',
+                borderColor: paymentMethod === opt.value ? 'secondary.main' : 'divider',
                 borderWidth: paymentMethod === opt.value ? 2 : 1,
+                borderRadius: 2.5,
                 cursor: 'pointer',
                 transition: 'all 200ms ease',
-                '&:hover': { borderColor: 'primary.light' },
+                '&:hover': { borderColor: 'secondary.light' },
+                boxShadow: 'none',
               }}
             >
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <CardContent sx={{ py: 2, px: 2, '&:last-child': { pb: 2 } }}>
                 <FormControlLabel
                   value={opt.value}
-                  control={<Radio />}
+                  control={
+                    <Radio
+                      size="small"
+                      sx={{
+                        color: 'secondary.main',
+                        '&.Mui-checked': { color: 'secondary.main' },
+                      }}
+                    />
+                  }
                   label={
-                    <Box sx={{ ml: 1 }}>
+                    <Box sx={{ ml: 0.5 }}>
                       <Stack direction="row" alignItems="center" spacing={1}>
-                        {opt.icon}
-                        <Typography sx={{ fontWeight: 600 }}>{opt.label}</Typography>
+                        <Box sx={{ color: 'text.secondary', display: 'flex' }}>{opt.icon}</Box>
+                        <Typography sx={{ fontWeight: 600, fontSize: 14 }}>{opt.label}</Typography>
                       </Stack>
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: 12 }}>
                         {opt.description}
                       </Typography>
                     </Box>
@@ -95,19 +142,25 @@ export const PaymentMethod = ({ onNext, onBack }: Props) => {
         </Stack>
       </RadioGroup>
 
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
-        <Button onClick={onBack} size="large">
-          Back
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mt: 4 }}
+      >
+        <Button onClick={onBack} sx={ghostButtonSx}>
+          ← Back
         </Button>
         <Button
           variant="contained"
           size="large"
           onClick={handleContinue}
           disabled={!paymentMethod}
+          sx={pillButtonSx}
         >
           Review order
         </Button>
-      </Box>
+      </Stack>
     </Box>
   );
 };

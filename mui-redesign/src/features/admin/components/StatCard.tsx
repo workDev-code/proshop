@@ -1,168 +1,111 @@
-import { Card, CardContent, Stack, Typography, Box, Chip } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import {
-  TrendingUp as UpIcon,
-  TrendingDown as DownIcon,
-  TrendingFlat as FlatIcon,
-} from '@mui/icons-material';
 
-export type StatColor =
-  | 'primary'
-  | 'secondary'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'info';
-
-interface Props {
-  /** Overline label (rendered uppercase). */
+/**
+ * Admin stat card matching the approved HTML prototype.
+ *
+ * Layout:
+ *   ┌─────────────────────────────────────┐
+ *   │ Label                    [icon]      │  <- icon badge in top-right
+ *   │                                      │
+ *   │ 1,234                                 │  <- large number (Manrope 800)
+ *   │ ↗ 12% vs. last month                 │  <- small caption with optional <b>
+ *   └─────────────────────────────────────┘
+ *
+ * Visual: flat white panel, 1px #e9ecf1 border, 13px radius, 19px padding.
+ */
+export interface StatCardProps {
+  /** Overline label (rendered small, muted). */
   label: string;
   /** Headline value — usually a number or money string. */
   value: string | number;
-  /** Icon shown inside the colored badge. */
+  /** Icon shown inside the badge in the top-right corner. */
   icon: ReactNode;
-  /** Tone for the icon badge. Defaults to primary. */
-  color?: StatColor;
-  /** Optional trend chip (e.g. "+12% vs last week"). */
-  trend?: { delta: string; direction: 'up' | 'down' | 'flat' };
-  /** Subtle supporting line under the value (e.g. "5 paid · 2 pending"). */
-  sublabel?: string;
+  /** Caption under the value. Pass a ReactNode to control formatting
+   *  (e.g. include a <b> for the trend delta). Plain string works too. */
+  caption?: ReactNode;
 }
 
-/** Map a StatColor token to a soft background + saturated foreground. */
-const TONE: Record<
-  StatColor,
-  { bg: string; fg: string; bar: string }
-> = {
-  primary:   { bg: 'rgba(217, 93, 57, 0.10)', fg: '#d95d39', bar: '#d95d39' },
-  secondary: { bg: 'rgba(32, 33, 31, 0.06)',  fg: '#20211f', bar: '#20211f' },
-  success:   { bg: 'rgba(74, 107, 58, 0.10)', fg: '#4a6b3a', bar: '#4a6b3a' },
-  warning:   { bg: 'rgba(201, 138, 37, 0.12)', fg: '#c98a25', bar: '#c98a25' },
-  error:     { bg: 'rgba(184, 68, 37, 0.10)',  fg: '#b84425', bar: '#b84425' },
-  info:      { bg: 'rgba(90, 107, 122, 0.12)', fg: '#5a6b7a', bar: '#5a6b7a' },
-};
-
-export const StatCard = ({
-  label,
-  value,
-  icon,
-  color = 'primary',
-  trend,
-  sublabel,
-}: Props) => {
-  const tone = TONE[color];
-  const TrendIcon =
-    trend?.direction === 'up' ? UpIcon : trend?.direction === 'down' ? DownIcon : FlatIcon;
-  const trendColor =
-    trend?.direction === 'up'
-      ? 'success.main'
-      : trend?.direction === 'down'
-      ? 'error.main'
-      : 'text.secondary';
-
-  return (
-    <Card
+/**
+ * Single-tone icon badge in the top-right of the stat card.
+ * The prototype always uses the soft terracotta pair (#fff0eb / #dc6241)
+ * regardless of the metric being shown, so we hard-code it here.
+ */
+export const StatCard = ({ label, value, icon, caption }: StatCardProps) => (
+  <Box
+    sx={{
+      bgcolor: '#fff',
+      border: '1px solid #e9ecf1',
+      borderRadius: '13px',
+      p: '19px',
+      minWidth: 0,
+    }}
+  >
+    {/* Label (left) + icon badge (right) */}
+    <Box
       sx={{
-        height: '100%',
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'transform 200ms ease, box-shadow 200ms ease',
-        '&:hover': { transform: 'translateY(-1px)', boxShadow: 2 },
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        color: '#747e90',
+        fontSize: 11,
+        gap: 1,
       }}
     >
-      {/* Tone bar */}
+      <span>{label}</span>
       <Box
         sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          bgcolor: tone.bar,
+          width: 32,
+          height: 32,
+          borderRadius: '9px',
+          display: 'grid',
+          placeItems: 'center',
+          bgcolor: '#fff0eb',
+          color: '#dc6241',
+          fontSize: 15,
+          flexShrink: 0,
+          '& svg': { fontSize: 17 },
         }}
-      />
-      <CardContent sx={{ p: 2.5, pb: '20px !important' }}>
-        <Stack direction="row" alignItems="flex-start" spacing={1.75}>
-          {/* Icon badge */}
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: 2,
-              bgcolor: tone.bg,
-              color: tone.fg,
-              display: 'grid',
-              placeItems: 'center',
-              flexShrink: 0,
-              '& .MuiSvgIcon-root': { fontSize: 22 },
-            }}
-          >
-            {icon}
-          </Box>
+        aria-hidden
+      >
+        {icon}
+      </Box>
+    </Box>
 
-          {/* Text */}
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography
-              variant="overline"
-              color="text.secondary"
-              sx={{
-                display: 'block',
-                lineHeight: 1.2,
-                letterSpacing: 0.6,
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                mb: 0.5,
-              }}
-            >
-              {label}
-            </Typography>
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 800,
-                lineHeight: 1.15,
-                color: 'text.primary',
-                fontFeatureSettings: '"tnum" 1',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {value}
-            </Typography>
+    {/* Headline value */}
+    <Typography
+      component="strong"
+      sx={{
+        display: 'block',
+        fontFamily: '"Manrope", sans-serif',
+        fontSize: 25,
+        fontWeight: 800,
+        letterSpacing: '-0.8px',
+        color: '#222938',
+        my: '17px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+    >
+      {value}
+    </Typography>
 
-            {/* Sublabel OR trend chip — never both */}
-            {sublabel && !trend && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mt: 0.5, lineHeight: 1.3 }}
-              >
-                {sublabel}
-              </Typography>
-            )}
-            {trend && (
-              <Chip
-                icon={<TrendIcon sx={{ fontSize: '14px !important' }} />}
-                label={trend.delta}
-                size="small"
-                variant="outlined"
-                sx={{
-                  mt: 1,
-                  height: 22,
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  letterSpacing: 0.3,
-                  color: trendColor,
-                  borderColor: 'divider',
-                  bgcolor: 'transparent',
-                  '& .MuiChip-icon': { ml: 0.5, color: 'inherit' },
-                }}
-              />
-            )}
-          </Box>
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-};
+    {/* Caption */}
+    {caption && (
+      <Box
+        component="small"
+        sx={{
+          display: 'block',
+          fontSize: 10,
+          color: '#7a8494',
+          // If caption is a plain string and contains inline markup, fall
+          // back to defaults; ReactNode lets callers pass JSX with <b>.
+          '& b': { color: '#1a9b72', marginRight: 0.5 },
+        }}
+      >
+        {caption}
+      </Box>
+    )}
+  </Box>
+);

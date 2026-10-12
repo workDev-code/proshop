@@ -1,10 +1,9 @@
 import { useParams, useSearchParams, Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Box, Stack, Typography, Grid2 as Grid, Button, Chip } from '@mui/material';
+import { Box, Stack, Typography, Button, Chip } from '@mui/material';
 import {
   SearchOff as NoSearchIcon,
   ArrowBack as BackIcon,
 } from '@mui/icons-material';
-import { PageHeader } from '../../../components/layout/PageHeader';
 import { ProductCard } from '../components/ProductCard';
 import { ProductFilters, paramsToQuery } from '../components/ProductFilters';
 import { LoadingState } from '../../../components/feedback/LoadingState';
@@ -13,6 +12,14 @@ import { ErrorState } from '../../../components/feedback/ErrorState';
 import { Pagination } from '../../../components/feedback/Pagination';
 import { useGetProductsQuery } from '../productApi';
 
+/**
+ * Search results page.
+ *
+ * Mirrors the storefront's "Featured products" section pattern:
+ *   [results header + back button]
+ *   [horizontal pill filters]
+ *   [4-col product grid + pagination]
+ */
 export const SearchPage = () => {
   const { keyword = '' } = useParams<{ keyword: string }>();
   const navigate = useNavigate();
@@ -31,89 +38,100 @@ export const SearchPage = () => {
   };
 
   return (
-    <Box>
-      <PageHeader
-        title="Search results"
-        icon={<NoSearchIcon />}
-        actions={
-          <Button
-            component={RouterLink}
-            to="/"
-            startIcon={<BackIcon />}
-            variant="outlined"
-            size="small"
-          >
-            Back to home
-          </Button>
-        }
-      />
-
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
-        <Typography variant="body2" color="text.secondary">
-          Results for
-        </Typography>
-        <Chip
-          label={decodeURIComponent(keyword)}
-          color="primary"
+    <Box sx={{ pt: { xs: 2, md: 3.5 } }}>
+      {/* Header */}
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        spacing={2}
+        sx={{ mb: { xs: 3, md: 4 } }}
+      >
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <NoSearchIcon sx={{ color: 'secondary.main', fontSize: 22 }} />
+          <Box>
+            <Box
+              sx={{
+                fontSize: '0.625rem',
+                fontWeight: 700,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'secondary.main',
+                mb: 0.75,
+              }}
+            >
+              Search results
+            </Box>
+            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+              <Chip
+                label={decodeURIComponent(keyword)}
+                color="secondary"
+                sx={{ fontWeight: 600, height: 24 }}
+              />
+              {data && (
+                <Typography variant="body2" color="text.secondary">
+                  · {data.total} {data.total === 1 ? 'result' : 'results'}
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+        </Stack>
+        <Button
+          component={RouterLink}
+          to="/"
+          startIcon={<BackIcon />}
           variant="outlined"
-          sx={{ fontWeight: 600 }}
-        />
-        {data && (
-          <Typography variant="body2" color="text.secondary">
-            · {data.total} {data.total === 1 ? 'result' : 'results'}
-          </Typography>
-        )}
+          size="small"
+          sx={{ borderRadius: 999 }}
+        >
+          Back to home
+        </Button>
       </Stack>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <ProductFilters facets={data?.facets} />
-        </Grid>
+      {/* Pills */}
+      <ProductFilters facets={data?.facets} />
 
-        <Grid size={{ xs: 12, md: 9 }}>
-          {isLoading ? (
-            <LoadingState variant="card" count={6} />
-          ) : isError ? (
-            <ErrorState onRetry={refetch} />
-          ) : !data || data.products.length === 0 ? (
-            <EmptyState
-              title="No matches"
-              description={`We couldn't find anything matching "${decodeURIComponent(
-                keyword,
-              )}". Try different keywords or adjust the filters.`}
-              action={{
-                label: 'Browse all products',
-                onClick: () => navigate('/'),
-              }}
-            />
-          ) : (
-            <>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gap: 2,
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: 'repeat(2, 1fr)',
-                    md: 'repeat(2, 1fr)',
-                    lg: 'repeat(3, 1fr)',
-                  },
-                }}
-              >
-                {data.products.map((p) => (
-                  <ProductCard key={p._id} product={p} />
-                ))}
-              </Box>
-              <Pagination
-                page={page}
-                pages={data.pages}
-                total={data.total}
-                onChange={setPage}
-              />
-            </>
-          )}
-        </Grid>
-      </Grid>
+      {/* Grid */}
+      {isLoading ? (
+        <LoadingState variant="card" count={8} />
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : !data || data.products.length === 0 ? (
+        <EmptyState
+          title="No matches"
+          description={`We couldn't find anything matching "${decodeURIComponent(
+            keyword,
+          )}". Try different keywords or clear the filters.`}
+          action={{
+            label: 'Browse all products',
+            onClick: () => navigate('/'),
+          }}
+        />
+      ) : (
+        <>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: { xs: 2.75, md: 2.25 },
+              gridTemplateColumns: {
+                xs: 'repeat(2, minmax(0, 1fr))',
+                md: 'repeat(3, minmax(0, 1fr))',
+                lg: 'repeat(4, minmax(0, 1fr))',
+              },
+            }}
+          >
+            {data.products.map((p) => (
+              <ProductCard key={p._id} product={p} />
+            ))}
+          </Box>
+          <Pagination
+            page={page}
+            pages={data.pages}
+            total={data.total}
+            onChange={setPage}
+          />
+        </>
+      )}
     </Box>
   );
 };

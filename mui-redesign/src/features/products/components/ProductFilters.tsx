@@ -1,72 +1,49 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  Box,
-  Stack,
-  Typography,
-  Divider,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
-  RadioGroup,
-  Radio,
-  TextField,
-  Slider,
-  Rating,
-  Switch,
-  Button,
-  IconButton,
-  Chip,
-  Tooltip,
-  Collapse,
-} from '@mui/material';
-import {
-  ClearAll as ClearIcon,
-  ExpandMore as ExpandIcon,
-  ExpandLess as CollapseIcon,
-  Tune as TuneIcon,
-} from '@mui/icons-material';
-import { useState } from 'react';
+import { Box, Stack, Button } from '@mui/material';
+import { ClearAll as ClearIcon } from '@mui/icons-material';
 import type { ProductListResponse, SortOption, ProductQueryParams } from '../types';
 import { SORT_LABELS } from '../types';
 
-const ALL = '__all__';
-
 interface Props {
   facets: ProductListResponse['facets'] | undefined;
+  /** Hide the right-aligned "View all" hint when rendered inside narrow pages. */
+  hideSort?: boolean;
 }
 
 /**
- * URL-driven filter sidebar.
- *  - Reads initial state from ?category, ?brand, ?priceMin, ?priceMax, ?minRating, ?inStock, ?sort
+ * URL-driven filter row (horizontal pills), matching `.filter-row`
+ * from the approved HTML prototype.
+ *
+ *  - Reads initial state from URL: ?category, ?brand, ?inStock, ?sort
  *  - Updates URL on every change → shareable links & back-button support
- *  - Parent pages (HomePage/SearchPage) read the same URL via useSearchParams and pass
- *    the resulting ProductQueryParams to useGetProductsQuery
+ *  - Parent pages (HomePage/SearchPage) read the same URL via
+ *    useSearchParams and pass the resulting ProductQueryParams to
+ *    useGetProductsQuery
+ *
+ *  Active pill = ink bg + white text + ink border.
+ *  Inactive pill = transparent bg + sage border + ink text.
+ *
+ *  Falls back to a single "All" pill when no facets are present.
+ *  Never renders hardcoded category or brand lists.
  */
-export const ProductFilters = ({ facets }: Props) => {
+export const ProductFilters = ({ facets, hideSort }: Props) => {
   const [params, setParams] = useSearchParams();
-  const [expanded, setExpanded] = useState(true);
 
-  // --- Read current filter values from URL ---
   const category = params.get('category') ?? '';
-  const brands = (params.get('brand') ?? '').split(',').filter(Boolean);
-  const priceMin = Number(params.get('priceMin') ?? 0);
-  const priceMax = Number(params.get('priceMax') ?? 2000);
-  const minRating = Number(params.get('minRating') ?? 0);
+  const brand = params.get('brand') ?? '';
   const inStock = params.get('inStock') === 'true';
   const sort = (params.get('sort') ?? 'newest') as SortOption;
 
-  // --- URL update helpers ---
   const update = useCallback(
     (patch: Record<string, string | null>) => {
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev);
           Object.entries(patch).forEach(([k, v]) => {
-            if (v === null || v === '' || v === '0') next.delete(k);
+            if (v === null || v === '') next.delete(k);
             else next.set(k, v);
           });
-          // Reset page when filters change
           if (!('pageNumber' in patch)) next.delete('pageNumber');
           return next;
         },
@@ -76,240 +53,160 @@ export const ProductFilters = ({ facets }: Props) => {
     [setParams],
   );
 
-  const setCategory = (v: string) => update({ category: v === ALL ? null : v });
-  const toggleBrand = (b: string) => {
-    const next = brands.includes(b) ? brands.filter((x) => x !== b) : [...brands, b];
-    update({ brand: next.length ? next.join(',') : null });
+  const setCategory = (v: string) => update({ category: v || null });
+  const setBrand = (v: string) => update({ brand: v || null });
+  const setInStock = () => update({ inStock: inStock ? null : 'true' });
+  const setSort = (v: SortOption) =>
+    update({ sort: v === 'newest' ? null : v });
+  const clearAll = () => {
+    const next = new URLSearchParams(params);
+    next.delete('category');
+    next.delete('brand');
+    next.delete('inStock');
+    next.delete('minRating');
+    next.delete('priceMin');
+    next.delete('priceMax');
+    next.set('pageNumber', '1');
+    setParams(next, { replace: true });
   };
-  const setPrice = (lo: number, hi: number) =>
-    update({
-      priceMin: lo > 0 ? String(lo) : null,
-      priceMax: hi < 2000 ? String(hi) : null,
-    });
-  const setMinRating = (v: number | null) =>
-    update({ minRating: v && v > 0 ? String(v) : null });
-  const setInStock = (v: boolean) => update({ inStock: v ? 'true' : null });
-  const setSort = (v: SortOption) => update({ sort: v === 'newest' ? null : v });
-  const resetAll = () => setParams(new URLSearchParams(), { replace: true });
 
   const activeCount =
     (category ? 1 : 0) +
-    brands.length +
-    (priceMin > 0 || priceMax < 2000 ? 1 : 0) +
-    (minRating > 0 ? 1 : 0) +
+    (brand ? 1 : 0) +
     (inStock ? 1 : 0);
+
+  const pillSx = (active: boolean) => ({
+    border: '1px solid',
+    borderColor: active ? 'primary.main' : 'rgba(219, 220, 211, 1)',
+    bgcolor: active ? 'primary.main' : 'transparent',
+    color: active ? 'common.white' : 'text.primary',
+    borderRadius: 999,
+    px: 2,
+    py: 1.125,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    textTransform: 'none',
+    whiteSpace: 'nowrap',
+    transition: 'background-color 200ms ease, border-color 200ms ease, color 200ms ease',
+    '&:hover': {
+      bgcolor: active ? 'primary.main' : 'rgba(32,33,31,0.06)',
+      borderColor: 'primary.main',
+    },
+  });
+
+  const categories = facets?.categories ?? [];
+  const brands = facets?.brands ?? [];
 
   return (
     <Box
       sx={{
-        p: 2,
-        bgcolor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 2,
-        position: { md: 'sticky' },
-        top: { md: 80 },
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        flexWrap: 'wrap',
+        mb: { xs: 3, md: 3.125 },
       }}
     >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <TuneIcon fontSize="small" color="primary" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            Filters
-          </Typography>
-          {activeCount > 0 && (
-            <Chip label={activeCount} size="small" color="primary" />
-          )}
-        </Stack>
-        <Stack direction="row">
-          <Tooltip title={expanded ? 'Collapse' : 'Expand'}>
-            <IconButton size="small" onClick={() => setExpanded((v) => !v)}>
-              {expanded ? <CollapseIcon /> : <ExpandIcon />}
-            </IconButton>
-          </Tooltip>
-          {activeCount > 0 && (
-            <Tooltip title="Clear all">
-              <IconButton size="small" onClick={resetAll}>
-                <ClearIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Stack>
-      </Stack>
-      <Divider sx={{ mb: 1.5 }} />
+      {/* Categories */}
+      <Button
+        onClick={() => setCategory('')}
+        sx={pillSx(!category)}
+        disableRipple
+      >
+        All
+      </Button>
+      {categories.map((c) => (
+        <Button
+          key={c}
+          onClick={() => setCategory(category === c ? '' : c)}
+          sx={pillSx(category === c)}
+          disableRipple
+        >
+          {c}
+        </Button>
+      ))}
 
-      <Collapse in={expanded}>
-        <Stack spacing={2.5}>
-          {/* Sort */}
-          <Box>
-            <Typography variant="overline" color="text.secondary">
-              Sort by
-            </Typography>
-            <TextField
-              select
-              fullWidth
-              size="small"
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortOption)}
-              SelectProps={{ native: true }}
-              sx={{ mt: 0.5 }}
+      {/* Brand segment - inline */}
+      {brands.length > 0 && (
+        <>
+          <Box sx={{ width: 1, height: 24, bgcolor: 'divider', mx: 1 }} />
+          {brands.slice(0, 6).map((b) => (
+            <Button
+              key={b}
+              onClick={() => setBrand(brand === b ? '' : b)}
+              sx={pillSx(brand === b)}
+              disableRipple
             >
-              {(Object.keys(SORT_LABELS) as SortOption[]).map((k) => (
-                <option key={k} value={k}>
-                  {SORT_LABELS[k]}
-                </option>
-              ))}
-            </TextField>
-          </Box>
-
-          <Divider />
-
-          {/* Category */}
-          {facets?.categories && facets.categories.length > 0 && (
-            <Box>
-              <Typography variant="overline" color="text.secondary">
-                Category
-              </Typography>
-              <RadioGroup
-                value={category || ALL}
-                onChange={(e) => setCategory(e.target.value)}
-                sx={{ mt: 0.5 }}
-              >
-                <FormControlLabel value={ALL} control={<Radio size="small" />} label="All" />
-                {facets.categories.map((c) => (
-                  <FormControlLabel
-                    key={c}
-                    value={c}
-                    control={<Radio size="small" />}
-                    label={c}
-                  />
-                ))}
-              </RadioGroup>
-            </Box>
-          )}
-
-          {facets?.categories && facets.categories.length > 0 && (
-            <Divider />
-          )}
-
-          {/* Brand */}
-          {facets?.brands && facets.brands.length > 0 && (
-            <Box>
-              <Typography variant="overline" color="text.secondary">
-                Brand
-              </Typography>
-              <FormGroup sx={{ mt: 0.5, maxHeight: 200, overflowY: 'auto' }}>
-                {facets.brands.map((b) => (
-                  <FormControlLabel
-                    key={b}
-                    control={
-                      <Checkbox
-                        size="small"
-                        checked={brands.includes(b)}
-                        onChange={() => toggleBrand(b)}
-                      />
-                    }
-                    label={b}
-                  />
-                ))}
-              </FormGroup>
-            </Box>
-          )}
-
-          {facets?.brands && facets.brands.length > 0 && <Divider />}
-
-          {/* Price range */}
-          <Box>
-            <Typography variant="overline" color="text.secondary">
-              Price
-            </Typography>
-            <Box sx={{ px: 1, mt: 2 }}>
-              <Slider
-                value={[priceMin, priceMax]}
-                onChange={(_, v) => {
-                  const [lo, hi] = v as number[];
-                  setPrice(lo, hi);
-                }}
-                valueLabelDisplay="auto"
-                valueLabelFormat={(v) => `$${v}`}
-                min={0}
-                max={2000}
-                step={10}
-                marks={[
-                  { value: 0, label: '$0' },
-                  { value: 2000, label: '$2k' },
-                ]}
-              />
-            </Box>
-            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-              <TextField
-                size="small"
-                label="Min"
-                type="number"
-                value={priceMin}
-                onChange={(e) => {
-                  const v = Math.max(0, Number(e.target.value) || 0);
-                  setPrice(Math.min(v, priceMax), priceMax);
-                }}
-                inputProps={{ min: 0 }}
-                sx={{ width: '50%' }}
-              />
-              <TextField
-                size="small"
-                label="Max"
-                type="number"
-                value={priceMax}
-                onChange={(e) => {
-                  const v = Math.min(2000, Number(e.target.value) || 2000);
-                  setPrice(priceMin, v);
-                }}
-                inputProps={{ min: 0 }}
-                sx={{ width: '50%' }}
-              />
-            </Stack>
-          </Box>
-
-          <Divider />
-
-          {/* Min rating */}
-          <Box>
-            <Typography variant="overline" color="text.secondary">
-              Min rating
-            </Typography>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
-              <Rating
-                value={minRating}
-                onChange={(_, v) => setMinRating(v)}
-                precision={0.5}
-              />
-              {minRating > 0 && (
-                <Button size="small" onClick={() => setMinRating(null)}>
-                  Clear
-                </Button>
-              )}
-            </Stack>
-          </Box>
-
-          <Divider />
-
-          {/* In stock */}
-          <FormControlLabel
-            control={
-              <Switch
-                checked={inStock}
-                onChange={(e) => setInStock(e.target.checked)}
-              />
-            }
-            label="In stock only"
-          />
-
-          {activeCount > 0 && (
-            <Button variant="outlined" fullWidth onClick={resetAll} startIcon={<ClearIcon />}>
-              Clear all filters
+              {b}
             </Button>
-          )}
+          ))}
+        </>
+      )}
+
+      {/* In-stock toggle */}
+      <Box sx={{ width: 1, height: 24, bgcolor: 'divider', mx: 1 }} />
+      <Button
+        onClick={setInStock}
+        sx={pillSx(inStock)}
+        disableRipple
+      >
+        In stock
+      </Button>
+
+      <Box sx={{ flexGrow: 1 }} />
+
+      {/* Sort dropdown */}
+      {!hideSort && (
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Box component="span" sx={{ fontSize: 10, color: 'text.secondary', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Sort
+          </Box>
+          <Box
+            component="select"
+            value={sort}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSort(e.target.value as SortOption)}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 999,
+              bgcolor: 'background.paper',
+              px: 1.5,
+              py: 0.875,
+              fontSize: 11,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              color: 'text.primary',
+              cursor: 'pointer',
+              outline: 'none',
+              '&:focus': { borderColor: 'primary.main' },
+            }}
+          >
+            {(Object.keys(SORT_LABELS) as SortOption[]).map((k) => (
+              <option key={k} value={k}>
+                {SORT_LABELS[k]}
+              </option>
+            ))}
+          </Box>
         </Stack>
-      </Collapse>
+      )}
+
+      {/* Clear */}
+      {activeCount > 0 && (
+        <Button
+          startIcon={<ClearIcon sx={{ fontSize: 14 }} />}
+          onClick={clearAll}
+          sx={{
+            ...pillSx(false),
+            color: 'secondary.main',
+            borderColor: 'secondary.main',
+            '&:hover': { bgcolor: 'rgba(217,93,57,0.08)' },
+          }}
+          disableRipple
+        >
+          Clear
+        </Button>
+      )}
     </Box>
   );
 };

@@ -5,7 +5,6 @@ import {
   Typography,
   Breadcrumbs,
   Link as MuiLink,
-  Avatar,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { NavigateNext as ChevronIcon } from '@mui/icons-material';
@@ -20,12 +19,33 @@ export interface Props {
   subtitle?: string;
   breadcrumbs?: Crumb[];
   actions?: ReactNode;
-  /** Optional icon shown next to the title */
+  /**
+   * Optional icon. Only renders as a small accent to the LEFT of the
+   * title (no boxed avatar - too admin-template-y).
+   */
   icon?: ReactNode;
+  /** Bottom margin override */
+  mb?: number;
 }
 
-export const PageHeader = ({ title, subtitle, breadcrumbs, actions, icon }: Props) => (
-  <Box sx={{ mb: 4 }}>
+/**
+ * Editorial-style page header.
+ *
+ *  - Title uses a fluid size (clamp) so it never wraps awkwardly on
+ *    narrow columns.
+ *  - Optional icon is a flat 28x28 accent, NOT a colored avatar box.
+ *  - Action buttons wrap to a second line on narrow viewports instead
+ *    of squeezing the title.
+ */
+export const PageHeader = ({
+  title,
+  subtitle,
+  breadcrumbs,
+  actions,
+  icon,
+  mb = 4,
+}: Props) => (
+  <Box sx={{ mb }}>
     {breadcrumbs && breadcrumbs.length > 0 && (
       <Breadcrumbs
         separator={<ChevronIcon fontSize="small" sx={{ color: 'text.disabled' }} />}
@@ -63,32 +83,62 @@ export const PageHeader = ({ title, subtitle, breadcrumbs, actions, icon }: Prop
       alignItems={{ xs: 'flex-start', md: 'center' }}
       spacing={2}
     >
-      <Stack direction="row" alignItems="center" spacing={2}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1.5}
+        sx={{ minWidth: 0, flex: 1 }}
+      >
         {icon && (
-          <Avatar
+          <Box
             sx={{
-              width: 48,
-              height: 48,
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
+              width: 32,
+              height: 32,
+              display: 'grid',
+              placeItems: 'center',
+              color: 'secondary.main',
+              flexShrink: 0,
+              '& svg': { fontSize: 24 },
             }}
           >
             {icon}
-          </Avatar>
+          </Box>
         )}
-        <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{
+              fontWeight: 700,
+              fontSize: 'clamp(1.5rem, 2.4vw, 2rem)',
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+            }}
+          >
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ mt: 0.5, fontSize: '0.95rem' }}
+            >
               {subtitle}
             </Typography>
           )}
         </Box>
       </Stack>
       {actions && (
-        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>{actions}</Box>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            flexShrink: 0,
+            flexWrap: 'wrap',
+          }}
+        >
+          {actions}
+        </Box>
       )}
     </Stack>
   </Box>

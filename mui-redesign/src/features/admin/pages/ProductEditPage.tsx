@@ -5,34 +5,34 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Box,
-  Card,
-  CardContent,
   Stack,
   TextField,
   Button,
-  Grid2 as Grid,
   Typography,
   Alert,
   CircularProgress,
   Divider,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
-import {
-  ArrowBack as BackIcon,
-  CloudUpload as UploadIcon,
-  Inventory2 as ProductsIcon,
-} from '@mui/icons-material';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { PageContainer } from '../../../components/layout/PageContainer';
-import { AdminSubNav } from '../components/AdminSubNav';
+import { CloudUpload as UploadIcon, Image as ImageIcon } from '@mui/icons-material';
 import { ProductImage } from '../../products/components/ProductImage';
 import { LoadingState } from '../../../components/feedback/LoadingState';
+import { useToast } from '../../../hooks/useToast';
 import {
   useCreateProductMutation,
   useUpdateProductMutation,
   useUploadImageMutation,
 } from '../adminApi';
-import { useGetProductByIdQuery } from '../../products/productApi';
-import { useToast } from '../../../hooks/useToast';
+import { useGetProductByIdQuery, useGetProductsQuery } from '../../products/productApi';
+import {
+  adminH1Sx,
+  adminPanelSx,
+  adminSubtitleSx,
+  adminTitleRowSx,
+} from '../components/adminStyles';
 
 const productSchema = z.object({
   name: z.string().min(2, 'Name is required').max(200),
@@ -45,6 +45,81 @@ const productSchema = z.object({
 });
 type ProductFormValues = z.infer<typeof productSchema>;
 
+/* ─── shared style tokens (admin edit pages) ─────────────────────── */
+
+const fieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    fontSize: 13,
+    bgcolor: '#fff',
+  },
+  '& .MuiOutlinedInput-input': {
+    py: 1.375,
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: 11,
+    fontWeight: 600,
+  },
+  '& .MuiFormHelperText-root': {
+    fontSize: 10,
+    mx: 0,
+    mt: 0.5,
+  },
+};
+
+const selectSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    fontSize: 13,
+    bgcolor: '#fff',
+  },
+  '& .MuiSelect-select': {
+    py: 1.375,
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: 11,
+    fontWeight: 600,
+  },
+};
+
+const overlineSx = {
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
+  color: '#818999',
+  mb: 1.5,
+};
+
+const primaryBtnSx = {
+  bgcolor: '#e65f3b',
+  '&:hover': { bgcolor: '#d55634' },
+  borderRadius: '8px',
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: 'none' as const,
+  px: 2,
+  py: 1.125,
+  color: '#fff',
+  whiteSpace: 'nowrap' as const,
+};
+
+const secondaryBtnSx = {
+  border: '1px solid #e1e5eb',
+  bgcolor: '#fff',
+  color: '#303747',
+  '&:hover': { bgcolor: '#f7f7f9' },
+  borderRadius: '8px',
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: 'none' as const,
+  px: 2,
+  py: 1.125,
+  whiteSpace: 'nowrap' as const,
+};
+
+/* ─── page ──────────────────────────────────────────────────────── */
+
 export const ProductEditPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -54,6 +129,9 @@ export const ProductEditPage = () => {
   const { data: existing, isLoading: loadingProduct } = useGetProductByIdQuery(id ?? '', {
     skip: !isEdit,
   });
+  // Get category list from the products endpoint
+  const { data: productsData } = useGetProductsQuery(undefined);
+  const categories = productsData?.facets?.categories ?? [];
   const [createProduct, { isLoading: creating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: updating }] = useUpdateProductMutation();
   const [uploadImage, { isLoading: uploading }] = useUploadImageMutation();
@@ -94,6 +172,7 @@ export const ProductEditPage = () => {
   }, [existing, reset]);
 
   const imageUrl = watch('image');
+  const categoryValue = watch('category');
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,166 +205,262 @@ export const ProductEditPage = () => {
     }
   };
 
+  const isSaving = creating || updating;
+
   if (isEdit && loadingProduct) return <LoadingState variant="detail" />;
 
   return (
-    <PageContainer>
-      <Button
-        component={RouterLink}
-        to="/admin/products"
-        startIcon={<BackIcon />}
-        size="small"
-        sx={{ mb: 2 }}
-      >
-        Back to products
-      </Button>
-
-      <PageHeader
-        title={isEdit ? 'Edit product' : 'New product'}
-        subtitle={isEdit ? `ID: ${id}` : 'Add a product to your catalog'}
-        icon={<ProductsIcon />}
-      />
-
-      <AdminSubNav />
-
-      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-        <Grid container spacing={3}>
-          {/* Image upload */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-                  Product image
-                </Typography>
-                <Box sx={{ aspectRatio: '1 / 1', borderRadius: 2, overflow: 'hidden' }}>
-                  <ProductImage src={imageUrl} alt={watch('name') || 'Product'} />
-                </Box>
-                <Stack spacing={1.5} sx={{ mt: 2 }}>
-                  <Button
-                    component="label"
-                    variant="outlined"
-                    startIcon={uploading ? <CircularProgress size={16} /> : <UploadIcon />}
-                    disabled={uploading}
-                    fullWidth
-                  >
-                    {uploading ? 'Uploading…' : 'Upload new image'}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      hidden
-                      onChange={handleImageUpload}
-                    />
-                  </Button>
-                  <TextField
-                    {...register('image')}
-                    label="Or paste image path/URL"
-                    size="small"
-                    fullWidth
-                    error={!!errors.image}
-                    helperText={errors.image?.message ?? 'e.g. /uploads/image-1234.jpg'}
-                  />
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Form fields */}
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-                  Product details
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12 }}>
-                    <TextField
-                      {...register('name')}
-                      label="Product name"
-                      fullWidth
-                      error={!!errors.name}
-                      helperText={errors.name?.message}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('brand')}
-                      label="Brand"
-                      fullWidth
-                      error={!!errors.brand}
-                      helperText={errors.brand?.message}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('category')}
-                      label="Category"
-                      fullWidth
-                      error={!!errors.category}
-                      helperText={errors.category?.message}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('price')}
-                      label="Price (USD)"
-                      type="number"
-                      fullWidth
-                      inputProps={{ step: '0.01', min: 0 }}
-                      error={!!errors.price}
-                      helperText={errors.price?.message}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('countInStock')}
-                      label="Stock quantity"
-                      type="number"
-                      fullWidth
-                      inputProps={{ step: '1', min: 0 }}
-                      error={!!errors.countInStock}
-                      helperText={errors.countInStock?.message}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <TextField
-                      {...register('description')}
-                      label="Description"
-                      multiline
-                      minRows={5}
-                      fullWidth
-                      error={!!errors.description}
-                      helperText={errors.description?.message}
-                    />
-                  </Grid>
-                </Grid>
-
-                <Divider sx={{ my: 3 }} />
-
-                {errors.image && (
-                  <Alert severity="error" sx={{ mb: 2 }}>
-                    {errors.image.message}
-                  </Alert>
-                )}
-
-                <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-                  <Button onClick={() => navigate('/admin/products')} disabled={creating || updating}>
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    disabled={creating || updating}
-                    startIcon={creating || updating ? <CircularProgress size={16} color="inherit" /> : null}
-                  >
-                    {isEdit ? 'Save changes' : 'Create product'}
-                  </Button>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+    <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+      {/* Title row */}
+      <Box sx={adminTitleRowSx}>
+        <Box>
+          <Typography component="h1" sx={adminH1Sx}>
+            {isEdit ? 'Edit product' : 'New product'}
+          </Typography>
+          <Typography sx={adminSubtitleSx}>
+            {isEdit
+              ? `ID: ${id} · Update catalog details and stock.`
+              : 'Add a new product to your catalog.'}
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <Button
+            component={RouterLink}
+            to="/admin/products"
+            variant="outlined"
+            sx={secondaryBtnSx}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSaving}
+            startIcon={isSaving ? <CircularProgress size={14} color="inherit" /> : null}
+            sx={primaryBtnSx}
+          >
+            {isEdit ? 'Save changes' : 'Create product'}
+          </Button>
+        </Stack>
       </Box>
-    </PageContainer>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 8fr) minmax(0, 4fr)' },
+          gap: 2.125,
+        }}
+      >
+        {/* LEFT — form fields */}
+        <Box sx={{ ...adminPanelSx, p: 0 }}>
+          <Box sx={{ p: 2.5 }}>
+            <Typography sx={overlineSx}>Product details</Typography>
+            <Stack spacing={2}>
+              <TextField
+                {...register('name')}
+                label="Product name"
+                fullWidth
+                error={!!errors.name}
+                helperText={errors.name?.message}
+                sx={fieldSx}
+              />
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: 1.5,
+                }}
+              >
+                <TextField
+                  {...register('brand')}
+                  label="Brand"
+                  fullWidth
+                  error={!!errors.brand}
+                  helperText={errors.brand?.message}
+                  sx={fieldSx}
+                />
+                <FormControl fullWidth error={!!errors.category} sx={selectSx}>
+                  <InputLabel id="category-label">Category</InputLabel>
+                  <Select
+                    {...register('category')}
+                    labelId="category-label"
+                    label="Category"
+                    value={categoryValue ?? ''}
+                  >
+                    <MenuItem value="" disabled>
+                      <em>Select a category</em>
+                    </MenuItem>
+                    {categories.map((c) => (
+                      <MenuItem key={c} value={c}>
+                        {c}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.category && (
+                    <Typography
+                      sx={{
+                        fontSize: 10,
+                        color: 'error.main',
+                        mt: 0.5,
+                      }}
+                    >
+                      {errors.category.message}
+                    </Typography>
+                  )}
+                </FormControl>
+              </Box>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: 1.5,
+                }}
+              >
+                <TextField
+                  {...register('price')}
+                  label="Price (USD)"
+                  type="number"
+                  fullWidth
+                  inputProps={{ step: '0.01', min: 0 }}
+                  error={!!errors.price}
+                  helperText={errors.price?.message}
+                  sx={fieldSx}
+                />
+                <TextField
+                  {...register('countInStock')}
+                  label="Stock quantity"
+                  type="number"
+                  fullWidth
+                  inputProps={{ step: '1', min: 0 }}
+                  error={!!errors.countInStock}
+                  helperText={errors.countInStock?.message}
+                  sx={fieldSx}
+                />
+              </Box>
+              <TextField
+                {...register('description')}
+                label="Description"
+                multiline
+                minRows={5}
+                fullWidth
+                error={!!errors.description}
+                helperText={errors.description?.message}
+                sx={fieldSx}
+              />
+            </Stack>
+          </Box>
+
+          <Divider />
+
+          <Box sx={{ p: 2.5 }}>
+            {errors.image && (
+              <Alert severity="error" sx={{ mb: 2, borderRadius: 2, fontSize: 12 }}>
+                {errors.image.message}
+              </Alert>
+            )}
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Button
+                onClick={() => navigate('/admin/products')}
+                disabled={isSaving}
+                sx={secondaryBtnSx}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isSaving}
+                startIcon={isSaving ? <CircularProgress size={14} color="inherit" /> : null}
+                sx={primaryBtnSx}
+              >
+                {isEdit ? 'Save changes' : 'Create product'}
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
+
+        {/* RIGHT — image upload meta panel */}
+        <Stack spacing={2.125}>
+          <Box sx={adminPanelSx}>
+            <Typography sx={overlineSx}>Image</Typography>
+            <Box
+              sx={{
+                aspectRatio: '1 / 1',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                bgcolor: '#f4f4ef',
+                border: '1px solid #e9ecf1',
+              }}
+            >
+              {imageUrl ? (
+                <ProductImage src={imageUrl} alt={watch('name') || 'Product'} />
+              ) : (
+                <Box
+                  sx={{
+                    height: '100%',
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: 'text.disabled',
+                  }}
+                >
+                  <ImageIcon sx={{ fontSize: 48 }} />
+                </Box>
+              )}
+            </Box>
+            <Button
+              component="label"
+              variant="outlined"
+              fullWidth
+              startIcon={uploading ? <CircularProgress size={14} /> : <UploadIcon sx={{ fontSize: 14 }} />}
+              disabled={uploading}
+              sx={{
+                ...secondaryBtnSx,
+                mt: 2,
+                justifyContent: 'center',
+              }}
+            >
+              {uploading ? 'Uploading…' : 'Upload new image'}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={handleImageUpload}
+              />
+            </Button>
+            <TextField
+              {...register('image')}
+              label="Or paste image path/URL"
+              size="small"
+              fullWidth
+              error={!!errors.image}
+              helperText={errors.image?.message ?? 'e.g. /uploads/image-1234.jpg'}
+              sx={{ ...fieldSx, mt: 1.5 }}
+            />
+          </Box>
+
+          <Box sx={adminPanelSx}>
+            <Typography sx={overlineSx}>Status</Typography>
+            <Stack spacing={1.25}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography sx={{ fontSize: 11, color: '#5e6057' }}>Stock</Typography>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#242b39' }}>
+                  {watch('countInStock') ?? 0} units
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography sx={{ fontSize: 11, color: '#5e6057' }}>Price</Typography>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#242b39' }}>
+                  ${Number(watch('price') ?? 0).toFixed(2)}
+                </Typography>
+              </Box>
+              <Divider />
+              <Typography sx={{ fontSize: 10, color: '#818999' }}>
+                Save to apply changes to your store.
+              </Typography>
+            </Stack>
+          </Box>
+        </Stack>
+      </Box>
+    </Box>
   );
 };

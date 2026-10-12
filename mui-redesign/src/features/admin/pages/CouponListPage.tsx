@@ -1,40 +1,60 @@
 import { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
+  Stack,
   Button,
-  Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  DataGrid,
-  type GridColDef,
-  GridActionsCellItem,
-} from '@mui/x-data-grid';
-import {
-  LocalOffer as CouponsIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { PageContainer } from '../../../components/layout/PageContainer';
-import { AdminSubNav } from '../components/AdminSubNav';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Add as AddIcon } from '@mui/icons-material';
 import {
   useGetAllCouponsQuery,
   useDeleteCouponMutation,
 } from '../adminApi';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { StatusPill } from '../../../components/feedback/StatusPill';
+import { LoadingState } from '../../../components/feedback/LoadingState';
 import { useToast } from '../../../hooks/useToast';
-import { ActiveChip, InactiveChip } from '../../../components/feedback';
+import {
+  adminEmptyDescSx,
+  adminEmptySx,
+  adminEmptyTitleSx,
+  adminH1Sx,
+  adminLinkSx,
+  adminPanelDescSx,
+  adminPanelH2Sx,
+  adminPanelHeadSx,
+  adminPanelSx,
+  adminSubtitleSx,
+  adminTableSx,
+  adminTdFirstSx,
+  adminTdSx,
+  adminThSx,
+  adminTitleRowSx,
+} from '../components/adminStyles';
+import type { PillTone } from '../../../components/feedback/StatusPill';
+import type { Coupon } from '../types';
 
+const couponPill = (c: Coupon): { label: string; tone: PillTone } => {
+  if (c.expiresAt && new Date(c.expiresAt) < new Date()) {
+    return { label: 'Expired', tone: 'error' };
+  }
+  return c.isActive
+    ? { label: 'Active', tone: 'success' }
+    : { label: 'Inactive', tone: 'neutral' };
+};
 
 export const CouponListPage = () => {
-  const navigate = useNavigate();
   const toast = useToast();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const { data: coupons, isLoading } = useGetAllCouponsQuery();
   const [deleteCoupon, { isLoading: deleting }] = useDeleteCouponMutation();
+
+  if (isLoading) {
+    return <LoadingState variant="card" count={2} />;
+  }
+
+  const all = coupons ?? [];
 
   const handleDelete = async (id: string) => {
     try {
@@ -47,137 +67,151 @@ export const CouponListPage = () => {
     }
   };
 
-  const columns: GridColDef[] = [
-    {
-      field: 'code',
-      headerName: 'Code',
-      width: 160,
-      renderCell: ({ value }: any) => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 700, letterSpacing: 1 }}>
-          {value}
-        </Typography>
-      ),
-    },
-    {
-      field: 'description',
-      headerName: 'Description',
-      flex: 1,
-      minWidth: 220,
-      renderCell: ({ value }: any) => (
-        <Typography variant="body2" color="text.secondary">
-          {value || '—'}
-        </Typography>
-      ),
-    },
-    {
-      field: 'type',
-      headerName: 'Type',
-      width: 120,
-      renderCell: ({ row }: any) =>
-        row.type === 'percentage' ? `${row.value}% off` : `$${row.value} off`,
-    },
-    {
-      field: 'minOrderAmount',
-      headerName: 'Min order',
-      width: 110,
-      renderCell: ({ value }: any) => (value ? `$${value}` : '—'),
-    },
-    {
-      field: 'usageCount',
-      headerName: 'Usage',
-      width: 110,
-      renderCell: ({ row }: any) =>
-        row.usageLimit
-          ? `${row.usageCount} / ${row.usageLimit}`
-          : `${row.usageCount} / ∞`,
-    },
-    {
-      field: 'isActive',
-      headerName: 'Status',
-      width: 120,
-      renderCell: ({ value, row }: any) => {
-        const expired = row.expiresAt && new Date(row.expiresAt) < new Date();
-        if (expired) return <InactiveChip label="Expired" status="error" />;
-        return value ? <ActiveChip /> : <InactiveChip />;
-      },
-    },
-    {
-      field: '_id',
-      headerName: 'Actions',
-      type: 'actions',
-      width: 100,
-      getActions: ({ row }) => [
-        <GridActionsCellItem
-          key="edit"
-          icon={
-            <Tooltip title="Edit coupon">
-              <EditIcon />
-            </Tooltip>
-          }
-          label="Edit"
-          onClick={() => navigate(`/admin/coupons/${row._id}/edit`)}
-          sx={{ color: 'primary.main' }}
-        />,
-        <GridActionsCellItem
-          key="delete"
-          icon={
-            <Tooltip title="Delete coupon">
-              <DeleteIcon />
-            </Tooltip>
-          }
-          label="Delete"
-          onClick={() => setConfirmDelete(row._id)}
-          sx={{ color: 'error.main' }}
-        />,
-      ],
-    },
-  ];
-
   return (
-    <PageContainer>
-      <PageHeader
-        title="Coupons"
-        subtitle={`${coupons?.length ?? 0} active coupons`}
-        icon={<CouponsIcon />}
-        actions={
-          <Button
-            component={RouterLink}
-            to="/admin/coupons/new"
-            variant="contained"
-            startIcon={<AddIcon />}
-          >
-            Create coupon
-          </Button>
-        }
-      />
-
-      <AdminSubNav />
-
-      <Box sx={{ height: 620, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-        <DataGrid
-          rows={coupons ?? []}
-          columns={columns}
-          getRowId={(r) => r._id}
-          loading={isLoading}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          disableRowSelectionOnClick
+    <>
+      <Box sx={adminTitleRowSx}>
+        <Box>
+          <Typography component="h1" sx={adminH1Sx}>
+            Coupons
+          </Typography>
+          <Typography sx={adminSubtitleSx}>
+            Manage discount codes and promotional campaigns.
+          </Typography>
+        </Box>
+        <Button
+          component={RouterLink}
+          to="/admin/coupons/new"
+          variant="contained"
+          startIcon={<AddIcon sx={{ fontSize: 14 }} />}
           sx={{
-            border: 0,
-            '& .MuiDataGrid-cell:focus': { outline: 'none' },
+            bgcolor: '#e65f3b',
+            '&:hover': { bgcolor: '#d55634' },
+            borderRadius: '8px',
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: 'none',
+            px: 1.625,
+            py: 1.125,
+            whiteSpace: 'nowrap',
+            color: '#fff',
           }}
-        />
+        >
+          + Create coupon
+        </Button>
+      </Box>
+
+      <Box sx={adminPanelSx}>
+        <Box sx={adminPanelHeadSx}>
+          <Box>
+            <Typography component="h2" sx={adminPanelH2Sx}>
+              All coupons
+            </Typography>
+            <Typography sx={adminPanelDescSx}>
+              Active and inactive discount codes
+            </Typography>
+          </Box>
+        </Box>
+
+        {all.length === 0 ? (
+          <Box sx={adminEmptySx}>
+            <Typography sx={adminEmptyTitleSx}>No coupons yet</Typography>
+            <Typography sx={adminEmptyDescSx}>
+              Create your first coupon to offer discounts at checkout.
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ overflowX: 'auto' }}>
+            <Box component="table" sx={adminTableSx}>
+              <Box component="thead">
+                <Box component="tr">
+                  {['Code', 'Description', 'Type', 'Min order', 'Usage', 'Status', 'Action'].map(
+                    (h) => (
+                      <Box component="th" key={h} sx={adminThSx}>
+                        {h}
+                      </Box>
+                    ),
+                  )}
+                </Box>
+              </Box>
+              <Box component="tbody">
+                {all.map((c) => {
+                  const pill = couponPill(c);
+                  return (
+                    <Box component="tr" key={c._id}>
+                      <Box component="td" sx={adminTdFirstSx}>
+                        <Typography
+                          component="strong"
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontWeight: 700,
+                            letterSpacing: 1,
+                            fontSize: 10,
+                          }}
+                        >
+                          {c.code}
+                        </Typography>
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {c.description || '—'}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {c.type === 'percentage' ? `${c.value}% off` : `$${c.value} off`}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {c.minOrderAmount ? `$${c.minOrderAmount}` : '—'}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {c.usageLimit
+                          ? `${c.usageCount} / ${c.usageLimit}`
+                          : `${c.usageCount} / ∞`}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        <StatusPill label={pill.label} tone={pill.tone} />
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Box
+                            component={RouterLink}
+                            to={`/admin/coupons/${c._id}/edit`}
+                            sx={adminLinkSx}
+                          >
+                            Edit
+                          </Box>
+                          <Box
+                            component="button"
+                            onClick={() => setConfirmDelete(c._id)}
+                            sx={{
+                              ...adminLinkSx,
+                              color: '#c84c4c',
+                              border: 0,
+                              background: 'none',
+                              padding: 0,
+                              font: 'inherit',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Delete
+                          </Box>
+                        </Stack>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          </Box>
+        )}
       </Box>
 
       <ConfirmDialog
         open={!!confirmDelete}
         title="Delete coupon?"
-        message="This coupon will be permanently removed. Users who have already used it will keep their discount."
+        message="This coupon will be permanently removed. Users who have already used it keep their discount."
         confirmLabel="Delete"
         loading={deleting}
         onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
         onCancel={() => setConfirmDelete(null)}
       />
-    </PageContainer>
+    </>
   );
 };

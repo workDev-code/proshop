@@ -1,131 +1,358 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
   CardContent,
-  Tabs,
-  Tab,
   Typography,
   TextField,
   Button,
   Stack,
-  Grid2 as Grid,
   CircularProgress,
   Avatar,
   Divider,
   Chip,
 } from '@mui/material';
 import {
-  Person as PersonIcon,
   Receipt as OrdersIcon,
-  AdminPanelSettings as AdminIcon,
+  FavoriteBorder as WishlistIcon,
+  Logout as LogoutIcon,
   ArrowForward as ArrowIcon,
+  Lock as LockIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { PageHeader } from '../../../components/layout/PageHeader';
 import { profileSchema, type ProfileFormValues } from '../schemas';
 import { useCurrentUser } from '../../auth/hooks';
-import { useGetMyOrdersQuery } from '../../orders/orderApi';
-import { useUpdateProfileMutation } from '../../auth/authApi';
+import { useUpdateProfileMutation, useLogoutMutation } from '../../auth/authApi';
 import { useToast } from '../../../hooks/useToast';
-import { PriceDisplay } from '../../products/components/PriceDisplay';
-import { EmptyState } from '../../../components/feedback/EmptyState';
-import { LoadingState } from '../../../components/feedback/LoadingState';
-import { fmtDate } from '../../../utils/fmt';
 
+const fieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: 999,
+    fontSize: 14,
+    bgcolor: 'background.paper',
+  },
+  '& .MuiOutlinedInput-input': {
+    py: 1.5,
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: 13,
+  },
+};
 
+const fieldErrorSx = {
+  '& .MuiOutlinedInput-root.Mui-error': { borderColor: 'error.main' },
+  '& .MuiFormHelperText-root.Mui-error': { ml: 2, fontSize: 11 },
+};
 
+/**
+ * Profile / account page.
+ *
+ * Layout (matches editorial 2-col pattern):
+ *   [editorial header — kicker "Account" + h1 "Your profile"]
+ *   [LEFT card — profile form (name, email, password, confirm)]
+ *   [RIGHT card — quick links (orders, wishlist, sign out)]
+ */
 export const ProfilePage = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const { user } = useCurrentUser();
-  const [tab, setTab] = useState(0);
+  const [logout] = useLogoutMutation();
 
   if (!user) return null;
 
+  const initials = user.name
+    .trim()
+    .split(/\s+/)
+    .map((p) => p[0] ?? '')
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      toast.info('Signed out');
+      navigate('/login', { replace: true });
+    } catch {
+      // server may not be reachable; navigate anyway
+      toast.info('Signed out');
+      navigate('/login', { replace: true });
+    }
+  };
+
   return (
-    <Box>
-      <PageHeader
-        title="My Profile"
-        subtitle="Manage your account and view your order history"
-        icon={<PersonIcon />}
-      />
-
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Avatar
-              sx={{
-                width: 72,
-                height: 72,
-                bgcolor: 'primary.main',
-                fontSize: 28,
-                fontWeight: 700,
-              }}
-            >
-              {user.name
-                .trim()
-                .split(/\s+/)
-                .map((p) => p[0] ?? '')
-                .slice(0, 2)
-                .join('')
-                .toUpperCase()}
-            </Avatar>
-            <Box sx={{ flex: 1 }}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  {user.name}
-                </Typography>
-                {user.isAdmin && (
-                  <Chip
-                    label="Admin"
-                    color="primary"
-                    size="small"
-                    icon={<AdminIcon />}
-                    sx={{ fontWeight: 600 }}
-                  />
-                )}
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                {user.email}
-              </Typography>
-            </Box>
-          </Stack>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <Tabs
-          value={tab}
-          onChange={(_, v) => setTab(v)}
-          sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+    <Box sx={{ pt: { xs: 2, md: 3.5 } }}>
+      {/* Editorial header */}
+      <Box sx={{ mb: { xs: 3, md: 4.5 } }}>
+        <Box
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1.25,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: 'secondary.main',
+            mb: 1.25,
+          }}
         >
-          <Tab icon={<PersonIcon />} iconPosition="start" label="Profile" />
-          <Tab icon={<OrdersIcon />} iconPosition="start" label="Orders" />
-        </Tabs>
+          <Box sx={{ width: 24, height: 1, bgcolor: 'currentColor' }} />
+          Account
+        </Box>
+        <Typography
+          component="h1"
+          sx={{
+            fontFamily: '"Manrope", sans-serif',
+            fontWeight: 800,
+            fontSize: 'clamp(1.75rem, 3vw, 2.375rem)',
+            lineHeight: 1.1,
+            letterSpacing: '-0.04em',
+            color: 'text.primary',
+            m: 0,
+          }}
+        >
+          Your profile
+        </Typography>
+        <Typography sx={{ mt: 1.25, fontSize: 13, color: 'text.secondary' }}>
+          {user.email}
+        </Typography>
+      </Box>
 
-        <CardContent>
-          {tab === 0 && <ProfileTab userId={user._id} name={user.name} email={user.email} onSaved={() => toast.success('Profile updated')} />}
-          {tab === 1 && <OrdersTab />}
-        </CardContent>
-      </Card>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.6fr) minmax(0, 1fr)' },
+          gap: { xs: 2.5, md: 3 },
+          alignItems: 'flex-start',
+        }}
+      >
+        {/* LEFT — profile form */}
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: '1px solid rgba(32,33,31,0.08)',
+            boxShadow: 'none',
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+            <ProfileForm
+              name={user.name}
+              email={user.email}
+              onSaved={() => toast.success('Profile updated')}
+              onError={(m) => toast.error(m)}
+            />
+          </CardContent>
+        </Card>
+
+        {/* RIGHT — side panel */}
+        <Stack spacing={2.5}>
+          {/* Account summary */}
+          <Card
+            sx={{
+              borderRadius: 3,
+              border: '1px solid rgba(32,33,31,0.08)',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Avatar
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    bgcolor: 'secondary.main',
+                    color: 'common.white',
+                    fontSize: 20,
+                    fontWeight: 700,
+                  }}
+                >
+                  {initials || '?'}
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 15,
+                        color: 'text.primary',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {user.name}
+                    </Typography>
+                    {user.isAdmin && (
+                      <Chip
+                        icon={<AdminIcon sx={{ fontSize: 12 }} />}
+                        label="Admin"
+                        size="small"
+                        sx={{
+                          bgcolor: 'secondary.main',
+                          color: 'common.white',
+                          fontSize: 9,
+                          fontWeight: 700,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          height: 20,
+                          '& .MuiChip-icon': { color: 'common.white' },
+                        }}
+                      />
+                    )}
+                  </Stack>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: 12,
+                      mt: 0.25,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {user.email}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* Quick links */}
+          <Card
+            sx={{
+              borderRadius: 3,
+              border: '1px solid rgba(32,33,31,0.08)',
+              boxShadow: 'none',
+            }}
+          >
+            <CardContent sx={{ p: { xs: 1, sm: 1.5 } }}>
+              <Box
+                sx={{
+                  px: 2,
+                  pt: 1.5,
+                  pb: 0.5,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                }}
+              >
+                Quick links
+              </Box>
+              <QuickLink
+                to="/orders"
+                icon={<OrdersIcon sx={{ fontSize: 18 }} />}
+                label="My orders"
+                hint="Track and view all purchases"
+              />
+              <QuickLink
+                to="/wishlist"
+                icon={<WishlistIcon sx={{ fontSize: 18 }} />}
+                label="Wishlist"
+                hint="Items you've saved for later"
+              />
+              <Divider sx={{ my: 0.5 }} />
+              <Box
+                component="button"
+                type="button"
+                onClick={handleLogout}
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: 2,
+                  border: 'none',
+                  bgcolor: 'transparent',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  color: 'text.secondary',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  transition: 'background-color 160ms ease, color 160ms ease',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                    color: 'error.main',
+                  },
+                }}
+              >
+                <LogoutIcon sx={{ fontSize: 18 }} />
+                Sign out
+              </Box>
+            </CardContent>
+          </Card>
+        </Stack>
+      </Box>
     </Box>
   );
 };
 
-const ProfileTab = ({
-  userId: _userId,
-  name,
-  email,
-  onSaved,
+const QuickLink = ({
+  to,
+  icon,
+  label,
+  hint,
 }: {
-  userId: string;
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+}) => (
+  <Box
+    component={RouterLink}
+    to={to}
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1.5,
+      px: 2,
+      py: 1.5,
+      borderRadius: 2,
+      textDecoration: 'none',
+      color: 'text.primary',
+      transition: 'background-color 160ms ease',
+      '&:hover': { bgcolor: 'action.hover' },
+    }}
+  >
+    <Box
+      sx={{
+        width: 34,
+        height: 34,
+        borderRadius: '50%',
+        border: '1px solid',
+        borderColor: 'divider',
+        display: 'grid',
+        placeItems: 'center',
+        color: 'secondary.main',
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+    </Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.25 }}>
+        {hint}
+      </Typography>
+    </Box>
+    <ArrowIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+  </Box>
+);
+
+interface ProfileFormProps {
   name: string;
   email: string;
   onSaved: () => void;
-}) => {
-  const toast = useToast();
+  onError: (msg: string) => void;
+}
+
+const ProfileForm = ({ name, email, onSaved, onError }: ProfileFormProps) => {
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
 
   const { register, handleSubmit, formState, reset } = useForm<ProfileFormValues>({
@@ -147,159 +374,112 @@ const ProfileTab = ({
       onSaved();
     } catch (err) {
       const e = err as { data?: { message?: string } };
-      toast.error(e.data?.message ?? 'Failed to update profile');
+      onError(e.data?.message ?? 'Failed to update profile');
     }
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
-        Edit profile
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            {...register('name')}
-            label="Full name"
-            fullWidth
-            error={!!formState.errors.name}
-            helperText={formState.errors.name?.message}
-            disabled={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            {...register('email')}
-            label="Email"
-            type="email"
-            fullWidth
-            error={!!formState.errors.email}
-            helperText={formState.errors.email?.message}
-            disabled={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <Divider sx={{ my: 1 }}>
-            <Chip label="Change password (optional)" size="small" />
-          </Divider>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            {...register('password')}
-            label="New password"
-            type="password"
-            fullWidth
-            autoComplete="new-password"
-            error={!!formState.errors.password}
-            helperText={formState.errors.password?.message ?? 'Leave empty to keep current password'}
-            disabled={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
-            {...register('confirmPassword')}
-            label="Confirm new password"
-            type="password"
-            fullWidth
-            autoComplete="new-password"
-            error={!!formState.errors.confirmPassword}
-            helperText={formState.errors.confirmPassword?.message}
-            disabled={isLoading}
-          />
-        </Grid>
-      </Grid>
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
+        <Typography
+          component="h2"
+          sx={{
+            fontFamily: '"Manrope", sans-serif',
+            fontWeight: 800,
+            fontSize: 18,
+            color: 'text.primary',
+          }}
+        >
+          Edit profile
+        </Typography>
+      </Stack>
+
+      <Stack spacing={2}>
+        <TextField
+          {...register('name')}
+          label="Full name"
+          fullWidth
+          error={!!formState.errors.name}
+          helperText={formState.errors.name?.message}
+          disabled={isLoading}
+          sx={{ ...fieldSx, ...fieldErrorSx }}
+        />
+        <TextField
+          {...register('email')}
+          label="Email"
+          type="email"
+          fullWidth
+          error={!!formState.errors.email}
+          helperText={formState.errors.email?.message}
+          disabled={isLoading}
+          sx={{ ...fieldSx, ...fieldErrorSx }}
+        />
+
+        <Box sx={{ pt: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+            <LockIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'text.secondary',
+              }}
+            >
+              Change password (optional)
+            </Typography>
+          </Stack>
+          <Stack spacing={2}>
+            <TextField
+              {...register('password')}
+              label="New password"
+              type="password"
+              fullWidth
+              autoComplete="new-password"
+              error={!!formState.errors.password}
+              helperText={
+                formState.errors.password?.message ?? 'Leave empty to keep your current password'
+              }
+              disabled={isLoading}
+              sx={{ ...fieldSx, ...fieldErrorSx }}
+            />
+            <TextField
+              {...register('confirmPassword')}
+              label="Confirm new password"
+              type="password"
+              fullWidth
+              autoComplete="new-password"
+              error={!!formState.errors.confirmPassword}
+              helperText={formState.errors.confirmPassword?.message}
+              disabled={isLoading}
+              sx={{ ...fieldSx, ...fieldErrorSx }}
+            />
+          </Stack>
+        </Box>
+
         <Button
           type="submit"
           variant="contained"
+          color="secondary"
+          fullWidth
           size="large"
           disabled={isLoading}
           startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
+          sx={{
+            mt: 1,
+            borderRadius: 999,
+            px: 2.75,
+            py: 1.5,
+            fontSize: 13,
+            fontWeight: 600,
+            textTransform: 'none',
+            '&:hover': { bgcolor: 'secondary.dark' },
+          }}
         >
           {isLoading ? 'Saving…' : 'Save changes'}
         </Button>
-      </Box>
-    </Box>
-  );
-};
-
-const OrdersTab = () => {
-  const { data: orders, isLoading } = useGetMyOrdersQuery();
-
-  if (isLoading) return <LoadingState variant="list" count={3} />;
-  if (!orders || orders.length === 0) {
-    return (
-      <EmptyState
-        title="No orders yet"
-        description="When you place an order, it will appear here."
-        action={{
-          label: 'Start shopping',
-          onClick: () => (window.location.href = '/'),
-        }}
-      />
-    );
-  }
-
-  return (
-    <Box>
-      <Stack spacing={1.5}>
-        {orders.slice(0, 5).map((o) => (
-          <Card key={o._id} variant="outlined">
-            <CardContent>
-              <Grid container spacing={2} alignItems="center">
-                <Grid size={{ xs: 6, sm: 3 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Order
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                    #{o._id.slice(-8).toUpperCase()}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 6, sm: 3 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Date
-                  </Typography>
-                  <Typography variant="body2">{fmtDate(o.createdAt)}</Typography>
-                </Grid>
-                <Grid size={{ xs: 6, sm: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Total
-                  </Typography>
-                  <PriceDisplay value={o.totalPrice} variant="body2" color="primary.main" />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Status
-                  </Typography>
-                  <Typography variant="body2">
-                    {o.isDelivered ? 'Delivered' : o.isPaid ? 'Paid' : 'Pending'}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 2 }}>
-                  <Button
-                    component={RouterLink}
-                    to={`/orders/${o._id}`}
-                    variant="outlined"
-                    size="small"
-                    endIcon={<ArrowIcon />}
-                    fullWidth
-                  >
-                    View
-                  </Button>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        ))}
       </Stack>
-      {orders.length > 5 && (
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Button component={RouterLink} to="/orders" variant="text">
-            View all orders →
-          </Button>
-        </Box>
-      )}
     </Box>
   );
 };
-

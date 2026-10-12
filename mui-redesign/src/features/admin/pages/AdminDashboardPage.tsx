@@ -1,368 +1,463 @@
 import { Link as RouterLink } from 'react-router-dom';
+import { Box, Stack, Typography } from '@mui/material';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid2 as Grid,
-  Stack,
-  Button,
-} from '@mui/material';
-import {
-  AdminPanelSettings as AdminIcon,
-  Inventory2 as ProductsIcon,
-  Receipt as OrdersIcon,
   AttachMoney as RevenueIcon,
-  People as UsersIcon,
-  Warning as WarningIcon,
-  TrendingUp as TrendingIcon,
-  ArrowForward as ArrowIcon,
+  ReceiptLong as OrdersIcon,
+  Inventory2 as ProductsIcon,
+  Group as CustomersIcon,
+  CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { PageContainer } from '../../../components/layout/PageContainer';
-import { AdminSubNav } from '../components/AdminSubNav';
 import { StatCard } from '../components/StatCard';
-import { PriceDisplay } from '../../products/components/PriceDisplay';
+import { StatusPill } from '../../../components/feedback/StatusPill';
 import { LoadingState } from '../../../components/feedback/LoadingState';
-import { PaidChip, PendingChip, OutOfStockChip, LowStockChip } from '../../../components/feedback';
-import { fmtDate } from '../../../utils/fmt';
-import { RevenueChart, OrdersChart, TopProductsChart, CategoryChart } from '../components/charts';
+import { useGetAllOrdersQuery, useGetAllUsersQuery } from '../adminApi';
+import { useGetProductsQuery } from '../../products/productApi';
+import { fmtDate, fmtMoney, fmtNumber } from '../../../utils/fmt';
 import {
-  useGetAllOrdersQuery,
-  useGetAllUsersQuery,
-} from '../adminApi';
-import { useGetProductsQuery, useGetTopProductsQuery } from '../../products/productApi';
-import type { Product } from '../../products/types';
-import { formatCurrency } from '../../cart/cartUtils';
+  adminEmptyDescSx,
+  adminEmptySx,
+  adminEmptyTitleSx,
+  adminH1Sx,
+  adminLinkSx,
+  adminPanelDescSx,
+  adminPanelH2Sx,
+  adminPanelHeadSx,
+  adminPanelSx,
+  adminSubtitleSx,
+  adminTableSx,
+  adminTdFirstSx,
+  adminTdSx,
+  adminThSx,
+  adminTitleRowSx,
+} from '../components/adminStyles';
+import type { PillTone } from '../../../components/feedback/StatusPill';
+import type { Order } from '../../orders/types';
 
+/* ─── helpers ────────────────────────────────────────────────────────── */
+
+const todayLabel = () =>
+  new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+/** Map an order to the matching status pill. */
+const orderPill = (o: Order): { label: string; tone: PillTone } => {
+  if (o.isDelivered) return { label: 'Delivered', tone: 'success' };
+  if (o.isPaid) return { label: 'Shipped', tone: 'info' };
+  return { label: 'Pending', tone: 'warning' };
+};
+
+const orderCustomer = (o: Order): { name: string; email: string } =>
+  o.user && typeof o.user === 'object' ? o.user : { name: 'Customer', email: '' };
+
+const orderIdShort = (id: string) => `#PS-${id.slice(-4).toUpperCase()}`;
+
+/* ─── small page bits ───────────────────────────────────────────────── */
+
+const DatePill = () => (
+  <Box
+    sx={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 1,
+      fontSize: 11,
+      color: '#70798b',
+      bgcolor: '#fff',
+      border: '1px solid #e5e8ee',
+      borderRadius: '8px',
+      px: 1.5,
+      py: 1.125,
+      whiteSpace: 'nowrap',
+    }}
+  >
+    <CalendarIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+    {todayLabel()} · Last 30 days
+  </Box>
+);
+
+const TitleRow = ({
+  title,
+  description,
+  date,
+}: {
+  title: string;
+  description: string;
+  date?: boolean;
+}) => (
+  <Box sx={adminTitleRowSx}>
+    <Box>
+      <Typography component="h1" sx={adminH1Sx}>
+        {title}
+      </Typography>
+      <Typography sx={adminSubtitleSx}>{description}</Typography>
+    </Box>
+    {date && <DatePill />}
+  </Box>
+);
+
+const PanelHead = ({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) => (
+  <Box sx={adminPanelHeadSx}>
+    <Box>
+      <Typography component="h2" sx={adminPanelH2Sx}>
+        {title}
+      </Typography>
+      <Typography sx={adminPanelDescSx}>{description}</Typography>
+    </Box>
+    {action}
+  </Box>
+);
+
+const Panel = ({ children }: { children: React.ReactNode }) => (
+  <Box sx={adminPanelSx}>{children}</Box>
+);
+
+/* ─── revenue bar chart (CSS-only, mirrors the prototype) ────────────── */
+
+interface MonthlyRevenue {
+  label: string;
+  thisYear: number;
+  lastYear: number;
+}
+
+const buildMonthlyRevenue = (orders: Order[] | undefined): MonthlyRevenue[] => {
+  const now = new Date();
+  const buckets: MonthlyRevenue[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    buckets.push({
+      label: d.toLocaleDateString('en-US', { month: 'short' }),
+      thisYear: 0,
+      lastYear: 0,
+    });
+  }
+  if (!orders) return buckets;
+
+  const monthKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
+  const byKey = new Map<string, number>();
+  for (const o of orders) {
+    if (!o.isPaid) continue;
+    const dt = new Date(o.createdAt);
+    byKey.set(monthKey(dt), (byKey.get(monthKey(dt)) ?? 0) + o.totalPrice);
+  }
+
+  buckets.forEach((b, idx) => {
+    const target = new Date(now.getFullYear(), now.getMonth() - (6 - idx), 1);
+    const v = byKey.get(monthKey(target));
+    if (v !== undefined) b.thisYear = v;
+  });
+  return buckets;
+};
+
+const RevenueBarChart = ({ orders }: { orders?: Order[] }) => {
+  const data = buildMonthlyRevenue(orders);
+  const hasData = data.some((d) => d.thisYear > 0);
+  if (!hasData) {
+    return (
+      <Box
+        sx={{
+          height: 205,
+          display: 'grid',
+          placeItems: 'center',
+          color: '#828b9b',
+          fontSize: 12,
+        }}
+      >
+        Data not available
+      </Box>
+    );
+  }
+  const max = Math.max(...data.map((d) => d.thisYear)) || 1;
+
+  return (
+    <>
+      <Box
+        sx={{
+          height: 205,
+          display: 'flex',
+          alignItems: 'flex-end',
+          gap: 1.5,
+          pt: 1.875,
+          px: 0.625,
+          borderBottom: '1px solid #edf0f4',
+          background:
+            'repeating-linear-gradient(to bottom, transparent 0, transparent 49px, #f0f2f6 50px)',
+          position: 'relative',
+        }}
+      >
+        {data.map((d) => (
+          <Box
+            key={d.label}
+            sx={{
+              flex: 1,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: '9px',
+            }}
+          >
+            <Box
+              sx={{
+                width: '100%',
+                height: 'calc(100% - 20px)',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                gap: '4px',
+              }}
+            >
+              <Box
+                sx={{
+                  width: '32%',
+                  maxWidth: 22,
+                  height: `${(d.lastYear / max) * 100}%`,
+                  borderRadius: '5px 5px 1px 1px',
+                  bgcolor: '#f2b8a7',
+                  minHeight: 0,
+                  visibility: d.lastYear > 0 ? 'visible' : 'hidden',
+                }}
+              />
+              <Box
+                sx={{
+                  width: '32%',
+                  maxWidth: 22,
+                  height: `${(d.thisYear / max) * 100}%`,
+                  borderRadius: '5px 5px 1px 1px',
+                  bgcolor: '#e36342',
+                  minHeight: d.thisYear > 0 ? 4 : 0,
+                }}
+              />
+            </Box>
+            <Typography
+              component="span"
+              sx={{ fontSize: 9, color: '#8b93a2', lineHeight: 1 }}
+            >
+              {d.label}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+      <Stack
+        direction="row"
+        spacing={2.125}
+        sx={{ mt: 1.75, color: '#7d8695', fontSize: 10 }}
+      >
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Box
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              bgcolor: '#e36342',
+              display: 'inline-block',
+            }}
+          />
+          This year
+        </Stack>
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Box
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              bgcolor: '#f2b8a7',
+              display: 'inline-block',
+            }}
+          />
+          Last year
+        </Stack>
+      </Stack>
+    </>
+  );
+};
+
+/* ─── Sales by channel panel (always empty, by design) ───────────────── */
+
+const ChannelPanel = () => (
+  <Panel>
+    <PanelHead title="Sales by channel" description="Where your customers find you" />
+    <Box sx={{ py: 4, textAlign: 'center' }}>
+      <Typography sx={adminEmptyTitleSx}>Data not available</Typography>
+      <Typography sx={adminEmptyDescSx}>
+        Channel attribution isn't tracked by the backend yet.
+      </Typography>
+    </Box>
+  </Panel>
+);
+
+/* ─── recent orders table ────────────────────────────────────────────── */
+
+const RecentOrdersTable = ({ orders }: { orders?: Order[] }) => {
+  const rows = (orders ?? []).slice(0, 4);
+  if (rows.length === 0) {
+    return (
+      <Box sx={adminEmptySx}>
+        <Typography sx={adminEmptyTitleSx}>No recent orders</Typography>
+        <Typography sx={adminEmptyDescSx}>
+          Orders will appear here as soon as customers check out.
+        </Typography>
+      </Box>
+    );
+  }
+  return (
+    <Box sx={{ overflowX: 'auto' }}>
+      <Box component="table" sx={adminTableSx}>
+        <Box component="thead">
+          <Box component="tr">
+            {['Order', 'Customer', 'Date', 'Total', 'Status'].map((h) => (
+              <Box component="th" key={h} sx={adminThSx}>
+                {h}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        <Box component="tbody">
+          {rows.map((o) => {
+            const customer = orderCustomer(o);
+            const pill = orderPill(o);
+            return (
+              <Box component="tr" key={o._id}>
+                <Box component="td" sx={adminTdFirstSx}>
+                  {orderIdShort(o._id)}
+                </Box>
+                <Box component="td" sx={adminTdSx}>
+                  {customer.name}
+                </Box>
+                <Box component="td" sx={adminTdSx}>
+                  {fmtDate(o.createdAt)}
+                </Box>
+                <Box component="td" sx={adminTdSx}>
+                  {fmtMoney(o.totalPrice)}
+                </Box>
+                <Box component="td" sx={adminTdSx}>
+                  <StatusPill label={pill.label} tone={pill.tone} />
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+/* ─── page ───────────────────────────────────────────────────────────── */
 
 export const AdminDashboardPage = () => {
   const { data: orders, isLoading: ordersLoading } = useGetAllOrdersQuery();
   const { data: users, isLoading: usersLoading } = useGetAllUsersQuery();
-  const { data: products, isLoading: productsLoading } = useGetProductsQuery(undefined);
-  const { data: topProducts } = useGetTopProductsQuery(undefined);
+  const { data: productsData, isLoading: productsLoading } =
+    useGetProductsQuery(undefined);
+
+  const paidOrders = orders?.filter((o) => o.isPaid) ?? [];
+  const totalRevenue = paidOrders.reduce((s, o) => s + o.totalPrice, 0);
 
   const isLoading = ordersLoading || usersLoading || productsLoading;
 
-  // Compute stats
-  const totalRevenue = orders
-    ?.filter((o) => o.isPaid)
-    .reduce((sum, o) => sum + o.totalPrice, 0) ?? 0;
-  const paidOrders = orders?.filter((o) => o.isPaid).length ?? 0;
-  const pendingOrders = orders?.filter((o) => !o.isPaid).length ?? 0;
-  const outOfStock = products?.products.filter((p: any) => p.countInStock === 0).length ?? 0;
-  const lowStock = products?.products.filter((p: any) => p.countInStock > 0 && p.countInStock <= 5).length ?? 0;
-
-  const recentOrders = orders?.slice(0, 5) ?? [];
-  const stockAlerts = products?.products
-    .filter((p: any) => p.countInStock <= 5)
-    .sort((a: any, b: any) => a.countInStock - b.countInStock)
-    .slice(0, 5) ?? [];
+  if (isLoading) {
+    return (
+      <>
+        <TitleRow title="Overview" description="Snapshot of your store performance" date />
+        <LoadingState variant="card" count={4} />
+      </>
+    );
+  }
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Admin Dashboard"
-        subtitle="Overview of your store performance"
-        icon={<AdminIcon />}
-      />
+    <>
+      <TitleRow title="Overview" description="Snapshot of your store performance" date />
 
-      <AdminSubNav />
+      {/* 4 stat cards */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, minmax(0, 1fr))',
+            md: 'repeat(4, minmax(0, 1fr))',
+          },
+          gap: 1.875,
+          mb: 2.25,
+        }}
+      >
+        <StatCard
+          label="Revenue"
+          value={fmtMoney(totalRevenue)}
+          icon={<RevenueIcon />}
+          caption={
+            <>
+              <b>↗ Paid orders</b> · {fmtNumber(paidOrders.length)} this period
+            </>
+          }
+        />
+        <StatCard
+          label="Orders"
+          value={fmtNumber(orders?.length ?? 0)}
+          icon={<OrdersIcon />}
+          caption={
+            <>
+              <b>{fmtNumber(paidOrders.length)} paid</b> ·{' '}
+              {fmtNumber((orders?.length ?? 0) - paidOrders.length)} pending
+            </>
+          }
+        />
+        <StatCard
+          label="Products"
+          value={fmtNumber(productsData?.total ?? 0)}
+          icon={<ProductsIcon />}
+          caption={<>In your catalog</>}
+        />
+        <StatCard
+          label="Customers"
+          value={fmtNumber(users?.length ?? 0)}
+          icon={<CustomersIcon />}
+          caption={<>Registered accounts</>}
+        />
+      </Box>
 
-      {isLoading ? (
-        <LoadingState variant="card" count={4} />
-      ) : (
-        <>
-          {/* KPI Stats — 4-col grid */}
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-              <StatCard
-                label="Revenue"
-                value={formatCurrency(totalRevenue)}
-                icon={<RevenueIcon />}
-                color="success"
-                sublabel={`From ${paidOrders} paid orders`}
-              />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-              <StatCard
-                label="Orders"
-                value={orders?.length ?? 0}
-                icon={<OrdersIcon />}
-                color="primary"
-                sublabel={`${paidOrders} paid · ${pendingOrders} pending`}
-              />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-              <StatCard
-                label="Products"
-                value={products?.total ?? 0}
-                icon={<ProductsIcon />}
-                color="info"
-                sublabel={`${outOfStock} out · ${lowStock} low stock`}
-              />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-              <StatCard
-                label="Customers"
-                value={users?.length ?? 0}
-                icon={<UsersIcon />}
-                color="warning"
-                sublabel={`${users?.filter((u: any) => u.isAdmin).length ?? 0} admin`}
-              />
-            </Grid>
-          </Grid>
+      {/* Revenue + channel */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1.45fr) minmax(270px, 0.85fr)' },
+          gap: 2.125,
+          mb: 2.25,
+        }}
+      >
+        <Panel>
+          <PanelHead
+            title="Revenue overview"
+            description="Revenue performance across the last 7 months"
+          />
+          <RevenueBarChart orders={orders} />
+        </Panel>
+        <ChannelPanel />
+      </Box>
 
-          {/* Charts */}
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 12, lg: 8 }}>
-              <RevenueChart orders={orders} days={30} />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <CategoryChart products={products?.products ?? []} />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 7 }}>
-              <OrdersChart orders={orders} days={30} />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 5 }}>
-              <TopProductsChart products={products?.products ?? []} />
-            </Grid>
-          </Grid>
-
-          <Grid container spacing={3}>
-            {/* Recent orders */}
-            <Grid size={{ xs: 12, lg: 7 }}>
-              <Card>
-                <CardContent>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                      Recent orders
-                    </Typography>
-                    <Button
-                      component={RouterLink}
-                      to="/admin/orders"
-                      size="small"
-                      endIcon={<ArrowIcon />}
-                    >
-                      View all
-                    </Button>
-                  </Stack>
-                  {recentOrders.length === 0 ? (
-                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                      No orders yet
-                    </Typography>
-                  ) : (
-                    <Stack divider={<Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }} />}>
-                      {recentOrders.map((o) => {
-                        const userObj = typeof o.user === 'object' ? o.user : null;
-                        return (
-                          <Box
-                            key={o._id}
-                            component={RouterLink}
-                            to={`/orders/${o._id}`}
-                            sx={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr auto auto',
-                              gap: 2,
-                              alignItems: 'center',
-                              py: 1.5,
-                              textDecoration: 'none',
-                              color: 'text.primary',
-                              '&:hover': { bgcolor: 'action.hover' },
-                              px: 1,
-                              borderRadius: 1,
-                            }}
-                          >
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                #{o._id.slice(-8).toUpperCase()}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {userObj ? userObj.name : 'Unknown user'} ·{' '}
-                                {fmtDate(o.createdAt)}
-                              </Typography>
-                            </Box>
-                            <PriceDisplay
-                              value={o.totalPrice}
-                              variant="body2"
-                              color="primary.main"
-                            />
-                            {o.isPaid ? <PaidChip /> : <PendingChip />}
-                          </Box>
-                        );
-                      })}
-                    </Stack>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Top products */}
-            <Grid size={{ xs: 12, lg: 5 }}>
-              <Card>
-                <CardContent>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <TrendingIcon color="primary" />
-                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Top rated products
-                      </Typography>
-                    </Stack>
-                    <Button
-                      component={RouterLink}
-                      to="/admin/products"
-                      size="small"
-                      endIcon={<ArrowIcon />}
-                    >
-                      Manage
-                    </Button>
-                  </Stack>
-                  {!topProducts || topProducts.length === 0 ? (
-                    <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                      No products yet
-                    </Typography>
-                  ) : (
-                    <Stack spacing={1.5}>
-                      {topProducts?.map((p: Product, i: number) => (
-                        <Stack
-                          key={p._id}
-                          direction="row"
-                          alignItems="center"
-                          spacing={2}
-                          component={RouterLink}
-                          to={`/admin/products/${p._id}/edit`}
-                          sx={{
-                            textDecoration: 'none',
-                            color: 'text.primary',
-                            p: 1,
-                            borderRadius: 1,
-                            '&:hover': { bgcolor: 'action.hover' },
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: 1,
-                              bgcolor: 'primary.main',
-                              color: 'primary.contrastText',
-                              display: 'grid',
-                              placeItems: 'center',
-                              fontSize: 14,
-                              fontWeight: 700,
-                            }}
-                          >
-                            {i + 1}
-                          </Box>
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
-                              {p.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {p.brand} · ⭐ {p.rating.toFixed(1)} · Stock: {p.countInStock}
-                            </Typography>
-                          </Box>
-                          <PriceDisplay value={p.price} variant="body2" color="primary.main" />
-                        </Stack>
-                      ))}
-                    </Stack>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Stock alerts — dedicated wide banner below charts */}
-            {stockAlerts.length > 0 && (
-              <Grid size={{ xs: 12 }}>
-                <Card
-                  sx={{
-                    borderLeft: '3px solid',
-                    borderLeftColor: outOfStock > 0 ? 'error.main' : 'warning.main',
-                  }}
-                >
-                  <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      sx={{ mb: 2 }}
-                    >
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 1.5,
-                            bgcolor: outOfStock > 0 ? 'rgba(184,68,37,0.10)' : 'rgba(201,138,37,0.12)',
-                            color: outOfStock > 0 ? 'error.main' : 'warning.main',
-                            display: 'grid',
-                            placeItems: 'center',
-                          }}
-                        >
-                          <WarningIcon fontSize="small" />
-                        </Box>
-                        <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                            Stock alerts
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {outOfStock} out of stock · {lowStock} low
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Button
-                        component={RouterLink}
-                        to="/admin/products"
-                        size="small"
-                        endIcon={<ArrowIcon />}
-                      >
-                        Manage inventory
-                      </Button>
-                    </Stack>
-
-                    <Stack divider={<Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }} />}>
-                      {stockAlerts.map((p) => (
-                        <Stack
-                          key={p._id}
-                          direction="row"
-                          alignItems="center"
-                          spacing={2}
-                          component={RouterLink}
-                          to={`/admin/products/${p._id}/edit`}
-                          sx={{
-                            textDecoration: 'none',
-                            color: 'text.primary',
-                            py: 1.25,
-                            px: 1,
-                            borderRadius: 1,
-                            transition: 'background-color 150ms ease',
-                            '&:hover': { bgcolor: 'action.hover' },
-                          }}
-                        >
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
-                              {p.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {p.brand} · {p.category}
-                            </Typography>
-                          </Box>
-                          <PriceDisplay value={p.price} variant="body2" color="text.secondary" />
-                          {p.countInStock === 0 ? (
-                            <OutOfStockChip label="OUT" />
-                          ) : (
-                            <LowStockChip label={`${p.countInStock} left`} />
-                          )}
-                        </Stack>
-                      ))}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-          </Grid>
-        </>
-      )}
-    </PageContainer>
+      {/* Recent orders */}
+      <Panel>
+        <PanelHead
+          title="Recent orders"
+          description="Latest orders from your store"
+          action={
+            <Box component={RouterLink} to="/admin/orders" sx={adminLinkSx}>
+              View all orders ↗
+            </Box>
+          }
+        />
+        <RecentOrdersTable orders={orders} />
+      </Panel>
+    </>
   );
 };

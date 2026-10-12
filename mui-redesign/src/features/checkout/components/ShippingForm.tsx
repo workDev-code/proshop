@@ -10,6 +10,27 @@ interface Props {
   onNext: () => void;
 }
 
+const fieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: 999,
+    fontSize: 14,
+    bgcolor: 'background.paper',
+  },
+  '& .MuiOutlinedInput-input': {
+    py: 1.5,
+  },
+};
+
+const fieldErrorSx = {
+  '& .MuiOutlinedInput-root.Mui-error': {
+    borderColor: 'error.main',
+  },
+  '& .MuiFormHelperText-root.Mui-error': {
+    ml: 2,
+    fontSize: 11,
+  },
+};
+
 export const ShippingForm = ({ onNext }: Props) => {
   const toast = useToast();
   const { shippingAddress, saveShipping } = useCart();
@@ -36,9 +57,17 @@ export const ShippingForm = ({ onNext }: Props) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-        <ShippingIcon color="primary" />
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
+        <ShippingIcon sx={{ color: 'secondary.main', fontSize: 20 }} />
+        <Typography
+          sx={{
+            fontFamily: '"Manrope", sans-serif',
+            fontWeight: 800,
+            fontSize: 18,
+            letterSpacing: '-0.01em',
+            color: 'text.primary',
+          }}
+        >
           Shipping address
         </Typography>
       </Stack>
@@ -51,6 +80,7 @@ export const ShippingForm = ({ onNext }: Props) => {
             autoComplete="street-address"
             error={!!errors.address}
             helperText={errors.address?.message}
+            sx={{ ...fieldSx, ...fieldErrorSx }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -61,6 +91,7 @@ export const ShippingForm = ({ onNext }: Props) => {
             autoComplete="address-level2"
             error={!!errors.city}
             helperText={errors.city?.message}
+            sx={{ ...fieldSx, ...fieldErrorSx }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -71,6 +102,7 @@ export const ShippingForm = ({ onNext }: Props) => {
             autoComplete="postal-code"
             error={!!errors.postalCode}
             helperText={errors.postalCode?.message}
+            sx={{ ...fieldSx, ...fieldErrorSx }}
           />
         </Grid>
         <Grid size={{ xs: 12 }}>
@@ -81,12 +113,27 @@ export const ShippingForm = ({ onNext }: Props) => {
             autoComplete="country-name"
             error={!!errors.country}
             helperText={errors.country?.message}
+            sx={{ ...fieldSx, ...fieldErrorSx }}
           />
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
+      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={isSubmitting}
+          sx={{
+            borderRadius: 999,
+            py: 1.5,
+            px: 3.5,
+            fontSize: 13,
+            fontWeight: 600,
+            textTransform: 'none',
+            minWidth: 180,
+          }}
+        >
           Continue to payment
         </Button>
       </Box>

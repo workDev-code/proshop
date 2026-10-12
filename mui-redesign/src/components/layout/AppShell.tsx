@@ -1,69 +1,67 @@
-import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { useState } from 'react';
+import { AnnouncementBar } from './AnnouncementBar';
 import { TopBar } from './TopBar';
-import { SideNav } from './SideNav';
+import { Footer } from './Footer';
+import { CartDrawer } from './CartDrawer';
+import { useCart } from '../../features/cart/hooks';
 
-const DRAWER_FULL = 240;
-const DRAWER_MINI = 64;
+const TOPBAR_HEIGHT = 82;
 
+/**
+ * Storefront layout.
+ *
+ * Vertical stack matching the approved HTML prototype:
+ *
+ *   [AnnouncementBar]
+ *   [TopBar - sticky]
+ *   [main content   - centered, max 1240]
+ *   [Footer         - dark]
+ *
+ * No sidebar (the sidebar exists only in the admin shell).
+ * Cart drawer is mounted here so the cart icon in TopBar can open it
+ * from anywhere in the storefront.
+ */
 export const AppShell = () => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [mini, setMini] = useState(false);
+  
+  const [cartOpen, setCartOpen] = useState(false);
+  const { totals } = useCart();
   const location = useLocation();
 
-  const drawerWidth = mini ? DRAWER_MINI : DRAWER_FULL;
-
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+      <AnnouncementBar />
+
       <TopBar
-        onMenuClick={() => setMobileOpen((v) => !v)}
+        onMenuClick={() => {/* mobile drawer trigger */}}
         showMenuButton={!isDesktop}
         currentPath={location.pathname}
-      />
-
-      {/*
-        SideNav is a MUI Drawer (permanent variant on desktop) which is
-        position:fixed and overlays the page. So <main> needs marginLeft
-        to push content out from under the drawer. The mobile drawer
-        (temporary) doesn't need this — it slides in over content.
-      */}
-      <SideNav
-        variant={isDesktop ? 'permanent' : 'temporary'}
-        open={isDesktop ? true : mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        mini={mini}
-        onToggleMini={() => setMini((v) => !v)}
-        width={drawerWidth}
+        onCartClick={() => setCartOpen(true)}
+        cartCount={totals.itemsCount}
       />
 
       <Box
         component="main"
         sx={{
-          flexGrow: 1,
-          flexBasis: 0,                         // grow from 0 so it shares space with SideNav
-          minWidth: 0,                          // prevent flex item overflow with long content
-          mt: '64px',                            // offset for fixed TopBar
-          ml: { xs: 0, md: `${drawerWidth}px` }, // offset for permanent Drawer on desktop
-          transition: 'margin-left 200ms ease',
-          minHeight: 'calc(100vh - 64px)',
-          bgcolor: 'background.default',
+          width: '100%',
+          maxWidth: 1240,
+          mx: 'auto',
+          px: { xs: 2, sm: 3, md: '28px' },
         }}
       >
-        {/* Left-aligned max-width container — caps width on huge screens
-            but keeps content hugging the left so the sidebar is the visual anchor */}
-        <Box
-          sx={{
-            maxWidth: 1440,
-            px: { xs: 2, sm: 3, md: 4 },
-            py: { xs: 2, sm: 3, md: 4 },
-          }}
-        >
-          <Outlet />
-        </Box>
+        <Outlet />
       </Box>
+
+      <Footer />
+
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </Box>
   );
+};
+
+export const LAYOUT_TOKENS = {
+  TOPBAR_HEIGHT,
 };

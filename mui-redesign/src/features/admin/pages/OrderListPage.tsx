@@ -2,48 +2,114 @@ import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
-  TextField,
-  InputAdornment,
-  Tooltip,
+  Stack,
+  Button,
+  InputBase,
+  Select,
+  MenuItem,
   Typography,
 } from '@mui/material';
-import {
-  DataGrid,
-  type GridColDef,
-  GridActionsCellItem,
-} from '@mui/x-data-grid';
-import {
-  Receipt as OrdersIcon,
-  Visibility as ViewIcon,
-  LocalShipping as DeliverIcon,
-  Search as SearchIcon,
-} from '@mui/icons-material';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { PageContainer } from '../../../components/layout/PageContainer';
-import { AdminSubNav } from '../components/AdminSubNav';
-import { PriceDisplay } from '../../products/components/PriceDisplay';
-import {
-  useGetAllOrdersQuery,
-  useMarkOrderDeliveredMutation,
-} from '../adminApi';
+import { LocalShipping as DeliverIcon } from '@mui/icons-material';
+import { useGetAllOrdersQuery, useMarkOrderDeliveredMutation } from '../adminApi';
+import { StatusPill } from '../../../components/feedback/StatusPill';
+import { LoadingState } from '../../../components/feedback/LoadingState';
 import { useToast } from '../../../hooks/useToast';
-import { PaidChip, PendingChip, DeliveredChip } from '../../../components/feedback';
-import { fmtDate } from '../../../utils/fmt';
+import { fmtDateShort, fmtMoney } from '../../../utils/fmt';
+import {
+  adminEmptyDescSx,
+  adminEmptySx,
+  adminEmptyTitleSx,
+  adminFilterRowSx,
+  adminH1Sx,
+  adminInputSx,
+  adminLinkSx,
+  adminMiniCardSx,
+  adminMiniGridSx,
+  adminPanelDescSx,
+  adminPanelH2Sx,
+  adminPanelHeadSx,
+  adminPanelSx,
+  adminSubtitleSx,
+  adminTableSx,
+  adminTdFirstSx,
+  adminTdSx,
+  adminThSx,
+  adminTitleRowSx,
+} from '../components/adminStyles';
+import type { PillTone } from '../../../components/feedback/StatusPill';
+import type { Order } from '../../orders/types';
 
+const STATUS_OPTIONS = [
+  'All',
+  'Paid',
+  'Pending',
+  'Shipped',
+  'Delivered',
+  'Cancelled',
+] as const;
+type StatusFilter = (typeof STATUS_OPTIONS)[number];
+
+interface PillResult {
+  label: string;
+  tone: PillTone;
+  raw: 'paid' | 'pending' | 'shipped' | 'delivered' | 'cancelled';
+}
+
+const orderPill = (o: Order): PillResult => {
+  if (o.isDelivered) return { label: 'Delivered', tone: 'success', raw: 'delivered' };
+  if (o.isPaid) return { label: 'Shipped', tone: 'info', raw: 'shipped' };
+  return { label: 'Pending', tone: 'warning', raw: 'pending' };
+};
+
+const orderCustomer = (o: Order): { name: string; email: string } =>
+  o.user && typeof o.user === 'object' ? o.user : { name: 'Customer', email: '' };
+
+const orderIdShort = (id: string) => `#PS-${id.slice(-4).toUpperCase()}`;
+
+const matchesFilter = (o: Order, filter: StatusFilter): boolean => {
+  const pill = orderPill(o);
+  switch (filter) {
+    case 'All':
+      return true;
+    case 'Paid':
+      return pill.raw === 'paid' || pill.raw === 'shipped' || pill.raw === 'delivered';
+    case 'Pending':
+      return pill.raw === 'pending';
+    case 'Shipped':
+      return pill.raw === 'shipped';
+    case 'Delivered':
+      return pill.raw === 'delivered';
+    case 'Cancelled':
+      return false; // Backend model has no `isCancelled` flag.
+    default:
+      return true;
+  }
+};
 
 export const OrderListPage = () => {
   const toast = useToast();
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<StatusFilter>('All');
   const { data: orders, isLoading } = useGetAllOrdersQuery();
   const [markDelivered, { isLoading: marking }] = useMarkOrderDeliveredMutation();
 
-  const filtered = orders?.filter((o) => {
-    const s = search.toLowerCase();
-    const userObj = typeof o.user === 'object' ? o.user : null;
+  if (isLoading) {
+    return <LoadingState variant="card" count={3} />;
+  }
+
+  const allOrders = orders ?? [];
+  // (Delivered is reflected in the Status filter and in each row’s pill.)
+  const awaiting = allOrders.filter((o) => o.isPaid && !o.isDelivered).length;
+
+  const filtered = allOrders.filter((o) => {
+    if (!matchesFilter(o, status)) return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    const c = orderCustomer(o);
     return (
-      o._id.toLowerCase().includes(s) ||
-      userObj?.name?.toLowerCase().includes(s) ||
-      userObj?.email?.toLowerCase().includes(s)
+      o._id.toLowerCase().includes(q) ||
+      c.name.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q)
     );
   });
 
@@ -57,146 +123,222 @@ export const OrderListPage = () => {
     }
   };
 
-  const columns: GridColDef[] = [
-    {
-      field: '_id',
-      headerName: 'Order ID',
-      width: 160,
-      renderCell: ({ value }) => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-          #{value.slice(-8).toUpperCase()}
-        </Typography>
-      ),
-    },
-    {
-      field: 'user',
-      headerName: 'Customer',
-      flex: 1,
-      minWidth: 180,
-      renderCell: ({ value }) => {
-        const userObj = typeof value === 'object' ? value : null;
-        if (!userObj) return <Typography variant="body2">Unknown</Typography>;
-        return (
+  return (
+    <>
+      {/* Title row */}
+      <Box sx={adminTitleRowSx}>
+        <Box>
+          <Typography component="h1" sx={adminH1Sx}>
+            Orders
+          </Typography>
+          <Typography sx={adminSubtitleSx}>
+            Track, process, and manage customer orders.
+          </Typography>
+        </Box>
+        <Button
+          onClick={() => toast.info('Export orders preview — wire up when backend supports it.')}
+          sx={{
+            border: '1px solid #e1e5eb',
+            bgcolor: '#fff',
+            color: '#303747',
+            borderRadius: '8px',
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: 'none',
+            px: 1.625,
+            py: 1.125,
+            '&:hover': { bgcolor: '#f7f7f9' },
+          }}
+        >
+          ↓ Export orders
+        </Button>
+      </Box>
+
+      {/* Mini cards */}
+      <Box sx={adminMiniGridSx}>
+        <Box sx={adminMiniCardSx}>
+          <Typography sx={{ fontSize: 10, color: '#818999' }}>All orders</Typography>
+          <Typography
+            component="strong"
+            sx={{
+              display: 'block',
+              fontFamily: '"Manrope", sans-serif',
+              fontSize: 22,
+              fontWeight: 800,
+              mt: '9px',
+              color: '#242b39',
+            }}
+          >
+            {allOrders.length}
+          </Typography>
+        </Box>
+        <Box sx={adminMiniCardSx}>
+          <Typography sx={{ fontSize: 10, color: '#818999' }}>Awaiting fulfillment</Typography>
+          <Typography
+            component="strong"
+            sx={{
+              display: 'block',
+              fontFamily: '"Manrope", sans-serif',
+              fontSize: 22,
+              fontWeight: 800,
+              mt: '9px',
+              color: '#242b39',
+            }}
+          >
+            {awaiting}
+          </Typography>
+        </Box>
+        <Box sx={adminMiniCardSx}>
+          <Typography sx={{ fontSize: 10, color: '#818999' }}>Returns requested</Typography>
+          <Typography
+            component="strong"
+            sx={{
+              display: 'block',
+              fontFamily: '"Manrope", sans-serif',
+              fontSize: 22,
+              fontWeight: 800,
+              mt: '9px',
+              color: '#242b39',
+            }}
+          >
+            0
+          </Typography>
+          <Typography sx={{ fontSize: 9, color: '#828b9b', mt: 0.5 }}>
+            Not tracked by the backend
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Order management */}
+      <Box sx={adminPanelSx}>
+        <Box sx={adminPanelHeadSx}>
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {userObj.name}
+            <Typography component="h2" sx={adminPanelH2Sx}>
+              Order management
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {userObj.email}
+            <Typography sx={adminPanelDescSx}>Review status and customer totals</Typography>
+          </Box>
+        </Box>
+
+        <Stack sx={adminFilterRowSx}>
+          <InputBase
+            placeholder="Search order or customer…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ ...adminInputSx, minWidth: 220 }}
+          />
+          <Select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as StatusFilter)}
+            sx={{
+              ...adminInputSx,
+              '& .MuiSelect-select': { p: 0 },
+              minWidth: 160,
+              fontSize: 10,
+            }}
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <MenuItem key={s} value={s}>
+                {s === 'All' ? 'All statuses' : s}
+              </MenuItem>
+            ))}
+          </Select>
+        </Stack>
+
+        {filtered.length === 0 ? (
+          <Box sx={adminEmptySx}>
+            <Typography sx={adminEmptyTitleSx}>No orders match the filter</Typography>
+            <Typography sx={adminEmptyDescSx}>
+              Try widening the search or picking a different status.
             </Typography>
           </Box>
-        );
-      },
-    },
-    {
-      field: 'createdAt',
-      headerName: 'Date',
-      width: 140,
-      renderCell: ({ value }) => (
-        <Typography variant="body2">{fmtDate(value)}</Typography>
-      ),
-    },
-    {
-      field: 'totalPrice',
-      headerName: 'Total',
-      width: 120,
-      renderCell: ({ value }) => <PriceDisplay value={value} variant="body2" color="primary.main" />,
-    },
-    {
-      field: 'isPaid',
-      headerName: 'Paid',
-      width: 100,
-      renderCell: ({ value }: any) => (value ? <PaidChip /> : <PendingChip />),
-    },
-    {
-      field: 'isDelivered',
-      headerName: 'Delivered',
-      width: 120,
-      renderCell: ({ value, row }: any) => {
-        if (value) return <DeliveredChip />;
-        if (!row.isPaid) return <PendingChip label="Awaiting payment" />;
-        return <DeliveredChip label="Ready to ship" />;
-      },
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      type: 'actions',
-      width: 120,
-      getActions: ({ row }) => [
-        <GridActionsCellItem
-          key="view"
-          icon={
-            <Tooltip title="View order">
-              <ViewIcon />
-            </Tooltip>
-          }
-          label="View"
-          component={RouterLink as any}
-          // @ts-expect-error - typing inline
-          to={`/orders/${row._id}`}
-          sx={{ color: 'primary.main' }}
-        />,
-        row.isPaid && !row.isDelivered ? (
-          <GridActionsCellItem
-            key="deliver"
-            icon={
-              <Tooltip title="Mark as delivered">
-                <DeliverIcon />
-              </Tooltip>
-            }
-            label="Mark delivered"
-            onClick={() => handleDeliver(row._id)}
-            disabled={marking}
-            sx={{ color: 'success.main' }}
-          />
-        ) : null,
-      ].filter(Boolean) as any,
-    },
-  ];
-
-  return (
-    <PageContainer>
-      <PageHeader
-        title="Orders"
-        subtitle={`${orders?.length ?? 0} total orders`}
-        icon={<OrdersIcon />}
-      />
-
-      <AdminSubNav />
-
-      <Box sx={{ mb: 2 }}>
-        <TextField
-          placeholder="Search by order ID, customer name, or email…"
-          size="small"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: { xs: '100%', sm: 400 } }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+        ) : (
+          <Box sx={{ overflowX: 'auto' }}>
+            <Box component="table" sx={adminTableSx}>
+              <Box component="thead">
+                <Box component="tr">
+                  {[
+                    'Order',
+                    'Customer',
+                    'Date',
+                    'Items',
+                    'Total',
+                    'Status',
+                    'Action',
+                  ].map((h) => (
+                    <Box component="th" key={h} sx={adminThSx}>
+                      {h}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+              <Box component="tbody">
+                {filtered.map((o) => {
+                  const customer = orderCustomer(o);
+                  const pill = orderPill(o);
+                  const items = o.orderItems?.reduce((s, i) => s + i.qty, 0) ?? 0;
+                  const canDeliver = o.isPaid && !o.isDelivered;
+                  return (
+                    <Box component="tr" key={o._id}>
+                      <Box component="td" sx={adminTdFirstSx}>
+                        {orderIdShort(o._id)}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {customer.name}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {fmtDateShort(o.createdAt)}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {items}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        {fmtMoney(o.totalPrice)}
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        <StatusPill label={pill.label} tone={pill.tone} />
+                      </Box>
+                      <Box component="td" sx={adminTdSx}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Box
+                            component={RouterLink}
+                            to={`/orders/${o._id}`}
+                            sx={adminLinkSx}
+                          >
+                            Details
+                          </Box>
+                          {canDeliver && (
+                            <Box
+                              component="button"
+                              onClick={() => handleDeliver(o._id)}
+                              disabled={marking}
+                              sx={{
+                                ...adminLinkSx,
+                                color: '#17845e',
+                                border: 0,
+                                background: 'none',
+                                padding: 0,
+                                font: 'inherit',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                              }}
+                            >
+                              <DeliverIcon sx={{ fontSize: 12 }} />
+                              Mark delivered
+                            </Box>
+                          )}
+                        </Stack>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          </Box>
+        )}
       </Box>
-
-      <Box sx={{ height: 620, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-        <DataGrid
-          rows={filtered ?? []}
-          columns={columns}
-          getRowId={(r) => r._id}
-          loading={isLoading}
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          disableRowSelectionOnClick
-          sx={{
-            border: 0,
-            '& .MuiDataGrid-cell:focus': { outline: 'none' },
-          }}
-        />
-      </Box>
-    </PageContainer>
+    </>
   );
 };
