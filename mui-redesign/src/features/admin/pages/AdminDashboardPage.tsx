@@ -7,7 +7,6 @@ import {
   Grid2 as Grid,
   Stack,
   Button,
-  Alert,
 } from '@mui/material';
 import {
   AdminPanelSettings as AdminIcon,
@@ -74,69 +73,43 @@ export const AdminDashboardPage = () => {
         <LoadingState variant="card" count={4} />
       ) : (
         <>
-          {/* Stats */}
+          {/* KPI Stats — 4-col grid */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
               <StatCard
                 label="Revenue"
                 value={formatCurrency(totalRevenue)}
                 icon={<RevenueIcon />}
-                color="success.main"
+                color="success"
+                sublabel={`From ${paidOrders} paid orders`}
               />
             </Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
               <StatCard
                 label="Orders"
                 value={orders?.length ?? 0}
                 icon={<OrdersIcon />}
-                color="primary.main"
-                trend={{ delta: `${paidOrders} paid · ${pendingOrders} pending`, direction: 'up' }}
+                color="primary"
+                sublabel={`${paidOrders} paid · ${pendingOrders} pending`}
               />
             </Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
               <StatCard
                 label="Products"
                 value={products?.total ?? 0}
                 icon={<ProductsIcon />}
-                color="info.main"
+                color="info"
+                sublabel={`${outOfStock} out · ${lowStock} low stock`}
               />
             </Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
               <StatCard
-                label="Users"
+                label="Customers"
                 value={users?.length ?? 0}
                 icon={<UsersIcon />}
-                color="warning.main"
+                color="warning"
+                sublabel={`${users?.filter((u: any) => u.isAdmin).length ?? 0} admin`}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 8, md: 4 }}>
-              <Card sx={{ height: '100%', bgcolor: outOfStock > 0 ? 'error.lighter' : 'background.paper' }}>
-                <CardContent>
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 2,
-                        display: 'grid',
-                        placeItems: 'center',
-                        bgcolor: 'error.lighter',
-                        color: 'error.main',
-                      }}
-                    >
-                      <WarningIcon />
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase' }}>
-                        Stock alerts
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        {outOfStock} out · {lowStock} low
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
             </Grid>
           </Grid>
 
@@ -298,17 +271,44 @@ export const AdminDashboardPage = () => {
               </Card>
             </Grid>
 
-            {/* Stock alerts */}
+            {/* Stock alerts — dedicated wide banner below charts */}
             {stockAlerts.length > 0 && (
               <Grid size={{ xs: 12 }}>
-                <Card>
-                  <CardContent>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <WarningIcon color="warning" />
-                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                          Low / out of stock
-                        </Typography>
+                <Card
+                  sx={{
+                    borderLeft: '3px solid',
+                    borderLeftColor: outOfStock > 0 ? 'error.main' : 'warning.main',
+                  }}
+                >
+                  <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      sx={{ mb: 2 }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1.5,
+                            bgcolor: outOfStock > 0 ? 'rgba(184,68,37,0.10)' : 'rgba(201,138,37,0.12)',
+                            color: outOfStock > 0 ? 'error.main' : 'warning.main',
+                            display: 'grid',
+                            placeItems: 'center',
+                          }}
+                        >
+                          <WarningIcon fontSize="small" />
+                        </Box>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                            Stock alerts
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {outOfStock} out of stock · {lowStock} low
+                          </Typography>
+                        </Box>
                       </Stack>
                       <Button
                         component={RouterLink}
@@ -316,32 +316,46 @@ export const AdminDashboardPage = () => {
                         size="small"
                         endIcon={<ArrowIcon />}
                       >
-                        Restock
+                        Manage inventory
                       </Button>
                     </Stack>
-                    <Grid container spacing={1}>
+
+                    <Stack divider={<Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }} />}>
                       {stockAlerts.map((p) => (
-                        <Grid key={p._id} size={{ xs: 12, sm: 6, md: 4 }}>
-                          <Alert
-                            severity={p.countInStock === 0 ? 'error' : 'warning'}
-                            icon={false}
-                            sx={{ alignItems: 'center' }}
-                          >
-                            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
-                              <Box sx={{ minWidth: 0 }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
-                                  {p.name}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {p.brand}
-                                </Typography>
-                              </Box>
-                              {p.countInStock === 0 ? <OutOfStockChip label="OUT" /> : <LowStockChip label={`${p.countInStock} left`} />}
-                            </Stack>
-                          </Alert>
-                        </Grid>
+                        <Stack
+                          key={p._id}
+                          direction="row"
+                          alignItems="center"
+                          spacing={2}
+                          component={RouterLink}
+                          to={`/admin/products/${p._id}/edit`}
+                          sx={{
+                            textDecoration: 'none',
+                            color: 'text.primary',
+                            py: 1.25,
+                            px: 1,
+                            borderRadius: 1,
+                            transition: 'background-color 150ms ease',
+                            '&:hover': { bgcolor: 'action.hover' },
+                          }}
+                        >
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+                              {p.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {p.brand} · {p.category}
+                            </Typography>
+                          </Box>
+                          <PriceDisplay value={p.price} variant="body2" color="text.secondary" />
+                          {p.countInStock === 0 ? (
+                            <OutOfStockChip label="OUT" />
+                          ) : (
+                            <LowStockChip label={`${p.countInStock} left`} />
+                          )}
+                        </Stack>
                       ))}
-                    </Grid>
+                    </Stack>
                   </CardContent>
                 </Card>
               </Grid>
