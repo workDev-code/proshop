@@ -3,7 +3,9 @@ import { AppShell } from '../components/layout/AppShell';
 import { RequireAuth } from '../components/auth/RequireAuth';
 import { DesignSystemPage } from '../features/design-system/pages/DesignSystemPage';
 import { LoginPage } from '../features/auth/pages/LoginPage';
-import { DashboardPage } from '../features/dashboard/pages/DashboardPage';
+import { HomePage } from '../features/products/pages/HomePage';
+import { SearchPage } from '../features/products/pages/SearchPage';
+import { ProductDetailPage } from '../features/products/pages/ProductDetailPage';
 
 export const AppRouter = () => (
   <Routes>
@@ -20,11 +22,11 @@ export const AppRouter = () => (
         </RequireAuth>
       }
     >
-      <Route path="/" element={<DashboardPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/search/:keyword" element={<SearchPage />} />
+      <Route path="/product/:id" element={<ProductDetailPage />} />
       <Route path="/dashboard" element={<Navigate to="/" replace />} />
       {/* Future routes will go here:
-          /search/:keyword  (Phase 3)
-          /product/:id      (Phase 3)
           /cart             (Phase 4)
           /checkout         (Phase 4)
           /orders, /orders/:id

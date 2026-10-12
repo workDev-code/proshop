@@ -1,17 +1,30 @@
 import { ReactNode } from 'react';
-import { Box, Stack, Typography, Breadcrumbs, Link as MuiLink } from '@mui/material';
+import {
+  Box,
+  Stack,
+  Typography,
+  Breadcrumbs,
+  Link as MuiLink,
+  Avatar,
+} from '@mui/material';
 import { Link } from 'react-router-dom';
 import { NavigateNext as ChevronIcon } from '@mui/icons-material';
 
-export interface Crumb { label: string; to?: string }
+export interface Crumb {
+  label: string;
+  to?: string;
+}
+
 export interface Props {
   title: string;
   subtitle?: string;
   breadcrumbs?: Crumb[];
   actions?: ReactNode;
+  /** Optional icon shown next to the title */
+  icon?: ReactNode;
 }
 
-export const PageHeader = ({ title, subtitle, breadcrumbs, actions }: Props) => (
+export const PageHeader = ({ title, subtitle, breadcrumbs, actions, icon }: Props) => (
   <Box sx={{ mb: 4 }}>
     {breadcrumbs && breadcrumbs.length > 0 && (
       <Breadcrumbs
@@ -31,10 +44,15 @@ export const PageHeader = ({ title, subtitle, breadcrumbs, actions }: Props) => 
               {c.label}
             </MuiLink>
           ) : (
-            <Typography key={i} variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem' }}>
+            <Typography
+              key={i}
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontSize: '0.8125rem' }}
+            >
               {c.label}
             </Typography>
-          )
+          ),
         )}
       </Breadcrumbs>
     )}
@@ -45,19 +63,33 @@ export const PageHeader = ({ title, subtitle, breadcrumbs, actions }: Props) => 
       alignItems={{ xs: 'flex-start', md: 'center' }}
       spacing={2}
     >
-      <Box>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
-          {title}
-        </Typography>
-        {subtitle && (
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
-            {subtitle}
-          </Typography>
+      <Stack direction="row" alignItems="center" spacing={2}>
+        {icon && (
+          <Avatar
+            sx={{
+              width: 48,
+              height: 48,
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+            }}
+          >
+            {icon}
+          </Avatar>
         )}
-      </Box>
-      {actions && <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>{actions}</Box>}
+        <Box>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+            {title}
+          </Typography>
+          {subtitle && (
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
+      </Stack>
+      {actions && (
+        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>{actions}</Box>
+      )}
     </Stack>
   </Box>
 );
-
-// Suppress noUnusedLocals
