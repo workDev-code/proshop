@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f2937"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f2937"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <!-- Camera body -->
+  <rect x="140" y="180" width="320" height="240" rx="16" fill="url(#body)" stroke="#4b5563" stroke-width="3"/>
+  <!-- Top viewfinder hump -->
+  <rect x="200" y="140" width="120" height="50" rx="8" fill="url(#body)" stroke="#4b5563" stroke-width="2"/>
+  <!-- Big lens -->
+  <circle cx="240" cy="300" r="80" fill="#030712" stroke="#6b7280" stroke-width="4"/>
+  <circle cx="240" cy="300" r="60" fill="#0a0a1a" stroke="#9ca3af" stroke-width="2"/>
+  <circle cx="240" cy="300" r="35" fill="#1e3a8a" opacity="0.6"/>
+  <circle cx="225" cy="285" r="10" fill="#dbeafe" opacity="0.7"/>
+  <!-- Small lens -->
+  <circle cx="380" cy="300" r="40" fill="#030712" stroke="#6b7280" stroke-width="3"/>
+  <circle cx="380" cy="300" r="25" fill="#0a0a1a" stroke="#9ca3af" stroke-width="1.5"/>
+  <!-- Grip texture -->
+  <rect x="155" y="200" width="20" height="200" fill="#1f2937" opacity="0.5"/>
+  <text x="155" y="245" font-family="sans-serif" font-size="8" fill="#6b7280" transform="rotate(90 155 245)">▌▌▌▌▌▌▌▌▌▌▌</text>
+  <!-- Brand -->
+  <text x="300" y="450" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#f3f4f6" letter-spacing="4">EOS 80D</text>
+  <text x="300" y="475" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#9ca3af">Canon DSLR Camera</text>
+  <text x="300" y="540" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#dc2626" letter-spacing="3">CANON</text>
+</svg>

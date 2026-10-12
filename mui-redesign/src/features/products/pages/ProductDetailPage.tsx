@@ -28,6 +28,7 @@ import { LoadingState } from '../../../components/feedback/LoadingState';
 import { ErrorState } from '../../../components/feedback/ErrorState';
 import { EmptyState } from '../../../components/feedback/EmptyState';
 import { ProductRating } from '../components/ProductRating';
+import { ProductImage } from '../components/ProductImage';
 import { PriceDisplay } from '../components/PriceDisplay';
 import { StockBadge } from '../components/StockBadge';
 import { ReviewItem } from '../components/ReviewItem';
@@ -110,23 +111,8 @@ export const ProductDetailPage = () => {
         {/* Image */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ overflow: 'hidden' }}>
-            <Box
-              sx={{
-                aspectRatio: '1 / 1',
-                bgcolor: 'action.hover',
-                position: 'relative',
-              }}
-            >
-              <Box
-                component="img"
-                src={image}
-                alt={name}
-                sx={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
+            <Box sx={{ position: 'relative' }}>
+              <ProductImage src={image} alt={name} product={product} />
               {outOfStock && (
                 <Chip
                   label="Out of stock"
@@ -137,6 +123,7 @@ export const ProductDetailPage = () => {
                     right: 16,
                     fontWeight: 700,
                     fontSize: '0.875rem',
+                    zIndex: 1,
                   }}
                 />
               )}

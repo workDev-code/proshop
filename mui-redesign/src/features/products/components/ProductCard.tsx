@@ -11,6 +11,7 @@ import {
 import type { Product } from '../types';
 import { PriceDisplay } from './PriceDisplay';
 import { ProductRating } from './ProductRating';
+import { ProductImage } from './ProductImage';
 
 interface Props {
   product: Product;
@@ -45,27 +46,8 @@ export const ProductCard = ({ product }: Props) => {
         sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
       >
         {/* Image */}
-        <Box
-          sx={{
-            position: 'relative',
-            aspectRatio: '1 / 1',
-            bgcolor: 'action.hover',
-            overflow: 'hidden',
-          }}
-        >
-          <Box
-            component="img"
-            src={image}
-            alt={name}
-            loading="lazy"
-            sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transition: 'transform 300ms ease',
-              '.MuiCardActionArea-root:hover &': { transform: 'scale(1.05)' },
-            }}
-          />
+        <Box sx={{ position: 'relative' }}>
+          <ProductImage src={image} alt={name} product={product} />
           {outOfStock && (
             <Chip
               label="Out of stock"
@@ -76,6 +58,7 @@ export const ProductCard = ({ product }: Props) => {
                 top: 8,
                 right: 8,
                 fontWeight: 600,
+                zIndex: 1,
               }}
             />
           )}

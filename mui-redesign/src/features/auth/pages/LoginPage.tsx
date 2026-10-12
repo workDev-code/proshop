@@ -23,6 +23,7 @@ import {
   Email as EmailIcon,
   Lock as LockIcon,
   Person as PersonIcon,
+  FlashOn as FlashIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import {
@@ -76,6 +77,14 @@ export const LoginPage = ({ mode = 'login' }: Props) => {
     defaultValues: { name: '', email: '', password: '', confirmPassword: '' },
   });
   const [registerMutate, registerState] = useRegisterMutation();
+
+  const fillDemoCredentials = (which: 'admin' | 'user') => {
+    loginForm.reset({
+      email: which === 'admin' ? 'admin@email.com' : 'john@email.com',
+      password: '123456',
+    });
+    registerForm.reset();
+  };
 
   const isSubmitting = loginState.isLoading || registerState.isLoading;
   const apiError = (loginState.error || registerState.error) as
@@ -232,14 +241,31 @@ export const LoginPage = ({ mode = 'login' }: Props) => {
               </Button>
 
               <Alert severity="info" sx={{ mt: 2 }} icon={false}>
-                <Typography variant="caption" component="div">
+                <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
                   <strong>Demo accounts:</strong>
                 </Typography>
-                <Typography variant="caption" component="div" sx={{ fontFamily: 'monospace' }}>
-                  admin@email.com / 123456
-                </Typography>
-                <Typography variant="caption" component="div" sx={{ fontFamily: 'monospace' }}>
-                  john@email.com / 123456
+                <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<FlashIcon />}
+                    onClick={() => fillDemoCredentials('admin')}
+                    sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }}
+                  >
+                    admin@email.com
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<FlashIcon />}
+                    onClick={() => fillDemoCredentials('user')}
+                    sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }}
+                  >
+                    john@email.com
+                  </Button>
+                </Stack>
+                <Typography variant="caption" component="div" sx={{ fontFamily: 'monospace', mt: 1, color: 'text.secondary' }}>
+                  Password for both: 123456
                 </Typography>
               </Alert>
             </Box>

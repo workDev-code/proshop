@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#27272a"/>
+    </linearGradient>
+    <linearGradient id="mouse" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3f3f46"/>
+      <stop offset="50%" stop-color="#27272a"/>
+      <stop offset="100%" stop-color="#18181b"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <!-- Mouse top view -->
+  <g transform="translate(200, 130)">
+    <!-- Body -->
+    <path d="M 0 170 Q 0 0 100 0 Q 200 0 200 170 L 200 240 Q 200 280 100 280 Q 0 280 0 240 Z" fill="url(#mouse)" stroke="#52525b" stroke-width="2"/>
+    <!-- Center divider -->
+    <line x1="100" y1="0" x2="100" y2="200" stroke="#52525b" stroke-width="1.5" opacity="0.6"/>
+    <!-- Left click button -->
+    <path d="M 0 170 Q 0 0 100 0 L 100 200 L 5 200 Q 0 200 0 195 Z" fill="none"/>
+    <!-- Right click button -->
+    <path d="M 200 170 Q 200 0 100 0 L 100 200 L 195 200 Q 200 200 200 195 Z" fill="none"/>
+    <!-- Scroll wheel -->
+    <rect x="85" y="100" width="30" height="50" rx="4" fill="#71717a" stroke="#a1a1aa" stroke-width="1"/>
+    <line x1="85" y1="115" x2="115" y2="115" stroke="#27272a" stroke-width="1"/>
+    <line x1="85" y1="125" x2="115" y2="125" stroke="#27272a" stroke-width="1"/>
+    <line x1="85" y1="135" x2="115" y2="135" stroke="#27272a" stroke-width="1"/>
+    <!-- DPI button -->
+    <rect x="90" y="160" width="20" height="6" rx="2" fill="#71717a"/>
+    <!-- RGB glow under -->
+    <ellipse cx="100" cy="290" rx="100" ry="10" fill="#06b6d4" opacity="0.3"/>
+  </g>
+  <text x="300" y="490" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#f4f4f5" letter-spacing="2">G-SERIES</text>
+  <text x="300" y="515" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#a1a1aa">Gaming Mouse</text>
+  <text x="300" y="555" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#06b6d4" letter-spacing="3">LOGITECH</text>
+</svg>

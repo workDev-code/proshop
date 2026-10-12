@@ -8,3 +8,4 @@ export * from './components/StockBadge';
 export * from './components/HeroCarousel';
 export * from './components/ReviewItem';
 export * from './components/ReviewForm';
+export * from './components/ProductImage';

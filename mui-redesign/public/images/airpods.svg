@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="case" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f5f7"/>
+      <stop offset="100%" stop-color="#d2d2d7"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <!-- Case -->
+  <ellipse cx="300" cy="380" rx="120" ry="90" fill="url(#case)" stroke="#86868b" stroke-width="2"/>
+  <ellipse cx="300" cy="370" rx="100" ry="75" fill="#f5f5f7"/>
+  <circle cx="300" cy="350" r="8" fill="#86868b" opacity="0.5"/>
+  <!-- Left AirPod -->
+  <g transform="translate(180, 200)">
+    <ellipse cx="0" cy="0" rx="35" ry="50" fill="#f5f5f7" stroke="#86868b" stroke-width="1.5"/>
+    <rect x="-5" y="35" width="10" height="80" fill="#f5f5f7" stroke="#86868b" stroke-width="1.5"/>
+    <ellipse cx="0" cy="115" rx="6" ry="4" fill="#86868b"/>
+  </g>
+  <!-- Right AirPod -->
+  <g transform="translate(420, 200)">
+    <ellipse cx="0" cy="0" rx="35" ry="50" fill="#f5f5f7" stroke="#86868b" stroke-width="1.5"/>
+    <rect x="-5" y="35" width="10" height="80" fill="#f5f5f7" stroke="#86868b" stroke-width="1.5"/>
+    <ellipse cx="0" cy="115" rx="6" ry="4" fill="#86868b"/>
+  </g>
+  <!-- Brand label -->
+  <text x="300" y="530" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="18" font-weight="600" fill="#86868b" letter-spacing="2">APPLE</text>
+  <text x="300" y="560" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="14" fill="#a1a1a6">AirPods Wireless</text>
+</svg>

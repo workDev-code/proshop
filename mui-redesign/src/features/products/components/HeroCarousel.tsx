@@ -70,7 +70,7 @@ export const HeroCarousel = ({ products, interval = 5000 }: Props) => {
         sx={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 100%), url(${product.image})`,
+          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 100%), url(${product.image.replace(/\.jpg$/, '.svg')})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           transition: 'background-image 400ms ease',
