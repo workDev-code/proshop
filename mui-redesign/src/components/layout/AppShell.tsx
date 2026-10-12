@@ -44,13 +44,18 @@ export const AppShell = () => {
           flexGrow: 1,                          // take remaining width
           minWidth: 0,                          // prevent flex item overflow with long content
           mt: '64px',                            // offset for fixed TopBar
-          p: { xs: 2, sm: 3, md: 4 },           // uniform padding
+          px: { xs: 2, sm: 3, md: 4 },           // uniform padding
+          py: { xs: 2, sm: 3, md: 4 },
           transition: 'padding 200ms ease',
           minHeight: 'calc(100vh - 64px)',
           bgcolor: 'background.default',
+          width: '100%',
         }}
       >
-        <Outlet />
+        {/* Centered max-width container so content doesn't stretch on huge screens */}
+        <Box sx={{ maxWidth: 1440, mx: 'auto', width: '100%' }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

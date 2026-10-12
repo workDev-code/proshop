@@ -97,11 +97,20 @@ export const SideNav = ({ variant, open, onClose, mini, onToggleMini, width }: P
     });
 
   const drawerContent = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        position: 'relative',
+      }}
+    >
       <Toolbar
         sx={{
           minHeight: 64,
           display: 'flex',
+          flexShrink: 0,
           justifyContent: mini ? 'center' : 'space-between',
           alignItems: 'center',
           px: 2,
@@ -116,20 +125,43 @@ export const SideNav = ({ variant, open, onClose, mini, onToggleMini, width }: P
           {mini ? <ExpandIcon /> : <CollapseIcon />}
         </IconButton>
       </Toolbar>
-      <Divider />
-      <List sx={{ flex: 1, py: 1 }}>{renderList(NAV)}</List>
-      <Divider />
-      <Box sx={{ p: 1 }}>
+      <Divider sx={{ flexShrink: 0 }} />
+      <List sx={{ py: 1, flexShrink: 0 }}>{renderList(NAV)}</List>
+
+      {/* Bottom group — absolutely positioned so it sits at the bottom of the drawer */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          bgcolor: 'background.paper',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box sx={{ p: 1 }}>
+          {!mini && (
+            <Typography
+              variant="overline"
+              color="text.secondary"
+              sx={{ pl: 1.5, fontWeight: 600 }}
+            >
+              Tools
+            </Typography>
+          )}
+          <List dense>{renderList(SECONDARY)}</List>
+        </Box>
         {!mini && (
-          <Typography
-            variant="overline"
-            color="text.secondary"
-            sx={{ pl: 1.5, fontWeight: 600 }}
-          >
-            Tools
-          </Typography>
+          <Box sx={{ px: 2, py: 1, borderTop: '1px dashed', borderColor: 'divider' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 500 }}>
+              ProShop v3.0
+            </Typography>
+            <Typography variant="caption" color="text.disabled" sx={{ display: 'block', fontSize: '0.65rem' }}>
+              Boutique commerce demo
+            </Typography>
+          </Box>
         )}
-        <List dense>{renderList(SECONDARY)}</List>
       </Box>
     </Box>
   );

@@ -12,9 +12,9 @@ interface Props {
 type Metric = 'rating' | 'numReviews' | 'price';
 
 const METRIC_LABEL: Record<Metric, string> = {
-  rating: 'Top rated',
-  numReviews: 'Most reviewed',
-  price: 'Most expensive',
+  rating: 'Rating',
+  numReviews: 'Reviews',
+  price: 'Price',
 };
 
 const METRIC_AXIS: Record<Metric, string> = {
@@ -23,23 +23,35 @@ const METRIC_AXIS: Record<Metric, string> = {
   price: 'Price ($)',
 };
 
+/** Truncate a product name to fit narrow y-axis labels. */
+const truncate = (s: string, max = 22) =>
+  s.length <= max ? s : `${s.slice(0, max - 1).trimEnd()}…`;
+
 /**
  * Horizontal bar chart of top N products by selected metric.
  * - Toggle between rating / numReviews / price
  * - Tooltip shows brand + value
+ * - Truncated product names so they fit narrow columns
  */
 export const TopProductsChart = ({ products }: Props) => {
   const [metric, setMetric] = useState<Metric>('rating');
-    const safeProducts = products ?? [];
-  const data = useMemo(() => topProductsBy(safeProducts, metric, 8), [products, metric]);
+  const safeProducts = products ?? [];
+  const data = useMemo(() => topProductsBy(safeProducts, metric, 6), [safeProducts, metric]);
+  const truncated = useMemo(() => data.map((d) => truncate(d.name, 20)), [data]);
 
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          justifyContent="space-between"
+          spacing={1}
+          sx={{ mb: 1.5 }}
+        >
           <Stack direction="row" alignItems="center" spacing={1}>
-            <StarIcon color="primary" />
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            <StarIcon color="primary" fontSize="small" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
               Top products
             </Typography>
           </Stack>
@@ -48,20 +60,35 @@ export const TopProductsChart = ({ products }: Props) => {
             exclusive
             size="small"
             onChange={(_, v) => v && setMetric(v)}
+            sx={{
+              '& .MuiToggleButton-root': {
+                px: 1.25,
+                py: 0.25,
+                fontSize: '0.7rem',
+                textTransform: 'none',
+                fontWeight: 600,
+              },
+            }}
           >
             {(Object.keys(METRIC_LABEL) as Metric[]).map((m) => (
-              <ToggleButton key={m} value={m} sx={{ px: 1.5, fontSize: '0.75rem' }}>
+              <ToggleButton key={m} value={m}>
                 {METRIC_LABEL[m]}
               </ToggleButton>
             ))}
           </ToggleButtonGroup>
         </Stack>
 
-        <Box sx={{ width: '100%', height: 320 }}>
+        <Box sx={{ width: '100%', height: 280 }}>
           {data.length > 0 ? (
             <BarChart
               xAxis={[{ label: METRIC_AXIS[metric] }]}
-              yAxis={[{ data: data.map((d) => d.name), scaleType: 'band', tickLabelStyle: { fontSize: 11 } }]}
+              yAxis={[
+                {
+                  data: truncated,
+                  scaleType: 'band',
+                  tickLabelStyle: { fontSize: 11 },
+                },
+              ]}
               series={[
                 {
                   data: data.map((d) => d.value),
@@ -70,9 +97,10 @@ export const TopProductsChart = ({ products }: Props) => {
                 },
               ]}
               layout="horizontal"
-              height={320}
-              margin={{ top: 16, right: 16, bottom: 48, left: 100 }}
+              height={280}
+              margin={{ top: 16, right: 16, bottom: 44, left: 110 }}
               grid={{ horizontal: true }}
+              slotProps={{ legend: { hidden: true } }}
             />
           ) : (
             <Box

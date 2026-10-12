@@ -121,10 +121,10 @@ export const AdminDashboardPage = () => {
             <Grid size={{ xs: 12, lg: 4 }}>
               <CategoryChart products={products?.products ?? []} />
             </Grid>
-            <Grid size={{ xs: 12, lg: 8 }}>
+            <Grid size={{ xs: 12, lg: 7 }}>
               <OrdersChart orders={orders} days={30} />
             </Grid>
-            <Grid size={{ xs: 12, lg: 4 }}>
+            <Grid size={{ xs: 12, lg: 5 }}>
               <TopProductsChart products={products?.products ?? []} />
             </Grid>
           </Grid>
