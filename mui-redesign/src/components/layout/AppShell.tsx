@@ -52,11 +52,11 @@ export const AppShell = () => {
           bgcolor: 'background.default',
         }}
       >
-        {/* Centered max-width container so content doesn't stretch on huge screens */}
+        {/* Left-aligned max-width container — caps width on huge screens
+            but keeps content hugging the left so the sidebar is the visual anchor */}
         <Box
           sx={{
             maxWidth: 1440,
-            mx: 'auto',
             px: { xs: 2, sm: 3, md: 4 },
             py: { xs: 2, sm: 3, md: 4 },
           }}
