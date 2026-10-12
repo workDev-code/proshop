@@ -7,6 +7,7 @@ import {
   TextField,
   Chip,
   InputAdornment,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -124,14 +125,22 @@ export const ProductListPage = () => {
       getActions: ({ row }) => [
         <GridActionsCellItem
           key="edit"
-          icon={<EditIcon />}
+          icon={
+            <Tooltip title="Edit product">
+              <EditIcon />
+            </Tooltip>
+          }
           label="Edit"
           onClick={() => navigate(`/admin/products/${row._id}/edit`)}
           sx={{ color: 'primary.main' }}
         />,
         <GridActionsCellItem
           key="delete"
-          icon={<DeleteIcon />}
+          icon={
+            <Tooltip title="Delete product">
+              <DeleteIcon />
+            </Tooltip>
+          }
           label="Delete"
           onClick={() => setConfirmDelete(row._id)}
           sx={{ color: 'error.main' }}
@@ -189,7 +198,6 @@ export const ProductListPage = () => {
           sx={{
             border: 0,
             '& .MuiDataGrid-cell:focus': { outline: 'none' },
-            '& .MuiDataGrid-row:hover': { bgcolor: 'action.hover' },
           }}
         />
       </Box>

@@ -3,6 +3,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -108,14 +109,22 @@ export const CouponListPage = () => {
       getActions: ({ row }) => [
         <GridActionsCellItem
           key="edit"
-          icon={<EditIcon />}
+          icon={
+            <Tooltip title="Edit coupon">
+              <EditIcon />
+            </Tooltip>
+          }
           label="Edit"
           onClick={() => navigate(`/admin/coupons/${row._id}/edit`)}
           sx={{ color: 'primary.main' }}
         />,
         <GridActionsCellItem
           key="delete"
-          icon={<DeleteIcon />}
+          icon={
+            <Tooltip title="Delete coupon">
+              <DeleteIcon />
+            </Tooltip>
+          }
           label="Delete"
           onClick={() => setConfirmDelete(row._id)}
           sx={{ color: 'error.main' }}
@@ -156,7 +165,6 @@ export const CouponListPage = () => {
           sx={{
             border: 0,
             '& .MuiDataGrid-cell:focus': { outline: 'none' },
-            '& .MuiDataGrid-row:hover': { bgcolor: 'action.hover' },
           }}
         />
       </Box>

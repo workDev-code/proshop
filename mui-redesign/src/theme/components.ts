@@ -7,7 +7,7 @@ import type { Components, Theme } from '@mui/material';
 const LINE = '#e8e8e1';
 const INK = '#20211f';
 
-export const components: Components<Omit<Theme, 'components'>> = {
+export const components: Components<Omit<Theme, 'components'>> & { MuiDataGrid?: any } = {
   MuiCssBaseline: {
     styleOverrides: {
       body: {
@@ -130,6 +130,48 @@ export const components: Components<Omit<Theme, 'components'>> = {
       root: { borderRadius: 999, height: 28, fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.04em' },
       label: { paddingLeft: 12, paddingRight: 12 },
       outlined: { borderColor: LINE },
+    },
+  },
+
+  MuiDataGrid: {
+    styleOverrides: {
+      root: {
+        border: 'none',
+        backgroundColor: 'transparent',
+        '--DataGrid-rowBorderColor': '#e8e8e1',
+        fontSize: '0.875rem',
+      },
+      columnHeaders: {
+        backgroundColor: 'transparent',
+        borderBottom: '1px solid #e8e8e1',
+        minHeight: '48px !important',
+      },
+      columnHeader: {
+        '&:focus, &:focus-within': { outline: 'none' },
+        '& .MuiDataGrid-columnHeaderTitle': {
+          fontWeight: 600,
+          color: '#5e6057',
+          fontSize: '0.7rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+        },
+      },
+      cell: {
+        '&:focus, &:focus-within': { outline: 'none' },
+      },
+      row: {
+        '&:hover': { backgroundColor: 'rgba(32,33,31,0.025)' },
+        '&.Mui-selected': { backgroundColor: 'rgba(217,93,57,0.06)' },
+        '&.Mui-selected:hover': { backgroundColor: 'rgba(217,93,57,0.10)' },
+      },
+      footerContainer: {
+        borderTop: '1px solid #e8e8e1',
+      },
+      iconButtonContainer: {
+        '& .MuiButtonBase-root': {
+          color: '#777a72',
+        },
+      },
     },
   },
 

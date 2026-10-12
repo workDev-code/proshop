@@ -4,6 +4,7 @@ import {
   Box,
   TextField,
   InputAdornment,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -125,7 +126,11 @@ export const OrderListPage = () => {
       getActions: ({ row }) => [
         <GridActionsCellItem
           key="view"
-          icon={<ViewIcon />}
+          icon={
+            <Tooltip title="View order">
+              <ViewIcon />
+            </Tooltip>
+          }
           label="View"
           component={RouterLink as any}
           // @ts-expect-error - typing inline
@@ -135,7 +140,11 @@ export const OrderListPage = () => {
         row.isPaid && !row.isDelivered ? (
           <GridActionsCellItem
             key="deliver"
-            icon={<DeliverIcon />}
+            icon={
+              <Tooltip title="Mark as delivered">
+                <DeliverIcon />
+              </Tooltip>
+            }
             label="Mark delivered"
             onClick={() => handleDeliver(row._id)}
             disabled={marking}
@@ -185,7 +194,6 @@ export const OrderListPage = () => {
           sx={{
             border: 0,
             '& .MuiDataGrid-cell:focus': { outline: 'none' },
-            '& .MuiDataGrid-row:hover': { bgcolor: 'action.hover' },
           }}
         />
       </Box>

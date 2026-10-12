@@ -6,6 +6,7 @@ import {
   InputAdornment,
   Avatar,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -119,14 +120,22 @@ export const UserListPage = () => {
       getActions: ({ row }) => [
         <GridActionsCellItem
           key="edit"
-          icon={<EditIcon />}
+          icon={
+            <Tooltip title="Edit user">
+              <EditIcon />
+            </Tooltip>
+          }
           label="Edit"
           onClick={() => navigate(`/admin/users/${row._id}/edit`)}
           sx={{ color: 'primary.main' }}
         />,
         <GridActionsCellItem
           key="delete"
-          icon={<DeleteIcon />}
+          icon={
+            <Tooltip title="Delete user">
+              <DeleteIcon />
+            </Tooltip>
+          }
           label="Delete"
           onClick={() => setConfirmDelete(row._id)}
           sx={{ color: 'error.main' }}
@@ -174,7 +183,6 @@ export const UserListPage = () => {
           sx={{
             border: 0,
             '& .MuiDataGrid-cell:focus': { outline: 'none' },
-            '& .MuiDataGrid-row:hover': { bgcolor: 'action.hover' },
           }}
         />
       </Box>
