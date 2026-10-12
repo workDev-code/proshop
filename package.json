@@ -7,11 +7,11 @@
   "scripts": {
     "start": "node backend/server.js",
     "server": "nodemon backend/server.js",
-    "client": "npm start --prefix frontend",
+    "client": "npm run dev --prefix mui-redesign",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "data:import": "node backend/seeder",
     "data:destroy": "node backend/seeder -d",
-    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+    "build": "npm install --prefix mui-redesign && npm run build --prefix mui-redesign",
     "generate-toc": "markdown-toc -i readme.md",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch"
@@ -29,6 +29,7 @@
     "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
+    "@babel/parser": "^8.0.7",
     "@types/express": "^4.17.17",
     "@types/jest": "^30.0.0",
     "concurrently": "^7.6.0",

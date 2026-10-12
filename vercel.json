@@ -2,53 +2,36 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "name": "proshop-v2",
-  "buildCommand": "cd frontend && npm run build",
-  "devCommand": "cd frontend && npm start",
-  "installCommand": "cd frontend && npm install",
-  "outputDirectory": "frontend/build",
-
-  "framework": null,
-
+  "buildCommand": "cd mui-redesign && npm run build",
+  "devCommand": "cd mui-redesign && npm run dev",
+  "installCommand": "cd mui-redesign && npm install",
+  "outputDirectory": "mui-redesign/dist",
+  "framework": "vite",
   "git": {
     "deploymentEnabled": {
       "main": true
     }
   },
-
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
-
   "headers": [
     {
-      "source": "/static/(.*)",
+      "source": "/assets/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     }
   ],
-
   "env": {
-    "REACT_APP_API_URL": "@react-app-api-url"
+    "VITE_API_URL": "@vite-api-url"
   }
 }
