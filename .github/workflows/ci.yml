@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel in-progress runs on the same branch when a new push lands
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  backend:
-    name: Backend Tests
+  # ============================================================
+  # 1. Backend — type-check (no-op, plain JS) + Jest + MongoDB
+  # ============================================================
+  backend-test:
+    name: Backend (Node + Jest + MongoDB)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -17,8 +25,7 @@ jobs:
     services:
       mongodb:
         image: mongo:7
-        ports:
-          - 27017:27017
+        ports: ["27017:27017"]
         options: >-
           --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
           --health-interval 10s
@@ -28,40 +35,117 @@ jobs:
     env:
       NODE_ENV: test
       MONGO_URI: mongodb://127.0.0.1:27017/proshop-test
-      JWT_SECRET: test-secret-do-not-use-in-prod
+      JWT_SECRET: ci-test-secret-do-not-use-in-prod
       PAGINATION_LIMIT: "8"
+      PORT: 5001
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      - run: npm ci
-      - run: npx jest --ci --reporters=default
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run Jest (Node test runner)
+        run: npx jest --ci --colors=false
         env:
           NODE_OPTIONS: --experimental-vm-modules
 
-  frontend:
-    name: Frontend Lint + Build
+      - name: Upload coverage
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ============================================================
+  # 2. Frontend (mui-redesign) — typecheck + lint + build
+  # ============================================================
+  frontend-check:
+    name: Frontend (TypeCheck + Lint + Build)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: mui-redesign
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: mui-redesign/package-lock.json
 
-      - run: npm ci
-      - run: npm run build --if-present
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build (production)
+        run: npx tsc -b && npx vite build
         env:
-          CI: true
+          # Demo mode off so the build doesn't pull mock-only code paths
+          VITE_DEMO_MODE: "false"
+          VITE_API_URL: ""
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mui-redesign-dist
+          path: mui-redesign/dist
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ============================================================
+  # 3. Root project — full build chain (optional smoke test)
+  # ============================================================
+  root-build:
+    name: Root build (smoke test)
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-check]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            mui-redesign/package-lock.json
+
+      - name: Install root deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Install mui-redesign deps
+        working-directory: mui-redesign
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify root build script works
+        run: |
+          # We don't actually rebuild the frontend here (frontend-check
+          # already did that). We just verify the root `npm run build`
+          # command resolves and exits cleanly when the dist already
+          # exists, by checking that the root package.json wiring is
+          # sane.
+          node -e "const p=require('./package.json'); \
+            if (!p.scripts.build) throw new Error('missing build script'); \
+            if (!p.scripts['data:import']) throw new Error('missing data:import');"

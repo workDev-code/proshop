@@ -1,0 +1,43 @@
+# Dependabot configuration
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+
+updates:
+  # ----- Root project (backend)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      backend-deps:
+        applies-to: version-updates
+        patterns: ["*"]
+        exclude-patterns: ["mui-redesign"]
+    commit-message:
+      prefix: "deps(backend)"
+    labels: ["dependencies", "backend"]
+
+  # ----- mui-redesign (frontend)
+  - package-ecosystem: "npm"
+    directory: "/mui-redesign"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(frontend)"
+    labels: ["dependencies", "frontend"]
+
+  # ----- GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci"
+    labels: ["dependencies", "ci"]

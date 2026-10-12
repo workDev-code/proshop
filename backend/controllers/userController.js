@@ -32,9 +32,20 @@ const authUser = asyncHandler(async (req, res) => {
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, phone } = req.body;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Validate inputs up-front so callers get 400 instead of 500 from
+  // Mongoose validation errors thrown inside the model create.
+  if (!name || typeof name !== 'string' || name.trim() === '') {
+    res.status(400);
+    throw new Error('Name is required');
+  }
   if (!email || !emailRegex.test(email)) {
     res.status(400);
     throw new Error('Invalid email format');
+  }
+  if (!password || typeof password !== 'string' || password.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters');
   }
 
   const userExists = await User.findOne({ email });
@@ -44,7 +55,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const user = await User.create({
-    name,
+    name: name.trim(),
     email,
     password,
     phone: phone || '',
