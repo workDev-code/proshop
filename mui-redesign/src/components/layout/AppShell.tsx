@@ -25,9 +25,10 @@ export const AppShell = () => {
       />
 
       {/*
-        SideNav is a flex item that takes its own width (240 or 64).
-        DO NOT also set margin-left or width on <main> — it would double-count
-        and push the content area way off to the right.
+        SideNav is a MUI Drawer (permanent variant on desktop) which is
+        position:fixed and overlays the page. So <main> needs marginLeft
+        to push content out from under the drawer. The mobile drawer
+        (temporary) doesn't need this — it slides in over content.
       */}
       <SideNav
         variant={isDesktop ? 'permanent' : 'temporary'}
@@ -41,19 +42,25 @@ export const AppShell = () => {
       <Box
         component="main"
         sx={{
-          flexGrow: 1,                          // take remaining width
+          flexGrow: 1,
+          flexBasis: 0,                         // grow from 0 so it shares space with SideNav
           minWidth: 0,                          // prevent flex item overflow with long content
           mt: '64px',                            // offset for fixed TopBar
-          px: { xs: 2, sm: 3, md: 4 },           // uniform padding
-          py: { xs: 2, sm: 3, md: 4 },
-          transition: 'padding 200ms ease',
+          ml: { xs: 0, md: `${drawerWidth}px` }, // offset for permanent Drawer on desktop
+          transition: 'margin-left 200ms ease',
           minHeight: 'calc(100vh - 64px)',
           bgcolor: 'background.default',
-          width: '100%',
         }}
       >
         {/* Centered max-width container so content doesn't stretch on huge screens */}
-        <Box sx={{ maxWidth: 1440, mx: 'auto', width: '100%' }}>
+        <Box
+          sx={{
+            maxWidth: 1440,
+            mx: 'auto',
+            px: { xs: 2, sm: 3, md: 4 },
+            py: { xs: 2, sm: 3, md: 4 },
+          }}
+        >
           <Outlet />
         </Box>
       </Box>
