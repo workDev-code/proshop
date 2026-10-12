@@ -47,3 +47,4 @@ http
 !.vscode/extensions.json
 .idea
 .DS_Store
+mui-redesign/dist
