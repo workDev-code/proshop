@@ -13,7 +13,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ReduxProvider store={store}>
       <AppThemeProvider>
         <ToastProvider>
-          <BrowserRouter>
+          <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
             <App />
           </BrowserRouter>
         </ToastProvider>
