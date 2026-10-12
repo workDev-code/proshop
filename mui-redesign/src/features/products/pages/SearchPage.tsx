@@ -1,4 +1,4 @@
-import { useParams, useSearchParams, Link as RouterLink } from 'react-router-dom';
+import { useParams, useSearchParams, Link as RouterLink, useNavigate } from 'react-router-dom';
 import { Box, Stack, Typography, Grid2 as Grid, Button, Chip } from '@mui/material';
 import {
   SearchOff as NoSearchIcon,
@@ -15,6 +15,7 @@ import { useGetProductsQuery } from '../productApi';
 
 export const SearchPage = () => {
   const { keyword = '' } = useParams<{ keyword: string }>();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const query = paramsToQuery(params);
   const page = Number(params.get('pageNumber') ?? 1);
@@ -82,7 +83,7 @@ export const SearchPage = () => {
               )}". Try different keywords or adjust the filters.`}
               action={{
                 label: 'Browse all products',
-                onClick: () => window.location.assign('/'),
+                onClick: () => navigate('/'),
               }}
             />
           ) : (
