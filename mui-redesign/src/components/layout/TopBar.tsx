@@ -4,6 +4,7 @@ import {
   AppBar,
   Toolbar,
   IconButton,
+  Badge,
   Box,
   InputBase,
   Avatar,
@@ -26,10 +27,13 @@ import {
   Person as PersonIcon,
   DesignServices as DesignIcon,
   AdminPanelSettings as AdminIcon,
+  ShoppingCart as CartIcon,
+  Favorite as FavoriteIcon,
 } from '@mui/icons-material';
 import { useAppTheme } from '../../theme/ThemeProvider';
 import { useCurrentUser } from '../../features/auth/hooks';
 import { useLogoutMutation } from '../../features/auth/authApi';
+import { useCart } from '../../features/cart/hooks';
 import { useToast } from '../../hooks/useToast';
 
 interface Props {
@@ -43,6 +47,15 @@ const getInitials = (name: string): string => {
   if (parts.length === 0) return '?';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const CartBadge = () => {
+  const { totals } = useCart();
+  return (
+    <Badge badgeContent={totals.itemsCount} color="primary" max={99}>
+      <CartIcon />
+    </Badge>
+  );
 };
 
 export const TopBar = ({ onMenuClick, showMenuButton, currentPath }: Props) => {
@@ -142,6 +155,32 @@ export const TopBar = ({ onMenuClick, showMenuButton, currentPath }: Props) => {
             }}
           />
         </Box>
+
+        {/* Wishlist */}
+        <Tooltip title="Wishlist">
+          <IconButton
+            component={Link}
+            to="/wishlist"
+            color={currentPath === '/wishlist' ? 'primary' : 'default'}
+            sx={{ ml: 0.5 }}
+          >
+            <Badge color="error" variant="dot" invisible={true}>
+              <FavoriteIcon />
+            </Badge>
+          </IconButton>
+        </Tooltip>
+
+        {/* Cart */}
+        <Tooltip title="Cart">
+          <IconButton
+            component={Link}
+            to="/cart"
+            color={currentPath?.startsWith('/cart') ? 'primary' : 'default'}
+            sx={{ ml: 0.5 }}
+          >
+            <CartBadge />
+          </IconButton>
+        </Tooltip>
 
         {/* Design system quick link */}
         <Tooltip title="Design System">

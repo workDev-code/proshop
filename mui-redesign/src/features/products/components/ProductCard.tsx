@@ -12,6 +12,7 @@ import type { Product } from '../types';
 import { PriceDisplay } from './PriceDisplay';
 import { ProductRating } from './ProductRating';
 import { ProductImage } from './ProductImage';
+import { WishlistButton } from '../../wishlist/components/WishlistButton';
 
 interface Props {
   product: Product;
@@ -48,6 +49,9 @@ export const ProductCard = ({ product }: Props) => {
         {/* Image */}
         <Box sx={{ position: 'relative' }}>
           <ProductImage src={image} alt={name} product={product} />
+          <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
+            <WishlistButton productId={_id} size="small" />
+          </Box>
           {outOfStock && (
             <Chip
               label="Out of stock"

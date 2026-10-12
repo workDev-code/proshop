@@ -16,12 +16,11 @@ import {
   Dashboard as DashboardIcon,
   Inventory2 as ProductsIcon,
   ShoppingCart as OrdersIcon,
-  Group as UsersIcon,
-  LocalOffer as CouponsIcon,
   Favorite as WishlistIcon,
   DesignServices as DesignIcon,
   ChevronLeft as CollapseIcon,
   ChevronRight as ExpandIcon,
+  Person as ProfileIcon,
 } from '@mui/icons-material';
 
 interface NavItem {
@@ -31,12 +30,11 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { label: 'Dashboard', to: '/',          icon: <DashboardIcon /> },
-  { label: 'Products',  to: '/products',  icon: <ProductsIcon /> },
+  { label: 'Home',      to: '/',          icon: <DashboardIcon /> },
+  { label: 'Cart',      to: '/cart',      icon: <ProductsIcon /> },
   { label: 'Orders',    to: '/orders',    icon: <OrdersIcon /> },
-  { label: 'Users',     to: '/users',     icon: <UsersIcon /> },
-  { label: 'Coupons',   to: '/coupons',   icon: <CouponsIcon /> },
   { label: 'Wishlist',  to: '/wishlist',  icon: <WishlistIcon /> },
+  { label: 'Profile',   to: '/profile',   icon: <ProfileIcon /> },
 ];
 
 const SECONDARY: NavItem[] = [

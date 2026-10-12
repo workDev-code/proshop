@@ -1,9 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { api } from './api';
+import cartReducer from '../features/cart/cartSlice';
 
 export const store = configureStore({
-  reducer: { [api.reducerPath]: api.reducer },
+  reducer: {
+    [api.reducerPath]: api.reducer,
+    cart: cartReducer,
+  },
   middleware: (getDefault) => getDefault().concat(api.middleware),
 });
 

@@ -21,6 +21,7 @@ type ToastContextValue = {
   error: (message: string) => void;
   success: (message: string) => void;
   info: (message: string) => void;
+  warning: (message: string) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -74,6 +75,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
       error: (m) => showToast({ message: m, severity: 'error' }),
       success: (m) => showToast({ message: m, severity: 'success' }),
       info: (m) => showToast({ message: m, severity: 'info' }),
+      warning: (m) => showToast({ message: m, severity: 'warning' }),
     }),
     [showToast],
   );

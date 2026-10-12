@@ -35,11 +35,14 @@ import { ReviewItem } from '../components/ReviewItem';
 import { ReviewForm } from '../components/ReviewForm';
 import { useGetProductByIdQuery } from '../productApi';
 import { useToast } from '../../../hooks/useToast';
+import { useCart } from '../../cart/hooks';
+import { WishlistButton } from '../../wishlist/components/WishlistButton';
 
 export const ProductDetailPage = () => {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const { addItem } = useCart();
   const [qty, setQty] = useState(1);
   const { data: product, isLoading, isError, refetch } = useGetProductByIdQuery(id);
 
@@ -49,8 +52,10 @@ export const ProductDetailPage = () => {
   const dec = () => setQty((q) => Math.max(1, q - 1));
 
   const handleAddToCart = () => {
-    // Cart wiring lands in Phase 4. For now, show toast + redirect to /cart (404 for now).
-    toast.success(`Added ${qty} × ${product?.name} to cart`);
+    if (!product) return;
+    addItem({ product, qty });
+    toast.success(`Added ${qty} × ${product.name} to cart`);
+    navigate('/cart');
   };
 
   if (isLoading) {
@@ -113,6 +118,9 @@ export const ProductDetailPage = () => {
           <Card sx={{ overflow: 'hidden' }}>
             <Box sx={{ position: 'relative' }}>
               <ProductImage src={image} alt={name} product={product} />
+              <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 1 }}>
+                <WishlistButton productId={product._id} size="medium" />
+              </Box>
               {outOfStock && (
                 <Chip
                   label="Out of stock"

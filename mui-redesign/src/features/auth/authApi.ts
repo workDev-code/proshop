@@ -63,6 +63,27 @@ export const authApi = api.injectEndpoints({
      * Logout: clears cookie on server, then wipes all RTK Query cache locally
      * (so useCurrentUser() returns undefined).
      */
+    /**
+     * Update the current user's profile.
+     * Optionally include `password` to change it.
+     */
+    updateProfile: build.mutation<
+      User,
+      { name?: string; email?: string; password?: string }
+    >({
+      query: (body) => ({ url: '/api/users/profile', method: 'PUT', body }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data: user } = await queryFulfilled;
+          dispatch(
+            authApi.util.upsertQueryData('getProfile', undefined, user),
+          );
+        } catch {
+          // error handled in component
+        }
+      },
+    }),
+
     logout: build.mutation<{ message: string }, void>({
       query: () => ({ url: '/api/users/logout', method: 'POST' }),
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
@@ -82,5 +103,6 @@ export const {
   useGetProfileQuery,
   useLoginMutation,
   useRegisterMutation,
+  useUpdateProfileMutation,
   useLogoutMutation,
 } = authApi;

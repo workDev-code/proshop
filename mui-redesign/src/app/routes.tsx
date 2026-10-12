@@ -6,6 +6,12 @@ import { LoginPage } from '../features/auth/pages/LoginPage';
 import { HomePage } from '../features/products/pages/HomePage';
 import { SearchPage } from '../features/products/pages/SearchPage';
 import { ProductDetailPage } from '../features/products/pages/ProductDetailPage';
+import { CartPage } from '../features/cart/pages/CartPage';
+import { CheckoutPage } from '../features/checkout/pages/CheckoutPage';
+import { OrdersListPage } from '../features/orders/pages/OrdersListPage';
+import { OrderDetailPage } from '../features/orders/pages/OrderDetailPage';
+import { WishlistPage } from '../features/wishlist/pages/WishlistPage';
+import { ProfilePage } from '../features/profile/pages/ProfilePage';
 
 export const AppRouter = () => (
   <Routes>
@@ -25,14 +31,13 @@ export const AppRouter = () => (
       <Route path="/" element={<HomePage />} />
       <Route path="/search/:keyword" element={<SearchPage />} />
       <Route path="/product/:id" element={<ProductDetailPage />} />
-      <Route path="/dashboard" element={<Navigate to="/" replace />} />
-      {/* Future routes will go here:
-          /cart             (Phase 4)
-          /checkout         (Phase 4)
-          /orders, /orders/:id
-          /wishlist
-          /profile
-          /admin/*          (Phase 5) */}
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/orders" element={<OrdersListPage />} />
+      <Route path="/orders/:id" element={<OrderDetailPage />} />
+      <Route path="/wishlist" element={<WishlistPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      {/* Phase 5: admin routes */}
     </Route>
 
     {/* Catch-all → home */}
