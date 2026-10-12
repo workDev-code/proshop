@@ -36,6 +36,7 @@ import { ReviewForm } from '../components/ReviewForm';
 import { useGetProductByIdQuery } from '../productApi';
 import { useToast } from '../../../hooks/useToast';
 import { useCart } from '../../cart/hooks';
+import { fmtMoney } from '../../../utils/fmt';
 import { WishlistButton } from '../../wishlist/components/WishlistButton';
 
 export const ProductDetailPage = () => {
@@ -233,14 +234,25 @@ export const ProductDetailPage = () => {
 
             <Button
               variant="contained"
+              color="secondary"
               size="large"
               fullWidth
               startIcon={<CartIcon />}
               disabled={outOfStock}
               onClick={handleAddToCart}
-              sx={{ py: 1.5, mt: 1 }}
+              sx={{
+                py: 1.75,
+                mt: 1,
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                boxShadow: outOfStock ? 'none' : '0 6px 18px rgba(217,93,57,0.25)',
+                '&:hover': {
+                  boxShadow: outOfStock ? 'none' : '0 10px 24px rgba(217,93,57,0.35)',
+                },
+              }}
             >
-              {outOfStock ? 'Out of stock' : `Add to cart — ${(price * qty).toFixed(2)}`}
+              {outOfStock ? 'Out of stock' : `Add to cart — ${fmtMoney(price * qty)}`}
             </Button>
 
             {qty >= countInStock && !outOfStock && (

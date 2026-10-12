@@ -6,6 +6,7 @@ import {
   IconButton,
   TextField,
   Divider,
+  Tooltip,
 } from '@mui/material';
 import { Delete as DeleteIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import { ProductImage } from '../../products/components/ProductImage';
@@ -39,6 +40,9 @@ export const CartItemRow = ({ item, onQtyChange, onRemove }: Props) => {
           gap: 2,
           alignItems: 'center',
           py: 2,
+          transition: 'background-color 150ms ease',
+          borderRadius: 1,
+          '&:hover': { bgcolor: 'rgba(32,33,31,0.02)' },
         }}
       >
         {/* Image */}
@@ -128,14 +132,16 @@ export const CartItemRow = ({ item, onQtyChange, onRemove }: Props) => {
         </Box>
 
         {/* Remove */}
-        <IconButton
-          onClick={() => onRemove(productId)}
-          aria-label="remove from cart"
-          color="error"
-          size="small"
-        >
-          <DeleteIcon />
-        </IconButton>
+        <Tooltip title="Remove from cart">
+          <IconButton
+            onClick={() => onRemove(productId)}
+            aria-label="remove from cart"
+            color="error"
+            size="small"
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
       <Divider />
     </>
