@@ -23,6 +23,8 @@ import {
   Store as BrandIcon,
   Category as CategoryIcon,
   FiberManualRecord as DotIcon,
+  LocalOffer as TagIcon,
+  Inventory2 as SkuIcon,
 } from '@mui/icons-material';
 import { LoadingState } from '../../../components/feedback/LoadingState';
 import { ErrorState } from '../../../components/feedback/ErrorState';
@@ -44,7 +46,7 @@ import { WishlistButton } from '../../wishlist/components/WishlistButton';
  *
  * Layout:
  *   [Breadcrumbs (Home / Products / name)]
- *   [Hero: 2-col on md+ — image left, info right]
+ *   [Hero: 2-col on md+ — image left (+ optional thumbnail strip), info right]
  *   [Customer reviews (existing ReviewItem + ReviewForm)]
  *
  * Visual language:
@@ -52,6 +54,11 @@ import { WishlistButton } from '../../wishlist/components/WishlistButton';
  *   - Out-of-stock chip top-left of image
  *   - Wishlist heart top-right
  *   - Full-width CTA on mobile, fixed width on desktop
+ *
+ * New data wired in (v3.0 backend):
+ *   - `product.images[]` → thumbnail strip below the main image
+ *   - `product.compareAtPrice` → strikethrough next to current price
+ *   - `product.sku` and `product.tags[]` → small chips under the price
  */
 export const ProductDetailPage = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -60,6 +67,13 @@ export const ProductDetailPage = () => {
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
   const { data: product, isLoading, isError, refetch } = useGetProductByIdQuery(id);
+
+  // Gallery state — which image is currently the main one. Index 0 == product.image
+  const gallery: string[] = product
+    ? [product.image, ...(product.images ?? []).filter((src) => src && src !== product.image)]
+    : [];
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const activeImage = gallery[activeImageIdx] ?? product?.image ?? '';
 
   const inc = () => {
     if (product) setQty((q) => Math.min(q + 1, product.countInStock));
@@ -124,9 +138,23 @@ export const ProductDetailPage = () => {
     );
   }
 
-  const { name, image, brand, category, description, rating, numReviews, price, countInStock, reviews } =
-    product;
+  const {
+    name,
+    brand,
+    category,
+    description,
+    rating,
+    numReviews,
+    price,
+    compareAtPrice,
+    sku,
+    tags,
+    countInStock,
+    reviews,
+  } = product;
   const outOfStock = countInStock === 0;
+  const onSale = typeof compareAtPrice === 'number' && compareAtPrice > price;
+  const hasGallery = gallery.length > 1;
 
   return (
     <Box sx={{ pt: { xs: 2, md: 3.5 } }}>
@@ -151,7 +179,7 @@ export const ProductDetailPage = () => {
 
       {/* Hero — 2-col on md+, single col on mobile */}
       <Grid container spacing={{ xs: 3, md: 5 }} alignItems="flex-start">
-        {/* Image */}
+        {/* Image + thumbnail strip */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card
             sx={{
@@ -163,7 +191,7 @@ export const ProductDetailPage = () => {
           >
             <Box sx={{ position: 'relative' }}>
               <ProductImage
-                src={image}
+                src={activeImage}
                 alt={name}
                 product={product}
                 aspectRatio="1 / 1"
@@ -191,12 +219,104 @@ export const ProductDetailPage = () => {
                   Out of stock
                 </Box>
               )}
+              {/* Sale chip — top left, only when in stock */}
+              {!outOfStock && onSale && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 16,
+                    left: 16,
+                    zIndex: 2,
+                    px: 1.25,
+                    py: 0.625,
+                    bgcolor: 'secondary.main',
+                    borderRadius: 999,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: 'common.white',
+                    boxShadow: '0 2px 8px rgba(32,33,31,0.08)',
+                  }}
+                >
+                  Sale
+                </Box>
+              )}
               {/* Wishlist heart — top right */}
               <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
                 <WishlistButton productId={product._id} size="medium" />
               </Box>
             </Box>
           </Card>
+
+          {/* Thumbnail strip — only when product has more than one image */}
+          {hasGallery && (
+            <Box
+              role="tablist"
+              aria-label="Product images"
+              sx={{
+                display: 'flex',
+                gap: 1,
+                mt: 1.5,
+                flexWrap: 'wrap',
+              }}
+            >
+              {gallery.map((src, i) => {
+                const active = i === activeImageIdx;
+                return (
+                  <Box
+                    key={`${src}-${i}`}
+                    role="tab"
+                    tabIndex={0}
+                    aria-selected={active}
+                    aria-label={`View image ${i + 1} of ${gallery.length}`}
+                    onClick={() => setActiveImageIdx(i)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveImageIdx(i);
+                      }
+                    }}
+                    sx={{
+                      width: { xs: 56, md: 68 },
+                      height: { xs: 56, md: 68 },
+                      borderRadius: 1.5,
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      position: 'relative',
+                      border: '2px solid',
+                      borderColor: active ? 'secondary.main' : 'transparent',
+                      outline: '1px solid',
+                      outlineColor: 'divider',
+                      transition: 'border-color 180ms ease, transform 180ms ease',
+                      '&:hover': {
+                        borderColor: active ? 'secondary.main' : 'text.disabled',
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid',
+                        outlineColor: 'secondary.main',
+                        outlineOffset: 2,
+                      },
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
         </Grid>
 
         {/* Info */}
@@ -281,20 +401,96 @@ export const ProductDetailPage = () => {
               </Typography>
             </Stack>
 
-            {/* Price */}
-            <Box sx={{ mb: 3 }}>
-              <PriceDisplay
-                value={price}
-                variant="h4"
-                sx={{
-                  fontFamily: '"Manrope", sans-serif',
-                  fontWeight: 800,
-                  fontSize: { xs: 28, sm: 32 },
-                  color: 'text.primary',
-                  letterSpacing: '-0.02em',
-                }}
-              />
+            {/* Price + optional strikethrough compareAtPrice */}
+            <Box sx={{ mb: 2 }}>
+              <Stack direction="row" alignItems="baseline" spacing={1.25}>
+                <PriceDisplay
+                  value={price}
+                  variant="h4"
+                  sx={{
+                    fontFamily: '"Manrope", sans-serif',
+                    fontWeight: 800,
+                    fontSize: { xs: 28, sm: 32 },
+                    color: onSale ? 'secondary.main' : 'text.primary',
+                    letterSpacing: '-0.02em',
+                  }}
+                />
+                {onSale && (
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontFamily: '"Manrope", sans-serif',
+                      fontWeight: 600,
+                      fontSize: { xs: 16, sm: 18 },
+                      color: 'text.disabled',
+                      textDecoration: 'line-through',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    ${compareAtPrice!.toFixed(2)}
+                  </Typography>
+                )}
+              </Stack>
             </Box>
+
+            {/* SKU + tags — small chip row, only rendered when data exists */}
+            {(sku || (tags && tags.length > 0)) && (
+              <Stack
+                direction="row"
+                spacing={0.75}
+                flexWrap="wrap"
+                useFlexGap
+                sx={{ mb: 2.5 }}
+              >
+                {sku && (
+                  <Chip
+                    icon={<SkuIcon sx={{ fontSize: '0.875rem !important' }} />}
+                    label={`SKU · ${sku}`}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      borderRadius: 999,
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      height: 24,
+                      letterSpacing: '0.04em',
+                      bgcolor: 'background.paper',
+                      color: 'text.secondary',
+                      borderColor: 'divider',
+                      '& .MuiChip-icon': { color: 'text.disabled' },
+                    }}
+                  />
+                )}
+                {tags?.map((tag) => (
+                  <Chip
+                    key={tag}
+                    icon={<TagIcon sx={{ fontSize: '0.875rem !important' }} />}
+                    label={tag}
+                    size="small"
+                    variant="outlined"
+                    onClick={() => navigate(`/?keyword=${encodeURIComponent(tag)}`)}
+                    sx={{
+                      borderRadius: 999,
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      height: 24,
+                      letterSpacing: '0.02em',
+                      bgcolor: 'background.paper',
+                      color: 'text.primary',
+                      borderColor: 'divider',
+                      cursor: 'pointer',
+                      textTransform: 'lowercase',
+                      '&:hover': {
+                        bgcolor: 'rgba(217, 93, 57, 0.08)',
+                        borderColor: 'secondary.main',
+                        color: 'secondary.main',
+                      },
+                      '& .MuiChip-icon': { color: 'text.disabled' },
+                    }}
+                  />
+                ))}
+              </Stack>
+            )}
 
             <Divider sx={{ mb: 2.5 }} />
 

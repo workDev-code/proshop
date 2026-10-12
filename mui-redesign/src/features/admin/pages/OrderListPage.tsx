@@ -1,3 +1,6 @@
+// Now uses the backend's authoritative `Order.status` enum (5 values) instead
+// of the old isPaid/isDelivered inference. Adds a real status filter and
+// wires the new mark-shipped + mark-delivered mutations as row actions.
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
@@ -9,8 +12,16 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
-import { LocalShipping as DeliverIcon } from '@mui/icons-material';
+import {
+  LocalShipping as DeliverIcon,
+  Inventory2 as ShipIcon,
+  Cancel as CancelIcon,
+} from '@mui/icons-material';
 import { useGetAllOrdersQuery, useMarkOrderDeliveredMutation } from '../adminApi';
+import {
+  useMarkOrderShippedMutation,
+  useCancelOrderMutation,
+} from '../../orders/orderApi';
 import { StatusPill } from '../../../components/feedback/StatusPill';
 import { LoadingState } from '../../../components/feedback/LoadingState';
 import { useToast } from '../../../hooks/useToast';
@@ -37,28 +48,54 @@ import {
   adminTitleRowSx,
 } from '../components/adminStyles';
 import type { PillTone } from '../../../components/feedback/StatusPill';
-import type { Order } from '../../orders/types';
+import type { Order, OrderStatus } from '../../orders/types';
 
-const STATUS_OPTIONS = [
-  'All',
-  'Paid',
-  'Pending',
-  'Shipped',
-  'Delivered',
-  'Cancelled',
-] as const;
-type StatusFilter = (typeof STATUS_OPTIONS)[number];
+/* ─── status → pill tone map (single source of truth) ───────────── */
 
-interface PillResult {
-  label: string;
-  tone: PillTone;
-  raw: 'paid' | 'pending' | 'shipped' | 'delivered' | 'cancelled';
-}
+const ORDER_STATUS_TONES: Record<OrderStatus, PillTone> = {
+  pending: 'warning',
+  paid: 'success',
+  shipped: 'info',
+  delivered: 'success',
+  cancelled: 'error',
+};
 
-const orderPill = (o: Order): PillResult => {
-  if (o.isDelivered) return { label: 'Delivered', tone: 'success', raw: 'delivered' };
-  if (o.isPaid) return { label: 'Shipped', tone: 'info', raw: 'shipped' };
-  return { label: 'Pending', tone: 'warning', raw: 'pending' };
+const STATUS_FILTER_OPTIONS: ReadonlyArray<{ value: 'all' | OrderStatus; label: string }> = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'shipped', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+type StatusFilter = (typeof STATUS_FILTER_OPTIONS)[number]['value'];
+
+/**
+ * Resolve the effective OrderStatus. The new backend returns `status`
+ * directly, but the demo seed still only has isPaid/isDelivered, so we
+ * fall back to a derived value for those legacy rows.
+ */
+const resolveStatus = (o: Order): OrderStatus => {
+  const s = (o as { status?: string }).status as OrderStatus | undefined;
+  if (s === 'pending' || s === 'paid' || s === 'shipped' || s === 'delivered' || s === 'cancelled') {
+    return s;
+  }
+  if (o.isDelivered) return 'delivered';
+  if (o.isPaid) return 'paid';
+  return 'pending';
+};
+
+const orderPill = (o: Order): { label: string; tone: PillTone; status: OrderStatus } => {
+  const status = resolveStatus(o);
+  const labels: Record<OrderStatus, string> = {
+    pending: 'Pending',
+    paid: 'Paid',
+    shipped: 'Shipped',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
+  };
+  return { label: labels[status], tone: ORDER_STATUS_TONES[status], status };
 };
 
 const orderCustomer = (o: Order): { name: string; email: string } =>
@@ -67,39 +104,28 @@ const orderCustomer = (o: Order): { name: string; email: string } =>
 const orderIdShort = (id: string) => `#PS-${id.slice(-4).toUpperCase()}`;
 
 const matchesFilter = (o: Order, filter: StatusFilter): boolean => {
-  const pill = orderPill(o);
-  switch (filter) {
-    case 'All':
-      return true;
-    case 'Paid':
-      return pill.raw === 'paid' || pill.raw === 'shipped' || pill.raw === 'delivered';
-    case 'Pending':
-      return pill.raw === 'pending';
-    case 'Shipped':
-      return pill.raw === 'shipped';
-    case 'Delivered':
-      return pill.raw === 'delivered';
-    case 'Cancelled':
-      return false; // Backend model has no `isCancelled` flag.
-    default:
-      return true;
-  }
+  if (filter === 'all') return true;
+  return resolveStatus(o) === filter;
 };
 
 export const OrderListPage = () => {
   const toast = useToast();
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('All');
+  const [status, setStatus] = useState<StatusFilter>('all');
   const { data: orders, isLoading } = useGetAllOrdersQuery();
-  const [markDelivered, { isLoading: marking }] = useMarkOrderDeliveredMutation();
+  const [markDelivered, { isLoading: markingDelivered }] = useMarkOrderDeliveredMutation();
+  const [markShipped, { isLoading: markingShipped }] = useMarkOrderShippedMutation();
+  const [cancelOrder, { isLoading: cancelling }] = useCancelOrderMutation();
 
   if (isLoading) {
     return <LoadingState variant="card" count={3} />;
   }
 
   const allOrders = orders ?? [];
-  // (Delivered is reflected in the Status filter and in each row’s pill.)
-  const awaiting = allOrders.filter((o) => o.isPaid && !o.isDelivered).length;
+  const awaiting = allOrders.filter((o) => {
+    const s = resolveStatus(o);
+    return s === 'paid' || s === 'shipped';
+  }).length;
 
   const filtered = allOrders.filter((o) => {
     if (!matchesFilter(o, status)) return false;
@@ -113,6 +139,16 @@ export const OrderListPage = () => {
     );
   });
 
+  const handleShip = async (id: string) => {
+    try {
+      await markShipped({ orderId: id, payload: {} }).unwrap();
+      toast.success('Order marked as shipped');
+    } catch (err) {
+      const e = err as { data?: { message?: string } };
+      toast.error(e.data?.message ?? 'Failed to mark as shipped');
+    }
+  };
+
   const handleDeliver = async (id: string) => {
     try {
       await markDelivered(id).unwrap();
@@ -122,6 +158,18 @@ export const OrderListPage = () => {
       toast.error(e.data?.message ?? 'Failed to mark as delivered');
     }
   };
+
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelOrder({ orderId: id, payload: {} }).unwrap();
+      toast.success('Order cancelled');
+    } catch (err) {
+      const e = err as { data?: { message?: string } };
+      toast.error(e.data?.message ?? 'Failed to cancel order');
+    }
+  };
+
+  const anyLoading = markingDelivered || markingShipped || cancelling;
 
   return (
     <>
@@ -237,9 +285,9 @@ export const OrderListPage = () => {
               fontSize: 10,
             }}
           >
-            {STATUS_OPTIONS.map((s) => (
-              <MenuItem key={s} value={s}>
-                {s === 'All' ? 'All statuses' : s}
+            {STATUS_FILTER_OPTIONS.map((s) => (
+              <MenuItem key={s.value} value={s.value}>
+                {s.label}
               </MenuItem>
             ))}
           </Select>
@@ -277,7 +325,9 @@ export const OrderListPage = () => {
                   const customer = orderCustomer(o);
                   const pill = orderPill(o);
                   const items = o.orderItems?.reduce((s, i) => s + i.qty, 0) ?? 0;
-                  const canDeliver = o.isPaid && !o.isDelivered;
+                  const canShip = pill.status === 'paid';
+                  const canDeliver = pill.status === 'shipped';
+                  const canCancel = pill.status === 'pending' || pill.status === 'paid';
                   return (
                     <Box component="tr" key={o._id}>
                       <Box component="td" sx={adminTdFirstSx}>
@@ -299,7 +349,7 @@ export const OrderListPage = () => {
                         <StatusPill label={pill.label} tone={pill.tone} />
                       </Box>
                       <Box component="td" sx={adminTdSx}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
                           <Box
                             component={RouterLink}
                             to={`/orders/${o._id}`}
@@ -307,11 +357,33 @@ export const OrderListPage = () => {
                           >
                             Details
                           </Box>
+                          {canShip && (
+                            <Box
+                              component="button"
+                              onClick={() => handleShip(o._id)}
+                              disabled={anyLoading}
+                              sx={{
+                                ...adminLinkSx,
+                                color: '#326bc4',
+                                border: 0,
+                                background: 'none',
+                                padding: 0,
+                                font: 'inherit',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                              }}
+                            >
+                              <ShipIcon sx={{ fontSize: 12 }} />
+                              Mark shipped
+                            </Box>
+                          )}
                           {canDeliver && (
                             <Box
                               component="button"
                               onClick={() => handleDeliver(o._id)}
-                              disabled={marking}
+                              disabled={anyLoading}
                               sx={{
                                 ...adminLinkSx,
                                 color: '#17845e',
@@ -327,6 +399,28 @@ export const OrderListPage = () => {
                             >
                               <DeliverIcon sx={{ fontSize: 12 }} />
                               Mark delivered
+                            </Box>
+                          )}
+                          {canCancel && (
+                            <Box
+                              component="button"
+                              onClick={() => handleCancel(o._id)}
+                              disabled={anyLoading}
+                              sx={{
+                                ...adminLinkSx,
+                                color: '#c84c4c',
+                                border: 0,
+                                background: 'none',
+                                padding: 0,
+                                font: 'inherit',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                              }}
+                            >
+                              <CancelIcon sx={{ fontSize: 12 }} />
+                              Cancel
                             </Box>
                           )}
                         </Stack>

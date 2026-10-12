@@ -1,6 +1,6 @@
 /**
  * Product domain types
- * Mirrors backend/models/productModel.js
+ * Mirrors backend/models/productModel.js (v3.0)
  */
 
 export interface Review {
@@ -12,27 +12,37 @@ export interface Review {
   createdAt: string;
 }
 
+export interface ProductDimensions {
+  length: number;
+  width: number;
+  height: number;
+}
+
 export interface Product {
   _id: string;
   name: string;
+  slug?: string;
+  sku?: string;
   image: string;
+  images?: string[];
   brand: string;
   category: string;
   description: string;
+  price: number;
+  compareAtPrice?: number;
+  tags?: string[];
   rating: number;
   numReviews: number;
-  price: number;
   countInStock: number;
   reviews: Review[];
+  isActive?: boolean;
+  weight?: number;
+  dimensions?: ProductDimensions;
   createdAt: string;
   updatedAt: string;
   user?: string;
 }
 
-/**
- * Backend response shape from GET /api/products
- * (see backend/controllers/productController.js → getProducts)
- */
 export interface ProductListResponse {
   products: Product[];
   page: number;
@@ -71,9 +81,6 @@ export const SORT_LABELS: Record<SortOption, string> = {
   name: 'Name (A→Z)',
 };
 
-/**
- * Query string parameters accepted by GET /api/products
- */
 export interface ProductQueryParams {
   keyword?: string;
   category?: string;
@@ -90,3 +97,22 @@ export interface CreateReviewPayload {
   rating: number;
   comment: string;
 }
+
+export interface CreateProductPayload {
+  name: string;
+  price: number;
+  description: string;
+  image: string;
+  images?: string[];
+  brand: string;
+  category: string;
+  countInStock: number;
+  sku?: string;
+  compareAtPrice?: number;
+  tags?: string[];
+  isActive?: boolean;
+  weight?: number;
+  dimensions?: ProductDimensions;
+}
+
+export interface UpdateProductPayload extends Partial<CreateProductPayload> {}

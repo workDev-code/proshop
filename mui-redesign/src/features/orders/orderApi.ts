@@ -4,45 +4,41 @@ import type {
   CreateOrderPayload,
   ValidateCouponPayload,
   ValidatedCoupon,
+  MarkShippedPayload,
+  CancelOrderPayload,
 } from './types';
 
 /**
  * Order API endpoints (see backend/routes/orderRoutes.js + couponRoutes.js).
  *
- * Backend routes:
- *   POST   /api/orders            create order (auth)
- *   GET    /api/orders/mine       my orders (auth)
- *   GET    /api/orders/:id        single order (auth)
- *   PUT    /api/orders/:id/pay    mark paid (auth)
- *   POST   /api/coupons/validate  validate coupon code (auth)
+ *   POST   /api/orders                create order (auth)
+ *   GET    /api/orders                list all (admin)
+ *   GET    /api/orders/mine           my orders (auth)
+ *   GET    /api/orders/:id            single order
+ *   PUT    /api/orders/:id/pay        mark paid (auth, demo)
+ *   PUT    /api/orders/:id/ship       mark shipped (admin)
+ *   PUT    /api/orders/:id/deliver    mark delivered (admin)
+ *   PUT    /api/orders/:id/cancel     cancel (owner if pending, or admin)
+ *   POST   /api/coupons/validate      validate coupon (auth)
  */
 export const orderApi = api.injectEndpoints({
   endpoints: (build) => ({
-    /** Create order. Returns the new Order with _id. */
     createOrder: build.mutation<Order, CreateOrderPayload>({
       query: (body) => ({ url: '/api/orders', method: 'POST', body }),
       invalidatesTags: (_r, _e, arg) =>
         arg.orderItems.map(({ _id }) => ({ type: 'Product' as const, id: _id })),
     }),
 
-    /** My orders. */
     getMyOrders: build.query<Order[], void>({
       query: () => '/api/orders/mine',
       providesTags: [{ type: 'Order', id: 'MINE' }],
     }),
 
-    /** Single order detail. */
     getOrderById: build.query<Order, string>({
       query: (id) => `/api/orders/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'Order', id }],
     }),
 
-    /**
-     * Mark an order as paid.
-     * For demo: pass { id: 'demo-payment', status: 'COMPLETED' } — server will
-     * attempt PayPal verification and fail unless it's a real PayPal capture id.
-     * In demo mode we catch the throw and proceed.
-     */
     payOrder: build.mutation<
       { message: string },
       { orderId: string; paymentResult: Record<string, unknown> }
@@ -55,10 +51,48 @@ export const orderApi = api.injectEndpoints({
       invalidatesTags: (_r, _e, { orderId }) => [
         { type: 'Order', id: orderId },
         { type: 'Order', id: 'MINE' },
+        { type: 'Order', id: 'ALL' },
       ],
     }),
 
-    /** Validate a coupon code against the current subtotal. */
+    markOrderShipped: build.mutation<
+      Order,
+      { orderId: string; payload: MarkShippedPayload }
+    >({
+      query: ({ orderId, payload }) => ({
+        url: `/api/orders/${orderId}/ship`,
+        method: 'PUT',
+        body: payload,
+      }),
+      invalidatesTags: (_r, _e, { orderId }) => [
+        { type: 'Order', id: orderId },
+        { type: 'Order', id: 'MINE' },
+        { type: 'Order', id: 'ALL' },
+        'Analytics',
+      ],
+    }),
+
+    markOrderDelivered: build.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/orders/${id}/deliver`, method: 'PUT' }),
+      invalidatesTags: () => ['Analytics'],
+    }),
+
+    cancelOrder: build.mutation<
+      Order,
+      { orderId: string; payload: CancelOrderPayload }
+    >({
+      query: ({ orderId, payload }) => ({
+        url: `/api/orders/${orderId}/cancel`,
+        method: 'PUT',
+        body: payload,
+      }),
+      invalidatesTags: (_r, _e, { orderId }) => [
+        { type: 'Order', id: orderId },
+        { type: 'Order', id: 'MINE' },
+        { type: 'Order', id: 'ALL' },
+      ],
+    }),
+
     validateCoupon: build.mutation<ValidatedCoupon, ValidateCouponPayload>({
       query: (body) => ({ url: '/api/coupons/validate', method: 'POST', body }),
     }),
@@ -71,5 +105,8 @@ export const {
   useGetMyOrdersQuery,
   useGetOrderByIdQuery,
   usePayOrderMutation,
+  useMarkOrderShippedMutation,
+  useMarkOrderDeliveredMutation,
+  useCancelOrderMutation,
   useValidateCouponMutation,
 } = orderApi;

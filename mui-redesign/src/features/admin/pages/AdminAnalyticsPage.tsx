@@ -1,9 +1,12 @@
-import { useMemo } from 'react';
+// Now consumes the analytics endpoints instead of computing metrics from
+// raw orders/products. The 4 stat cards read from /api/analytics/overview;
+// Conversion rate uses `paidCustomerRate` (the closest metric the backend
+// can derive from the order history).
 import { Box, Stack, Button, Typography } from '@mui/material';
 import {
-  useGetAllOrdersQuery,
-} from '../adminApi';
-import { useGetProductsQuery } from '../../products/productApi';
+  useGetOverviewQuery,
+  useGetTopProductsQuery,
+} from '../../analytics/analyticsApi';
 import { StatCard } from '../components/StatCard';
 import { useToast } from '../../../hooks/useToast';
 import { fmtMoney, fmtNumber } from '../../../utils/fmt';
@@ -23,92 +26,158 @@ import {
   adminTitleRowSx,
 } from '../components/adminStyles';
 import { adminH1Sx, adminSubtitleSx } from '../components/adminStyles';
-import type { Order, OrderItem } from '../../orders/types';
-import type { Product } from '../../products/types';
+import type { TopProduct } from '../../analytics/types';
 
-interface ProductMetric {
-  product: Product;
-  unitsSold: number;
-  revenue: number;
-}
-
-/* Compute top products by revenue from real order data. */
-const computeTopProducts = (
-  orders: Order[] | undefined,
-  products: Product[] | undefined,
-): ProductMetric[] => {
-  const map = new Map<string, ProductMetric>();
-  if (!orders || !products) return [];
-
-  const productById = new Map<string, Product>();
-  for (const p of products) productById.set(p._id, p);
-
-  for (const o of orders) {
-    for (const item of o.orderItems as OrderItem[]) {
-      const product = productById.get(item.product);
-      if (!product) continue;
-      const cur = map.get(product._id) ?? { product, unitsSold: 0, revenue: 0 };
-      cur.unitsSold += item.qty;
-      cur.revenue += item.qty * item.price;
-      map.set(product._id, cur);
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
-};
-
-const UnavailableStat = ({
+/**
+ * Renders an "available" stat card with a value + caption, or a
+ * "Data not available" placeholder when the field is null.
+ */
+const StatSlot = ({
   label,
+  value,
   icon,
   explanation,
 }: {
   label: string;
+  value: string | number | null | undefined;
   icon: React.ReactNode;
-  explanation: string;
-}) => (
-  <StatCard
-    label={label}
-    value="—"
-    icon={icon}
-    caption={
-      <Box sx={{ mt: 0.5 }}>
-        <Typography
-          component="span"
-          sx={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: '#50596a',
-            display: 'block',
-          }}
-        >
-          Data not available
-        </Typography>
-        <Typography
-          component="span"
-          sx={{ fontSize: 9, color: '#828b9b', display: 'block', mt: 0.25 }}
-        >
-          {explanation}
+  explanation?: string;
+}) => {
+  if (value === null || value === undefined) {
+    return (
+      <StatCard
+        label={label}
+        value="—"
+        icon={icon}
+        caption={
+          <Box sx={{ mt: 0.5 }}>
+            <Typography
+              component="span"
+              sx={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: '#50596a',
+                display: 'block',
+              }}
+            >
+              Data not available
+            </Typography>
+            {explanation && (
+              <Typography
+                component="span"
+                sx={{ fontSize: 9, color: '#828b9b', display: 'block', mt: 0.25 }}
+              >
+                {explanation}
+              </Typography>
+            )}
+          </Box>
+        }
+      />
+    );
+  }
+  return <StatCard label={label} value={value} icon={icon} />;
+};
+
+const TopProductsTable = ({ rows }: { rows: TopProduct[] | undefined }) => {
+  if (!rows || rows.length === 0) {
+    return (
+      <Box sx={adminEmptySx}>
+        <Typography sx={adminEmptyTitleSx}>No sales data yet</Typography>
+        <Typography sx={adminEmptyDescSx}>
+          Once customers start placing orders, top products will appear here.
         </Typography>
       </Box>
-    }
-  />
-);
+    );
+  }
+  return (
+    <Box sx={{ overflowX: 'auto' }}>
+      <Box component="table" sx={adminTableSx}>
+        <Box component="thead">
+          <Box component="tr">
+            {['Product', 'Units sold', 'Revenue', 'Orders'].map((h) => (
+              <Box component="th" key={h} sx={adminThSx}>
+                {h}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        <Box component="tbody">
+          {rows.map((row) => (
+            <Box component="tr" key={row.productId}>
+              <Box component="td" sx={adminTdFirstSx}>
+                <Stack direction="row" alignItems="center" spacing={1.25}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 38,
+                      borderRadius: '7px',
+                      bgcolor: '#f0f1ed',
+                      flexShrink: 0,
+                      display: 'grid',
+                      placeItems: 'center',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {row.image ? (
+                      <Box
+                        component="img"
+                        src={row.image}
+                        alt={row.name}
+                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#929aaa' }}>
+                        {row.name?.[0]?.toUpperCase() ?? '?'}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      component="strong"
+                      sx={{ display: 'block', fontSize: 10, fontWeight: 700 }}
+                    >
+                      {row.name}
+                    </Typography>
+                    <Typography
+                      component="small"
+                      sx={{ display: 'block', color: '#929aaa', fontSize: 9, mt: '4px' }}
+                    >
+                      {row.category}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+              <Box component="td" sx={adminTdSx}>
+                {fmtNumber(row.unitsSold)}
+              </Box>
+              <Box component="td" sx={adminTdSx}>
+                {fmtMoney(row.revenue)}
+              </Box>
+              <Box component="td" sx={adminTdSx}>
+                {fmtNumber(row.ordersCount)}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
 
 export const AdminAnalyticsPage = () => {
   const toast = useToast();
-  const { data: orders, isLoading: ordersLoading } = useGetAllOrdersQuery();
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(undefined);
+  const { data: overview, isLoading: overviewLoading } = useGetOverviewQuery(30);
+  const { data: topProducts, isLoading: topLoading } = useGetTopProductsQuery(10);
 
-  const products = productsData?.products ?? [];
-
-  const topProducts = useMemo(
-    () => computeTopProducts(orders, products),
-    [orders, products],
-  );
-
-  if (ordersLoading || productsLoading) {
+  if (overviewLoading || topLoading) {
     return <LoadingState variant="card" count={4} />;
   }
+
+  // paidCustomerRate is a percentage (0-100) — show with 1 decimal.
+  const conversionLabel =
+    overview?.paidCustomerRate !== undefined && overview?.paidCustomerRate !== null
+      ? `${overview.paidCustomerRate.toFixed(1)}%`
+      : null;
 
   return (
     <>
@@ -141,7 +210,7 @@ export const AdminAnalyticsPage = () => {
         </Button>
       </Box>
 
-      {/* 4 stat cards — all show "Data not available" by design */}
+      {/* 4 stat cards — only fields the backend can compute are real */}
       <Box
         sx={{
           display: 'grid',
@@ -153,23 +222,45 @@ export const AdminAnalyticsPage = () => {
           mb: 2.25,
         }}
       >
-        <UnavailableStat
+        <StatCard
           label="Conversion rate"
+          value={conversionLabel ?? '—'}
           icon={<Box sx={{ fontFamily: 'monospace', fontWeight: 700 }}>%</Box>}
-          explanation="Conversion requires session tracking"
+          caption={
+            <Box sx={{ mt: 0.5 }}>
+              <Typography
+                component="span"
+                sx={{ fontSize: 10, fontWeight: 700, color: '#50596a', display: 'block' }}
+              >
+                Paid customer rate
+              </Typography>
+              <Typography
+                component="span"
+                sx={{ fontSize: 9, color: '#828b9b', display: 'block', mt: 0.25 }}
+              >
+                % of customers with at least one paid order
+              </Typography>
+            </Box>
+          }
         />
-        <UnavailableStat
+        <StatSlot
           label="Sessions"
+          value={null}
           icon={<Box sx={{ fontFamily: 'monospace', fontWeight: 700 }}>↗</Box>}
           explanation="Requires analytics integration"
         />
-        <UnavailableStat
+        <StatSlot
           label="Returning customers"
+          value={
+            overview?.repeatCustomers !== undefined
+              ? fmtNumber(overview.repeatCustomers)
+              : null
+          }
           icon={<Box sx={{ fontFamily: 'monospace', fontWeight: 700 }}>↻</Box>}
-          explanation="No historical cohort data yet"
         />
-        <UnavailableStat
+        <StatSlot
           label="Refund rate"
+          value={null}
           icon={<Box sx={{ fontFamily: 'monospace', fontWeight: 700 }}>$</Box>}
           explanation="Refunds aren't tracked by the backend"
         />
@@ -183,91 +274,11 @@ export const AdminAnalyticsPage = () => {
               Top-performing products
             </Typography>
             <Typography sx={adminPanelDescSx}>
-              Ranked by revenue from all paid orders
+              Ranked by revenue from all paid orders (top 10)
             </Typography>
           </Box>
         </Box>
-
-        {topProducts.length === 0 ? (
-          <Box sx={adminEmptySx}>
-            <Typography sx={adminEmptyTitleSx}>No sales data yet</Typography>
-            <Typography sx={adminEmptyDescSx}>
-              Once customers start placing orders, top products will appear here.
-            </Typography>
-          </Box>
-        ) : (
-          <Box sx={{ overflowX: 'auto' }}>
-            <Box component="table" sx={adminTableSx}>
-              <Box component="thead">
-                <Box component="tr">
-                  {['Product', 'Units sold', 'Revenue', 'Trend'].map((h) => (
-                    <Box component="th" key={h} sx={adminThSx}>
-                      {h}
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-              <Box component="tbody">
-                {topProducts.map((m) => (
-                  <Box component="tr" key={m.product._id}>
-                    <Box component="td" sx={adminTdFirstSx}>
-                      <Stack direction="row" alignItems="center" spacing={1.25}>
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 38,
-                            borderRadius: '7px',
-                            bgcolor: '#f0f1ed',
-                            flexShrink: 0,
-                            display: 'grid',
-                            placeItems: 'center',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {m.product.image ? (
-                            <Box
-                              component="img"
-                              src={m.product.image}
-                              alt={m.product.name}
-                              sx={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                              }}
-                            />
-                          ) : (
-                            <Typography
-                              sx={{ fontSize: 12, fontWeight: 700, color: '#929aaa' }}
-                            >
-                              {m.product.name?.[0]?.toUpperCase() ?? '?'}
-                            </Typography>
-                          )}
-                        </Box>
-                        <Box>
-                          <Typography
-                            component="strong"
-                            sx={{ display: 'block', fontSize: 10, fontWeight: 700 }}
-                          >
-                            {m.product.name}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Box>
-                    <Box component="td" sx={adminTdSx}>
-                      {fmtNumber(m.unitsSold)}
-                    </Box>
-                    <Box component="td" sx={adminTdSx}>
-                      {fmtMoney(m.revenue)}
-                    </Box>
-                    <Box component="td" sx={adminTdSx}>
-                      —
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </Box>
-        )}
+        <TopProductsTable rows={topProducts} />
       </Box>
     </>
   );

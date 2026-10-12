@@ -13,6 +13,9 @@ import {
   mockOrders,
   mockCoupons,
   mockWishlist,
+  mockCategories,
+  mockBrands,
+  mockAddresses,
   MOCK_PASSWORD,
 } from './mockData';
 
@@ -23,6 +26,11 @@ const state = {
   orders: [...mockOrders],
   coupons: [...mockCoupons],
   wishlist: [...mockWishlist],
+  categories: [...mockCategories],
+  brands: [...mockBrands],
+  addresses: [...mockAddresses],
+  /** order counter for analytic lookups (ms-precision id) */
+  orderSeq: 0,
   /** Currently logged in user id (set after login mutation) */
   currentUserId: null as string | null,
   /** Current "JWT cookie" (mock token, just a string) */
@@ -558,5 +566,271 @@ export const mockBaseQuery: BaseQueryFn = async (args) => {
     return ok({ message: 'Image uploaded successfully (demo)', image: '/images/sample.jpg' });
   }
 
+
+  // ===== CATEGORIES =====
+  if (url === '/api/categories' && method === 'GET') {
+    return ok(state.categories.filter(c => c.isActive).sort((a, b) => a.displayOrder - b.displayOrder));
+  }
+  if (url === '/api/categories' && method === 'POST') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    const data = body as any;
+    const newCat = {
+      _id: `cat_${Date.now()}`,
+      name: data.name,
+      slug: data.name.toLowerCase().replace(/\W+/g, '-'),
+      image: data.image,
+      description: data.description || '',
+      displayOrder: data.displayOrder ?? 99,
+      isActive: data.isActive ?? true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    state.categories.push(newCat);
+    return ok(newCat);
+  }
+  const catMatch = matchUrl(url, /^\/api\/categories\/([a-zA-Z0-9_]+)$/);
+  if (catMatch && method === 'GET') {
+    const c = state.categories.find(c => c._id === catMatch[1]);
+    if (!c) return err(404, 'Category not found');
+    return ok(c);
+  }
+  if (catMatch && method === 'PUT') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    const c = state.categories.find(c => c._id === catMatch[1]);
+    if (!c) return err(404, 'Category not found');
+    Object.assign(c, body);
+    c.updatedAt = new Date().toISOString();
+    return ok(c);
+  }
+  if (catMatch && method === 'DELETE') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    state.categories = state.categories.filter(c => c._id !== catMatch[1]);
+    return ok({ message: 'Category removed' });
+  }
+
+  // ===== BRANDS =====
+  if (url === '/api/brands' && method === 'GET') {
+    return ok(state.brands.filter(b => b.isActive).sort((a, b) => a.name.localeCompare(b.name)));
+  }
+  if (url === '/api/brands' && method === 'POST') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    const data = body as any;
+    const newBrand = {
+      _id: `b_${Date.now()}`,
+      name: data.name,
+      slug: data.name.toLowerCase().replace(/\W+/g, '-'),
+      logo: data.logo || '',
+      description: data.description || '',
+      isActive: data.isActive ?? true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    state.brands.push(newBrand);
+    return ok(newBrand);
+  }
+  const brandMatch = matchUrl(url, /^\/api\/brands\/([a-zA-Z0-9_]+)$/);
+  if (brandMatch && method === 'GET') {
+    const b = state.brands.find(x => x._id === brandMatch[1]);
+    if (!b) return err(404, 'Brand not found');
+    return ok(b);
+  }
+  if (brandMatch && method === 'PUT') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    const b = state.brands.find(x => x._id === brandMatch[1]);
+    if (!b) return err(404, 'Brand not found');
+    Object.assign(b, body);
+    b.updatedAt = new Date().toISOString();
+    return ok(b);
+  }
+  if (brandMatch && method === 'DELETE') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    state.brands = state.brands.filter(b => b._id !== brandMatch[1]);
+    return ok({ message: 'Brand removed' });
+  }
+
+  // ===== ADDRESSES =====
+  if (url === '/api/addresses' && method === 'GET') {
+    const me = getCurrentUser();
+    if (!me) return err(401, 'Not authorized, no token');
+    return ok(state.addresses.filter(a => a.user === me._id));
+  }
+  if (url === '/api/addresses' && method === 'POST') {
+    const me = getCurrentUser();
+    if (!me) return err(401, 'Not authorized, no token');
+    const data = body as any;
+    if (data.isDefault) {
+      // Clear other defaults
+      state.addresses.forEach(a => {
+        if (a.user === me._id) a.isDefault = false;
+      });
+    }
+    const newAddr = {
+      _id: `a_${Date.now()}`,
+      user: me._id,
+      label: data.label || 'Home',
+      fullName: data.fullName,
+      phone: data.phone || '',
+      address: data.address,
+      city: data.city,
+      postalCode: data.postalCode,
+      country: data.country || 'US',
+      isDefault: !!data.isDefault,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    state.addresses.push(newAddr);
+    return ok(newAddr);
+  }
+  const addrMatch = matchUrl(url, /^\/api\/addresses\/([a-zA-Z0-9_]+)$/);
+  if (addrMatch && method === 'PUT') {
+    const me = getCurrentUser();
+    if (!me) return err(401, 'Not authorized, no token');
+    const a = state.addresses.find(x => x._id === addrMatch[1] && x.user === me._id);
+    if (!a) return err(404, 'Address not found');
+    if ((body as any).isDefault) {
+      state.addresses.forEach(x => {
+        if (x.user === me._id && x._id !== a._id) x.isDefault = false;
+      });
+    }
+    Object.assign(a, body);
+    a.updatedAt = new Date().toISOString();
+    return ok(a);
+  }
+  if (addrMatch && method === 'DELETE') {
+    const me = getCurrentUser();
+    if (!me) return err(401, 'Not authorized, no token');
+    state.addresses = state.addresses.filter(x => !(x._id === addrMatch[1] && x.user === me._id));
+    return ok({ message: 'Address removed' });
+  }
+
+  // ===== ANALYTICS =====
+  if (url.startsWith('/api/analytics/overview') && method === 'GET') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    const recent = state.orders;
+    const allPaid = recent.filter(o => o.status === 'paid' || o.status === 'shipped' || o.status === 'delivered');
+    const revenue = allPaid.reduce((s, o) => s + o.totalPrice, 0);
+    const paidOrdersCount = allPaid.length;
+    const aov = paidOrdersCount > 0 ? revenue / paidOrdersCount : 0;
+    const statusMap: Record<string, number> = {};
+    recent.forEach(o => { statusMap[o.status] = (statusMap[o.status] || 0) + 1; });
+    const paidUsers = new Set(allPaid.map(o => typeof o.user === 'object' ? o.user._id : o.user));
+    const lowStock = state.products.filter(p => p.countInStock > 0 && p.countInStock <= 5).length;
+    const outOfStock = state.products.filter(p => p.countInStock === 0).length;
+    return ok({
+      rangeDays: 30,
+      revenue: Math.round(revenue * 100) / 100,
+      aov: Math.round(aov * 100) / 100,
+      ordersCount: recent.length,
+      paidOrdersCount,
+      newCustomers: state.users.length,
+      totalCustomers: state.users.length,
+      repeatCustomers: 0,
+      paidCustomerRate: state.users.length > 0 ? Math.round((paidUsers.size / state.users.length) * 1000) / 10 : 0,
+      products: { total: state.products.length, lowStock, outOfStock },
+      ordersByStatus: {
+        pending: statusMap.pending || 0,
+        paid: statusMap.paid || 0,
+        shipped: statusMap.shipped || 0,
+        delivered: statusMap.delivered || 0,
+        cancelled: statusMap.cancelled || 0,
+      },
+      unavailable: {
+        conversionRate: null,
+        sessions: null,
+        refundRate: null,
+        salesByChannel: null,
+      },
+    });
+  }
+  if (url.startsWith('/api/analytics/top-products') && method === 'GET') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    const units = new Map<string, { units: number; revenue: number; orders: number }>();
+    state.orders
+      .filter(o => o.status === 'paid' || o.status === 'shipped' || o.status === 'delivered')
+      .forEach(o => {
+        o.orderItems.forEach((i: any) => {
+          const k = i.product;
+          const cur = units.get(k) || { units: 0, revenue: 0, orders: 0 };
+          cur.units += i.qty;
+          cur.revenue += i.price * i.qty;
+          cur.orders += 1;
+          units.set(k, cur);
+        });
+      });
+    const out = [...units.entries()]
+      .map(([productId, v]) => {
+        const p = state.products.find(pp => pp._id === productId);
+        return p ? {
+          productId, name: p.name, image: p.image, category: p.category,
+          unitsSold: v.units, revenue: Math.round(v.revenue * 100) / 100, ordersCount: v.orders,
+        } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b as any).revenue - (a as any).revenue);
+    return ok(out);
+  }
+  if (url.startsWith('/api/analytics/revenue-by-month') && method === 'GET') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    const monthMap = new Map<string, { revenue: number; orders: number }>();
+    state.orders
+      .filter(o => o.status === 'paid' || o.status === 'shipped' || o.status === 'delivered')
+      .forEach(o => {
+        const d = new Date(o.createdAt);
+        const k = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        const cur = monthMap.get(k) || { revenue: 0, orders: 0 };
+        cur.revenue += o.totalPrice;
+        cur.orders += 1;
+        monthMap.set(k, cur);
+      });
+    return ok([...monthMap.entries()].map(([k, v]) => {
+      const [y, m] = k.split('-').map(Number);
+      return { year: y, month: m, revenue: Math.round(v.revenue * 100) / 100, orders: v.orders };
+    }).sort((a, b) => a.year - b.year || a.month - b.month));
+  }
+
+  // ===== ORDER STATUS TRANSITIONS =====
+  const shipMatch = matchUrl(url, /^\/api\/orders\/([a-zA-Z0-9_]+)\/ship$/);
+  if (shipMatch && method === 'PUT') {
+    const me = getCurrentUser();
+    if (!me?.isAdmin) return err(401, 'Not authorized as an admin');
+    const id = shipMatch[1];
+    const order = state.orders.find(o => o._id === id);
+    if (!order) return err(404, 'Order not found');
+    if (order.status === 'cancelled') return err(400, 'Cannot ship a cancelled order');
+    if (order.status === 'delivered') return err(400, 'Order is already delivered');
+    const data = (body as any) || {};
+    order.status = 'shipped';
+    order.trackingNumber = data.trackingNumber || '';
+    order.carrier = data.carrier || '';
+    order.shippedAt = new Date().toISOString();
+    return ok(order);
+  }
+  const cancelMatch = matchUrl(url, /^\/api\/orders\/([a-zA-Z0-9_]+)\/cancel$/);
+  if (cancelMatch && method === 'PUT') {
+    const me = getCurrentUser();
+    if (!me) return err(401, 'Not authorized, no token');
+    const id = cancelMatch[1];
+    const order = state.orders.find(o => o._id === id);
+    if (!order) return err(404, 'Order not found');
+    if (order.status === 'delivered') return err(400, 'Cannot cancel a delivered order');
+    if (order.status === 'cancelled') return err(400, 'Order is already cancelled');
+    if (!me.isAdmin && order.user !== me._id) return err(403, 'Not authorized to cancel this order');
+    const data = (body as any) || {};
+    order.status = 'cancelled';
+    order.cancelledAt = new Date().toISOString();
+    order.cancelReason = data.reason || 'Cancelled by user';
+    return ok(order);
+  }
+
+  // ===== Fallback =====
   return err(404, `Mock route not implemented: ${method} ${url}`);
 };

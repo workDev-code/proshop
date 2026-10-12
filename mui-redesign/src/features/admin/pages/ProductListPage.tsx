@@ -47,6 +47,48 @@ const stockPill = (p: Product): { label: string; tone: PillTone } => {
   return { label: 'In stock', tone: 'success' };
 };
 
+/**
+ * Small "ACTIVE" / "HIDDEN" pill driven by `product.isActive`.
+ * Defaults to ACTIVE for legacy rows that don't carry the flag.
+ */
+const ActiveIndicator = ({ isActive }: { isActive: boolean | undefined }) => {
+  const active = isActive !== false;
+  const bg = active ? '#e8f7f0' : '#ffeded';
+  const fg = active ? '#17845e' : '#c84c4c';
+  return (
+    <Box
+      component="span"
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.5,
+        px: 0.875,
+        py: 0.4,
+        borderRadius: 99,
+        bgcolor: bg,
+        color: fg,
+        fontSize: 9,
+        fontWeight: 700,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <Box
+        component="span"
+        sx={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          bgcolor: fg,
+          display: 'inline-block',
+        }}
+      />
+      {active ? 'Active' : 'Hidden'}
+    </Box>
+  );
+};
+
 export const ProductListPage = () => {
   const toast = useToast();
   const [search, setSearch] = useState('');
@@ -61,6 +103,9 @@ export const ProductListPage = () => {
 
   const products = data?.products ?? [];
   const total = data?.total ?? products.length;
+  // `active` here means "is for sale" (i.e. visible on the storefront and
+  // not out of stock). The product.isActive flag (added in schema v3.0)
+  // is a separate "hidden from storefront" toggle surfaced as a column.
   const active = products.filter((p) => p.countInStock > 0).length;
   const lowStock = products.filter((p) => p.countInStock > 0 && p.countInStock <= 5).length;
 
@@ -254,7 +299,7 @@ export const ProductListPage = () => {
             <Box component="table" sx={adminTableSx}>
               <Box component="thead">
                 <Box component="tr">
-                  {['Product', 'Category', 'Price', 'Stock', 'Status', 'Action'].map((h) => (
+                  {['Product', 'Category', 'Price', 'Stock', 'Visibility', 'Action'].map((h) => (
                     <Box component="th" key={h} sx={adminThSx}>
                       {h}
                     </Box>
@@ -325,7 +370,10 @@ export const ProductListPage = () => {
                         {fmtNumber(p.countInStock)}
                       </Box>
                       <Box component="td" sx={adminTdSx}>
-                        <StatusPill label={pill.label} tone={pill.tone} />
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <StatusPill label={pill.label} tone={pill.tone} />
+                          <ActiveIndicator isActive={p.isActive} />
+                        </Stack>
                       </Box>
                       <Box component="td" sx={adminTdSx}>
                         <Stack direction="row" spacing={1.5} alignItems="center">

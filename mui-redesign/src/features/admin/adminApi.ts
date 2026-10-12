@@ -9,7 +9,7 @@ import type {
 } from './types';
 import type { Product } from '../products/types';
 import type { Order } from '../orders/types';
-import type { User } from '../auth/types';
+import type { AdminUserRow } from '../auth/types';
 
 /**
  * Admin API endpoints. All require admin privileges on the backend.
@@ -90,15 +90,15 @@ export const adminApi = api.injectEndpoints({
     }),
 
     // ===== Users =====
-    getAllUsers: build.query<User[], void>({
+    getAllUsers: build.query<AdminUserRow[], void>({
       query: () => '/api/users',
       providesTags: ['User'],
     }),
-    getUserById: build.query<User, string>({
+    getUserById: build.query<AdminUserRow, string>({
       query: (id) => `/api/users/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'User', id }],
     }),
-    updateUser: build.mutation<User, { id: string; payload: UpdateUserPayload }>({
+    updateUser: build.mutation<AdminUserRow, { id: string; payload: UpdateUserPayload }>({
       query: ({ id, payload }) => ({
         url: `/api/users/${id}`,
         method: 'PUT',

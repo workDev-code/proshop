@@ -384,3 +384,79 @@ export const mockOrders: any[] = [
 
 // =================== WISHLIST ===================
 export const mockWishlist: string[] = ['p_2', 'p_7']; // Jane has these
+
+// =================== CATEGORIES ===================
+// Mirrors backend Category collection. Used by the storefront
+// CategoryGrid and the admin Categories page.
+import type { Category } from '../features/categories/types';
+import type { Brand } from '../features/brands/types';
+import type { Address } from '../features/addresses/types';
+
+export const mockCategories: Category[] = [
+  {
+    _id: 'c_footwear', name: 'Footwear', slug: 'footwear',
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80',
+    description: 'Sneakers, boots, and everyday shoes.',
+    displayOrder: 1, isActive: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z',
+  },
+  {
+    _id: 'c_tech', name: 'Tech', slug: 'tech',
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
+    description: 'Audio, wearables, smart home.',
+    displayOrder: 2, isActive: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z',
+  },
+  {
+    _id: 'c_accessories', name: 'Accessories', slug: 'accessories',
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80',
+    description: 'Watches, bags, small carry.',
+    displayOrder: 3, isActive: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z',
+  },
+  {
+    _id: 'c_lifestyle', name: 'Lifestyle', slug: 'lifestyle',
+    image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80',
+    description: 'Home, kitchen, and everyday carry.',
+    displayOrder: 4, isActive: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z',
+  },
+];
+
+// =================== BRANDS ===================
+export const mockBrands: Brand[] = [
+  { _id: 'b_common_ground', name: 'Common Ground', slug: 'common-ground',
+    description: 'Honest basics for everyday wear.', isActive: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z' },
+  { _id: 'b_sonus', name: 'Sonus', slug: 'sonus',
+    description: 'Sound, considered.', isActive: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z' },
+  { _id: 'b_north', name: 'North', slug: 'north',
+    description: 'Watches and small leather goods.', isActive: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z' },
+  { _id: 'b_field', name: 'Field', slug: 'field',
+    description: 'Home and carry essentials.', isActive: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z' },
+];
+
+// =================== ADDRESSES ===================
+export const mockAddresses: Address[] = [
+  {
+    _id: 'a_jane_home', user: 'u_jane', label: 'Home', fullName: 'Jane Meyer',
+    phone: '+1 555 010 0003', address: '88 Mission Street', city: 'San Francisco',
+    postalCode: '94105', country: 'US', isDefault: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z',
+  },
+  {
+    _id: 'a_jane_office', user: 'u_jane', label: 'Office', fullName: 'Jane Meyer',
+    phone: '+1 555 010 0003', address: '500 Howard Street', city: 'San Francisco',
+    postalCode: '94105', country: 'US', isDefault: false,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z',
+  },
+  {
+    _id: 'a_admin_home', user: 'u_admin', label: 'Home', fullName: 'Avery Stone',
+    phone: '+1 555 010 0001', address: '742 Evergreen Terrace', city: 'Springfield',
+    postalCode: '49007', country: 'US', isDefault: true,
+    createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z',
+  },
+];

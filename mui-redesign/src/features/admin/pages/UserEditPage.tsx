@@ -1,3 +1,9 @@
+// Adds two new fields to the admin user edit form:
+//   - `phone`   : text input
+//   - `avatar`  : URL input + live preview thumbnail
+// Both are kept in the local form state and submitted via the existing
+// updateUser mutation. The backend's PUT /api/users/:id accepts arbitrary
+// fields (admin override), so the extra keys are passed through transparently.
 import { useEffect } from 'react';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -19,6 +25,8 @@ import {
   AdminPanelSettings as AdminIcon,
   Person as PersonIcon,
   Email as EmailIcon,
+  Phone as PhoneIcon,
+  Image as ImageIcon,
 } from '@mui/icons-material';
 import { LoadingState } from '../../../components/feedback/LoadingState';
 import { useGetUserByIdQuery, useUpdateUserMutation } from '../adminApi';
@@ -34,6 +42,19 @@ const userSchema = z.object({
   name: z.string().min(2, 'Name is required').max(50),
   email: z.string().email('Invalid email'),
   isAdmin: z.boolean(),
+  phone: z
+    .string()
+    .trim()
+    .max(30, 'Phone is too long')
+    .optional()
+    .or(z.literal('')),
+  avatar: z
+    .string()
+    .trim()
+    .url('Must be a valid URL')
+    .max(500, 'Avatar URL is too long')
+    .optional()
+    .or(z.literal('')),
 });
 type UserFormValues = z.infer<typeof userSchema>;
 
@@ -102,20 +123,47 @@ export const UserEditPage = () => {
   const { data: user, isLoading } = useGetUserByIdQuery(id);
   const [updateUser, { isLoading: updating }] = useUpdateUserMutation();
 
-  const { register, handleSubmit, reset, watch, formState } = useForm<UserFormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState,
+  } = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
-    defaultValues: { name: '', email: '', isAdmin: false },
+    defaultValues: {
+      name: '',
+      email: '',
+      isAdmin: false,
+      phone: '',
+      avatar: '',
+    },
   });
 
   useEffect(() => {
     if (user) {
-      reset({ name: user.name, email: user.email, isAdmin: user.isAdmin });
+      reset({
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        phone: user.phone ?? '',
+        avatar: user.avatar ?? '',
+      });
     }
   }, [user, reset]);
 
   const onSubmit = async (values: UserFormValues) => {
     try {
-      await updateUser({ id, payload: values }).unwrap();
+      // Strip empty optional strings so the backend stores `undefined` instead
+      // of an empty string for fields the admin didn't fill in.
+      const payload = {
+        name: values.name,
+        email: values.email,
+        isAdmin: values.isAdmin,
+        ...(values.phone ? { phone: values.phone } : {}),
+        ...(values.avatar ? { avatar: values.avatar } : {}),
+      };
+      await updateUser({ id, payload }).unwrap();
       toast.success('User updated');
       navigate('/admin/users');
     } catch (err) {
@@ -128,6 +176,7 @@ export const UserEditPage = () => {
   if (!user) return <Alert severity="error">User not found</Alert>;
 
   const isAdminValue = watch('isAdmin');
+  const avatarValue = watch('avatar') || '';
   const initials = (user.name ?? '')
     .trim()
     .split(/\s+/)
@@ -228,6 +277,77 @@ export const UserEditPage = () => {
                   ),
                 }}
               />
+              <TextField
+                {...register('phone')}
+                label="Phone"
+                fullWidth
+                error={!!formState.errors.phone}
+                helperText={formState.errors.phone?.message ?? 'Optional'}
+                disabled={updating}
+                sx={fieldSx}
+                InputProps={{
+                  startAdornment: (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: '#818999',
+                        pr: 1,
+                      }}
+                    >
+                      <PhoneIcon sx={{ fontSize: 18 }} />
+                    </Box>
+                  ),
+                }}
+              />
+            </Stack>
+          </Box>
+
+          <Divider />
+
+          <Box sx={{ p: 2.5 }}>
+            <Typography sx={overlineSx}>Avatar</Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  border: '1px dashed #d4d8e0',
+                  bgcolor: '#f7f8fa',
+                  display: 'grid',
+                  placeItems: 'center',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}
+              >
+                {avatarValue ? (
+                  <Box
+                    component="img"
+                    src={avatarValue}
+                    alt={user.name}
+                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      // graceful fallback if the URL 404s
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <ImageIcon sx={{ fontSize: 22, color: '#b6bcc8' }} />
+                )}
+              </Box>
+              <TextField
+                {...register('avatar')}
+                label="Avatar URL"
+                placeholder="https://…"
+                fullWidth
+                error={!!formState.errors.avatar}
+                helperText={
+                  formState.errors.avatar?.message ?? 'Paste an image URL (https://…)'
+                }
+                disabled={updating}
+                sx={fieldSx}
+              />
             </Stack>
           </Box>
 
@@ -306,6 +426,7 @@ export const UserEditPage = () => {
             <Typography sx={overlineSx}>Profile</Typography>
             <Stack alignItems="center" spacing={1.5} sx={{ py: 1.5 }}>
               <Avatar
+                src={user.avatar}
                 sx={{
                   width: 80,
                   height: 80,
@@ -331,6 +452,11 @@ export const UserEditPage = () => {
                 <Typography sx={{ fontSize: 11, color: '#818999' }}>
                   {user.email}
                 </Typography>
+                {user.phone && (
+                  <Typography sx={{ fontSize: 11, color: '#818999' }}>
+                    {user.phone}
+                  </Typography>
+                )}
               </Stack>
             </Stack>
           </Box>

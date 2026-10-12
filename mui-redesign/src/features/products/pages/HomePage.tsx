@@ -14,7 +14,6 @@ import { EmptyState } from '../../../components/feedback/EmptyState';
 import { ErrorState } from '../../../components/feedback/ErrorState';
 import { Pagination } from '../../../components/feedback/Pagination';
 import { useGetProductsQuery, useGetTopProductsQuery } from '../productApi';
-import type { Product } from '../types';
 
 /**
  * Storefront home page.
@@ -22,7 +21,8 @@ import type { Product } from '../types';
  * Sections (per approved HTML prototype):
  *   1. HeroBanner       — 2-col panel with featured product artwork
  *   2. TrustBadges      — 4-col strip (shipping / returns / checkout / support)
- *   3. CategoryGrid     — 4-col tile grid from facets.categories
+ *   3. CategoryGrid     — 4-col tile grid powered by the Category API
+ *                         (fetches its own data, no props)
  *   4. Featured products — pill filters + 4-col product grid + pagination
  *   5. FeatureCard      — 2-col editorial panel
  *   6. EditorialCards   — 2-col asymmetric editorial
@@ -53,14 +53,6 @@ export const HomePage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Compute category previews: first product of each category
-  const categoryPreviews: Record<string, string | undefined> = {};
-  list?.products.forEach((p: Product) => {
-    if (!categoryPreviews[p.category]) {
-      categoryPreviews[p.category] = p.image?.replace(/\.jpg$/, '.svg') ?? p.image;
-    }
-  });
-
   const featuredHero = top?.[0];
   const featureCardProduct = top?.[1];
   const editorialItems = (top ?? []).slice(2, 4);
@@ -83,11 +75,8 @@ export const HomePage = () => {
         <TrustBadges />
       </Box>
 
-      {/* 3. Category grid */}
-      <CategoryGrid
-        categories={list?.facets?.categories}
-        previews={categoryPreviews}
-      />
+      {/* 3. Category grid — fetches its own data via useGetCategoriesQuery */}
+      <CategoryGrid />
 
       {/* 4. Featured products */}
       <Box

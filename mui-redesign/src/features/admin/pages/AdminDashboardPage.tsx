@@ -1,3 +1,7 @@
+// Now wired to the new analytics endpoints. The 4 KPI cards, the top-products
+// table and the revenue chart all read from /api/analytics/* rather than
+// being computed client-side from the raw orders/users/products lists.
+// "Sales by channel" is honestly empty because the backend can't derive it.
 import { Link as RouterLink } from 'react-router-dom';
 import { Box, Stack, Typography } from '@mui/material';
 import {
@@ -10,8 +14,12 @@ import {
 import { StatCard } from '../components/StatCard';
 import { StatusPill } from '../../../components/feedback/StatusPill';
 import { LoadingState } from '../../../components/feedback/LoadingState';
-import { useGetAllOrdersQuery, useGetAllUsersQuery } from '../adminApi';
-import { useGetProductsQuery } from '../../products/productApi';
+import { useGetAllOrdersQuery } from '../adminApi';
+import {
+  useGetOverviewQuery,
+  useGetTopProductsQuery,
+  useGetRevenueByMonthQuery,
+} from '../../analytics/analyticsApi';
 import { fmtDate, fmtMoney, fmtNumber } from '../../../utils/fmt';
 import {
   adminEmptyDescSx,
@@ -30,8 +38,9 @@ import {
   adminThSx,
   adminTitleRowSx,
 } from '../components/adminStyles';
+import type { RevenueByMonth, TopProduct } from '../../analytics/types';
 import type { PillTone } from '../../../components/feedback/StatusPill';
-import type { Order } from '../../orders/types';
+import type { Order, OrderStatus } from '../../orders/types';
 
 /* ─── helpers ────────────────────────────────────────────────────────── */
 
@@ -43,11 +52,36 @@ const todayLabel = () =>
     year: 'numeric',
   });
 
-/** Map an order to the matching status pill. */
+/** Resolve the effective status, falling back to isPaid/isDelivered for
+ *  the legacy demo seed. */
+const resolveStatus = (o: Order): OrderStatus => {
+  const s = (o as { status?: string }).status as OrderStatus | undefined;
+  if (s === 'pending' || s === 'paid' || s === 'shipped' || s === 'delivered' || s === 'cancelled') {
+    return s;
+  }
+  if (o.isDelivered) return 'delivered';
+  if (o.isPaid) return 'paid';
+  return 'pending';
+};
+
+const ORDER_STATUS_TONES: Record<OrderStatus, PillTone> = {
+  pending: 'warning',
+  paid: 'success',
+  shipped: 'info',
+  delivered: 'success',
+  cancelled: 'error',
+};
+
 const orderPill = (o: Order): { label: string; tone: PillTone } => {
-  if (o.isDelivered) return { label: 'Delivered', tone: 'success' };
-  if (o.isPaid) return { label: 'Shipped', tone: 'info' };
-  return { label: 'Pending', tone: 'warning' };
+  const status = resolveStatus(o);
+  const labels: Record<OrderStatus, string> = {
+    pending: 'Pending',
+    paid: 'Paid',
+    shipped: 'Shipped',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
+  };
+  return { label: labels[status], tone: ORDER_STATUS_TONES[status] };
 };
 
 const orderCustomer = (o: Order): { name: string; email: string } =>
@@ -122,46 +156,35 @@ const Panel = ({ children }: { children: React.ReactNode }) => (
   <Box sx={adminPanelSx}>{children}</Box>
 );
 
-/* ─── revenue bar chart (CSS-only, mirrors the prototype) ────────────── */
+/* ─── revenue bar chart (CSS-only) ─────────────────────────────── */
 
-interface MonthlyRevenue {
-  label: string;
-  thisYear: number;
-  lastYear: number;
-}
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const buildMonthlyRevenue = (orders: Order[] | undefined): MonthlyRevenue[] => {
+const buildMonthlyBars = (rows: RevenueByMonth[] | undefined) => {
   const now = new Date();
-  const buckets: MonthlyRevenue[] = [];
+  const buckets: { label: string; revenue: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    buckets.push({
-      label: d.toLocaleDateString('en-US', { month: 'short' }),
-      thisYear: 0,
-      lastYear: 0,
-    });
+    buckets.push({ label: MONTHS[d.getMonth()], revenue: 0 });
   }
-  if (!orders) return buckets;
-
-  const monthKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
-  const byKey = new Map<string, number>();
-  for (const o of orders) {
-    if (!o.isPaid) continue;
-    const dt = new Date(o.createdAt);
-    byKey.set(monthKey(dt), (byKey.get(monthKey(dt)) ?? 0) + o.totalPrice);
+  if (!rows) return buckets;
+  // Build a lookup of all months that have data, then map them onto the
+  // trailing 7-month window so older buckets don't appear.
+  for (const row of rows) {
+    const rowDate = new Date(row.year, row.month - 1, 1);
+    const monthsAgo =
+      (now.getFullYear() - row.year) * 12 + (now.getMonth() - row.month);
+    if (monthsAgo < 0 || monthsAgo > 6) continue;
+    const idx = 6 - monthsAgo;
+    if (buckets[idx]) buckets[idx].revenue = row.revenue;
+    void rowDate;
   }
-
-  buckets.forEach((b, idx) => {
-    const target = new Date(now.getFullYear(), now.getMonth() - (6 - idx), 1);
-    const v = byKey.get(monthKey(target));
-    if (v !== undefined) b.thisYear = v;
-  });
   return buckets;
 };
 
-const RevenueBarChart = ({ orders }: { orders?: Order[] }) => {
-  const data = buildMonthlyRevenue(orders);
-  const hasData = data.some((d) => d.thisYear > 0);
+const RevenueBarChart = ({ rows }: { rows: RevenueByMonth[] | undefined }) => {
+  const data = buildMonthlyBars(rows);
+  const hasData = data.some((d) => d.revenue > 0);
   if (!hasData) {
     return (
       <Box
@@ -177,7 +200,7 @@ const RevenueBarChart = ({ orders }: { orders?: Order[] }) => {
       </Box>
     );
   }
-  const max = Math.max(...data.map((d) => d.thisYear)) || 1;
+  const max = Math.max(...data.map((d) => d.revenue)) || 1;
 
   return (
     <>
@@ -215,28 +238,16 @@ const RevenueBarChart = ({ orders }: { orders?: Order[] }) => {
                 display: 'flex',
                 alignItems: 'flex-end',
                 justifyContent: 'center',
-                gap: '4px',
               }}
             >
               <Box
                 sx={{
-                  width: '32%',
-                  maxWidth: 22,
-                  height: `${(d.lastYear / max) * 100}%`,
-                  borderRadius: '5px 5px 1px 1px',
-                  bgcolor: '#f2b8a7',
-                  minHeight: 0,
-                  visibility: d.lastYear > 0 ? 'visible' : 'hidden',
-                }}
-              />
-              <Box
-                sx={{
-                  width: '32%',
-                  maxWidth: 22,
-                  height: `${(d.thisYear / max) * 100}%`,
+                  width: '38%',
+                  maxWidth: 28,
+                  height: `${(d.revenue / max) * 100}%`,
                   borderRadius: '5px 5px 1px 1px',
                   bgcolor: '#e36342',
-                  minHeight: d.thisYear > 0 ? 4 : 0,
+                  minHeight: d.revenue > 0 ? 4 : 0,
                 }}
               />
             </Box>
@@ -264,19 +275,7 @@ const RevenueBarChart = ({ orders }: { orders?: Order[] }) => {
               display: 'inline-block',
             }}
           />
-          This year
-        </Stack>
-        <Stack direction="row" alignItems="center" spacing={0.75}>
-          <Box
-            sx={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              bgcolor: '#f2b8a7',
-              display: 'inline-block',
-            }}
-          />
-          Last year
+          Revenue
         </Stack>
       </Stack>
     </>
@@ -285,17 +284,113 @@ const RevenueBarChart = ({ orders }: { orders?: Order[] }) => {
 
 /* ─── Sales by channel panel (always empty, by design) ───────────────── */
 
-const ChannelPanel = () => (
+const ChannelPanel = ({ whyMessage }: { whyMessage: string }) => (
   <Panel>
     <PanelHead title="Sales by channel" description="Where your customers find you" />
     <Box sx={{ py: 4, textAlign: 'center' }}>
       <Typography sx={adminEmptyTitleSx}>Data not available</Typography>
-      <Typography sx={adminEmptyDescSx}>
-        Channel attribution isn't tracked by the backend yet.
+      <Typography sx={adminEmptyDescSx}>{whyMessage}</Typography>
+      <Typography
+        sx={{
+          fontSize: 9,
+          color: '#9aa3b3',
+          mt: 1,
+          fontStyle: 'italic',
+        }}
+      >
+        Why? overview.unavailable.salesByChannel is null
       </Typography>
     </Box>
   </Panel>
 );
+
+/* ─── top performing products table ──────────────────────────────── */
+
+const TopProductsTable = ({ rows }: { rows: TopProduct[] | undefined }) => {
+  if (!rows || rows.length === 0) {
+    return (
+      <Box sx={adminEmptySx}>
+        <Typography sx={adminEmptyTitleSx}>No sales data yet</Typography>
+        <Typography sx={adminEmptyDescSx}>
+          Once customers start placing orders, top products will appear here.
+        </Typography>
+      </Box>
+    );
+  }
+  return (
+    <Box sx={{ overflowX: 'auto' }}>
+      <Box component="table" sx={adminTableSx}>
+        <Box component="thead">
+          <Box component="tr">
+            {['Product', 'Units sold', 'Revenue', 'Trend'].map((h) => (
+              <Box component="th" key={h} sx={adminThSx}>
+                {h}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        <Box component="tbody">
+          {rows.map((row) => (
+            <Box component="tr" key={row.productId}>
+              <Box component="td" sx={adminTdFirstSx}>
+                <Stack direction="row" alignItems="center" spacing={1.25}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 38,
+                      borderRadius: '7px',
+                      bgcolor: '#f0f1ed',
+                      flexShrink: 0,
+                      display: 'grid',
+                      placeItems: 'center',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {row.image ? (
+                      <Box
+                        component="img"
+                        src={row.image}
+                        alt={row.name}
+                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#929aaa' }}>
+                        {row.name?.[0]?.toUpperCase() ?? '?'}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      component="strong"
+                      sx={{ display: 'block', fontSize: 10, fontWeight: 700 }}
+                    >
+                      {row.name}
+                    </Typography>
+                    <Typography
+                      component="small"
+                      sx={{ display: 'block', color: '#929aaa', fontSize: 9, mt: '4px' }}
+                    >
+                      {row.category}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+              <Box component="td" sx={adminTdSx}>
+                {fmtNumber(row.unitsSold)}
+              </Box>
+              <Box component="td" sx={adminTdSx}>
+                {fmtMoney(row.revenue)}
+              </Box>
+              <Box component="td" sx={adminTdSx}>
+                —
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
 
 /* ─── recent orders table ────────────────────────────────────────────── */
 
@@ -357,14 +452,11 @@ const RecentOrdersTable = ({ orders }: { orders?: Order[] }) => {
 
 export const AdminDashboardPage = () => {
   const { data: orders, isLoading: ordersLoading } = useGetAllOrdersQuery();
-  const { data: users, isLoading: usersLoading } = useGetAllUsersQuery();
-  const { data: productsData, isLoading: productsLoading } =
-    useGetProductsQuery(undefined);
+  const { data: overview, isLoading: overviewLoading } = useGetOverviewQuery(30);
+  const { data: topProducts, isLoading: topLoading } = useGetTopProductsQuery(5);
+  const { data: revenueByMonth, isLoading: revenueLoading } = useGetRevenueByMonthQuery(7);
 
-  const paidOrders = orders?.filter((o) => o.isPaid) ?? [];
-  const totalRevenue = paidOrders.reduce((s, o) => s + o.totalPrice, 0);
-
-  const isLoading = ordersLoading || usersLoading || productsLoading;
+  const isLoading = ordersLoading || overviewLoading || topLoading || revenueLoading;
 
   if (isLoading) {
     return (
@@ -379,7 +471,7 @@ export const AdminDashboardPage = () => {
     <>
       <TitleRow title="Overview" description="Snapshot of your store performance" date />
 
-      {/* 4 stat cards */}
+      {/* 4 stat cards — all sourced from /api/analytics/overview */}
       <Box
         sx={{
           display: 'grid',
@@ -393,36 +485,45 @@ export const AdminDashboardPage = () => {
       >
         <StatCard
           label="Revenue"
-          value={fmtMoney(totalRevenue)}
+          value={fmtMoney(overview?.revenue ?? 0)}
           icon={<RevenueIcon />}
           caption={
             <>
-              <b>↗ Paid orders</b> · {fmtNumber(paidOrders.length)} this period
+              <b>↗ Last 30 days</b> · AOV {fmtMoney(overview?.aov ?? 0)}
             </>
           }
         />
         <StatCard
           label="Orders"
-          value={fmtNumber(orders?.length ?? 0)}
+          value={fmtNumber(overview?.ordersCount ?? 0)}
           icon={<OrdersIcon />}
           caption={
             <>
-              <b>{fmtNumber(paidOrders.length)} paid</b> ·{' '}
-              {fmtNumber((orders?.length ?? 0) - paidOrders.length)} pending
+              <b>{fmtNumber(overview?.paidOrdersCount ?? 0)} paid</b> · in this period
             </>
           }
         />
         <StatCard
           label="Products"
-          value={fmtNumber(productsData?.total ?? 0)}
+          value={fmtNumber(overview?.products.total ?? 0)}
           icon={<ProductsIcon />}
-          caption={<>In your catalog</>}
+          caption={
+            <>
+              <b>{fmtNumber(overview?.products.lowStock ?? 0)} low</b> ·{' '}
+              {fmtNumber(overview?.products.outOfStock ?? 0)} out of stock
+            </>
+          }
         />
         <StatCard
           label="Customers"
-          value={fmtNumber(users?.length ?? 0)}
+          value={fmtNumber(overview?.totalCustomers ?? 0)}
           icon={<CustomersIcon />}
-          caption={<>Registered accounts</>}
+          caption={
+            <>
+              <b>{fmtNumber(overview?.newCustomers ?? 0)} total</b> · paid rate{' '}
+              {fmtNumber(overview?.paidCustomerRate ?? 0)}%
+            </>
+          }
         />
       </Box>
 
@@ -440,9 +541,20 @@ export const AdminDashboardPage = () => {
             title="Revenue overview"
             description="Revenue performance across the last 7 months"
           />
-          <RevenueBarChart orders={orders} />
+          <RevenueBarChart rows={revenueByMonth} />
         </Panel>
-        <ChannelPanel />
+        <ChannelPanel whyMessage="Channel attribution isn't tracked by the backend yet." />
+      </Box>
+
+      {/* Top performing products */}
+      <Box sx={{ mb: 2.25 }}>
+        <Panel>
+          <PanelHead
+            title="Top performing products"
+            description="Ranked by revenue from all paid orders (last 30 days)"
+          />
+          <TopProductsTable rows={topProducts} />
+        </Panel>
       </Box>
 
       {/* Recent orders */}

@@ -77,3 +77,4 @@ export interface AdminStats {
 }
 
 export { type Product, type Order, type User };
+export type { AdminUserRow } from '../auth/types';

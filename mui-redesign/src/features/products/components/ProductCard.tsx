@@ -23,10 +23,16 @@ interface Props {
  *  - Quick-add button (bottom, full width, dark pill) appears on card hover
  *  - Below: meta row (brand · rating), title, price
  *  - Clicking the card navigates to /product/:id
+ *
+ *  Sale pricing: when `product.compareAtPrice > product.price`, the
+ *  original price is shown next to the current price with a strikethrough
+ *  in `text.disabled`. Both numbers stay in the 13-14px row.
  */
 export const ProductCard = ({ product }: Props) => {
-  const { _id, name, image, brand, price, rating, numReviews, countInStock, category } = product;
+  const { _id, name, image, brand, price, compareAtPrice, rating, numReviews, countInStock, category } =
+    product;
   const outOfStock = countInStock === 0;
+  const onSale = typeof compareAtPrice === 'number' && compareAtPrice > price;
   const { addItem } = useCart();
   const toast = useToast();
 
@@ -73,7 +79,30 @@ export const ProductCard = ({ product }: Props) => {
           <WishlistButton productId={_id} size="small" />
         </Box>
 
-        {/* Out of stock badge (top-left) */}
+        {/* On sale pill (top-left) — shown only when there's a real discount */}
+        {onSale && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 13,
+              left: 13,
+              zIndex: 2,
+              px: 1.125,
+              py: 0.75,
+              bgcolor: 'secondary.main',
+              borderRadius: 999,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'common.white',
+            }}
+          >
+            Sale
+          </Box>
+        )}
+
+        {/* Out of stock badge (top-left) — takes priority when both apply */}
         {outOfStock && (
           <Box
             sx={{
@@ -162,11 +191,33 @@ export const ProductCard = ({ product }: Props) => {
           {name}
         </Typography>
 
-        <PriceDisplay
-          value={price}
-          variant="body2"
-          sx={{ fontSize: 14, fontWeight: 700, color: 'text.primary' }}
-        />
+        {/* Price row — current price + optional strikethrough compareAtPrice */}
+        <Stack direction="row" alignItems="baseline" spacing={0.75}>
+          <PriceDisplay
+            value={price}
+            variant="body2"
+            sx={{
+              fontSize: 14,
+              fontWeight: 700,
+              color: onSale ? 'secondary.main' : 'text.primary',
+            }}
+          />
+          {onSale && (
+            <Typography
+              component="span"
+              sx={{
+                fontSize: 12,
+                fontWeight: 500,
+                color: 'text.disabled',
+                textDecoration: 'line-through',
+                fontVariantNumeric: 'tabular-nums',
+                lineHeight: 1,
+              }}
+            >
+              ${compareAtPrice!.toFixed(2)}
+            </Typography>
+          )}
+        </Stack>
       </Box>
     </Box>
   );

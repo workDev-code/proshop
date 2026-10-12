@@ -1,31 +1,41 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Stack, Typography, Link as MuiLink } from '@mui/material';
 import { ArrowOutward as ArrowIcon } from '@mui/icons-material';
 import { EmptyState } from '../../../components/feedback/EmptyState';
-
-interface Props {
-  /** List of category names from the backend facets. */
-  categories?: string[];
-  /** Optional preview image per category (e.g. first product of that category). */
-  previews?: Record<string, string | undefined>;
-}
+import { LoadingState } from '../../../components/feedback/LoadingState';
+import { ErrorState } from '../../../components/feedback/ErrorState';
+import { useGetCategoriesQuery } from '../../categories/categoryApi';
 
 /**
  * 4-column grid of category tiles (responsive: 2-col on mobile).
  * Matches `.categories` / `.category` from the approved HTML prototype.
  *
- *  - Each tile is a Link to `/?category=<name>` (pushes URL search param)
- *  - Dark gradient overlay on top of the image for legibility
- *  - Arrow button in the bottom-right corner
+ * Data source: `useGetCategoriesQuery()` (public, RTK Query) — pulls the
+ * real Category collection from the backend (or from the in-memory mock
+ * in demo mode). Tiles are rendered from the API response directly:
  *
- *  Falls back to the shared <EmptyState> when no categories exist.
- *  Never renders hardcoded categories.
+ *  - All active categories returned by the API
+ *  - Sorted by `displayOrder` ascending
+ *  - Each tile uses `Category.image` as background (much sharper than
+ *    building previews from product images)
+ *  - Clicking a tile navigates to `/?category=<name>`
+ *
+ * Falls back to the shared <EmptyState> when the API returns no active
+ * categories. Never renders hardcoded categories.
  */
-export const CategoryGrid = ({ categories, previews }: Props) => {
+export const CategoryGrid = () => {
   const navigate = useNavigate();
+  const { data, isLoading, isError, refetch } = useGetCategoriesQuery();
 
-  const items = categories ?? [];
-  const hasItems = items.length > 0;
+  const categories = useMemo(() => {
+    if (!data) return [];
+    return [...data]
+      .filter((c) => c.isActive)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [data]);
+
+  const hasItems = categories.length > 0;
 
   return (
     <Box component="section" id="categories" sx={{ py: { xs: 6, md: 9 } }}>
@@ -92,7 +102,44 @@ export const CategoryGrid = ({ categories, previews }: Props) => {
         </MuiLink>
       </Stack>
 
-      {!hasItems ? (
+      {isLoading ? (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: { xs: 1.25, md: 2 },
+          }}
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <Box
+              key={i}
+              sx={{
+                minHeight: { xs: 180, md: 220 },
+                borderRadius: 2.25,
+                bgcolor: 'action.hover',
+                overflow: 'hidden',
+              }}
+            >
+              <LoadingState variant="card" count={1} />
+            </Box>
+          ))}
+        </Box>
+      ) : isError ? (
+        <Box
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 3,
+            overflow: 'hidden',
+          }}
+        >
+          <ErrorState
+            title="Could not load categories"
+            message="Please check your connection and try again."
+            onRetry={refetch}
+          />
+        </Box>
+      ) : !hasItems ? (
         <Box
           sx={{
             border: '1px solid',
@@ -103,7 +150,7 @@ export const CategoryGrid = ({ categories, previews }: Props) => {
         >
           <EmptyState
             title="No categories yet"
-            description="Once products are added with categories, they'll appear here."
+            description="Once the catalog is organized into categories, they'll appear here — each with a handpicked hero image."
           />
         </Box>
       ) : (
@@ -117,12 +164,12 @@ export const CategoryGrid = ({ categories, previews }: Props) => {
             gap: { xs: 1.25, md: 2 },
           }}
         >
-          {items.map((name) => (
+          {categories.map((c) => (
             <CategoryTile
-              key={name}
-              name={name}
-              image={previews?.[name]}
-              onClick={() => navigate(`/?category=${encodeURIComponent(name)}`)}
+              key={c._id}
+              name={c.name}
+              image={c.image}
+              onClick={() => navigate(`/?category=${encodeURIComponent(c.name)}`)}
             />
           ))}
         </Box>
