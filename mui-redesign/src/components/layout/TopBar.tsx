@@ -29,6 +29,7 @@ import {
   AdminPanelSettings as AdminIcon,
   ShoppingCart as CartIcon,
   Favorite as FavoriteIcon,
+  Dashboard as DashboardIcon,
 } from '@mui/icons-material';
 import { useAppTheme } from '../../theme/ThemeProvider';
 import { useCurrentUser } from '../../features/auth/hooks';
@@ -193,6 +194,20 @@ export const TopBar = ({ onMenuClick, showMenuButton, currentPath }: Props) => {
             <DesignIcon />
           </IconButton>
         </Tooltip>
+
+        {/* Admin dashboard (admin only) */}
+        {user?.isAdmin && (
+          <Tooltip title="Admin">
+            <IconButton
+              component={Link}
+              to="/admin"
+              sx={{ ml: 0.5 }}
+              color={currentPath?.startsWith('/admin') ? 'primary' : 'default'}
+            >
+              <DashboardIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
         {/* Theme toggle */}
         <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
