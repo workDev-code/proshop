@@ -2,7 +2,6 @@ import asyncHandler from '../middleware/asyncHandler.js';
 import Product from '../models/productModel.js';
 
 // Helper: build sort object from query param `sort`
-// Supported: newest (default) | price_asc | price_desc | rating | top_sellers | name
 function buildSort(sortBy) {
   switch (sortBy) {
     case 'price_asc':
@@ -12,7 +11,6 @@ function buildSort(sortBy) {
     case 'rating':
       return { rating: -1 };
     case 'top_sellers':
-      // Heuristic: products with rating + high priceDesc-ish; here use rating then numReviews
       return { rating: -1, numReviews: -1 };
     case 'name':
       return { name: 1 };
@@ -22,8 +20,6 @@ function buildSort(sortBy) {
   }
 }
 
-// Helper: build price filter
-// Supports price range and individual milestones
 function buildPriceFilter(query) {
   const min = parseFloat(query.priceMin);
   const max = parseFloat(query.priceMax);
@@ -33,7 +29,6 @@ function buildPriceFilter(query) {
   return Object.keys(filter).length ? { price: filter } : {};
 }
 
-// Helper: build rating filter (min rating)
 function buildRatingFilter(query) {
   const minRating = parseFloat(query.minRating);
   if (!Number.isNaN(minRating)) {
@@ -42,7 +37,6 @@ function buildRatingFilter(query) {
   return {};
 }
 
-// Helper: build in-stock filter
 function buildStockFilter(query) {
   if (query.inStock === 'true') {
     return { countInStock: { $gt: 0 } };
@@ -50,24 +44,21 @@ function buildStockFilter(query) {
   return {};
 }
 
-// @desc    Fetch all products with advanced filtering + sorting + pagination
+// @desc    Fetch all products with filtering, sorting, pagination
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = process.env.PAGINATION_LIMIT;
+  const pageSize = Number(process.env.PAGINATION_LIMIT) || 12;
   const page = Number(req.query.pageNumber) || 1;
 
-  // ---- Build the combined filter ----
   const keyword = req.query.keyword
     ? { name: { $regex: req.query.keyword, $options: 'i' } }
     : {};
 
-  // category filter
   const category = req.query.category
     ? { category: req.query.category }
     : {};
 
-  // brand filter (multi-select)
   const brand = req.query.brand
     ? { brand: { $in: req.query.brand.split(',').map((b) => b.trim()) } }
     : {};
@@ -79,29 +70,25 @@ const getProducts = asyncHandler(async (req, res) => {
     ...buildPriceFilter(req.query),
     ...buildRatingFilter(req.query),
     ...buildStockFilter(req.query),
+    // Hide inactive products from public listings
+    isActive: { $ne: false },
   };
 
-  // ---- Sorting ----
   const sort = buildSort(req.query.sort);
 
-  // ---- Count + query ----
   const count = await Product.countDocuments(filter);
   const products = await Product.find(filter)
     .sort(sort)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 
-  // ---- Return filter context for client (active facets) ----
-  const allProductsForFacets = await Product.find(
-    {},
+  // Facets — only from active products
+  const allForFacets = await Product.find(
+    { isActive: { $ne: false } },
     { category: 1, brand: 1, _id: 0 }
   );
-  const categories = [
-    ...new Set(allProductsForFacets.map((p) => p.category)),
-  ].sort();
-  const brands = [
-    ...new Set(allProductsForFacets.map((p) => p.brand)),
-  ].sort();
+  const categories = [...new Set(allForFacets.map((p) => p.category))].sort();
+  const brands = [...new Set(allForFacets.map((p) => p.brand))].sort();
 
   res.json({
     products,
@@ -129,26 +116,47 @@ const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (product) {
     return res.json(product);
-  } else {
-    res.status(404);
-    throw new Error('Product not found');
   }
+  res.status(404);
+  throw new Error('Product not found');
 });
 
 // @desc    Create a product
 // @route   POST /api/products
 // @access  Private/Admin
 const createProduct = asyncHandler(async (req, res) => {
+  const {
+    name,
+    price,
+    description,
+    image,
+    images,
+    brand,
+    category,
+    countInStock,
+    sku,
+    compareAtPrice,
+    tags,
+    weight,
+    dimensions,
+  } = req.body;
+
+  // ✅ Use the request body (was previously hardcoded "Sample name" etc.)
   const product = new Product({
-    name: 'Sample name',
-    price: 0,
     user: req.user._id,
-    image: '/images/sample.jpg',
-    brand: 'Sample brand',
-    category: 'Sample category',
-    countInStock: 0,
-    numReviews: 0,
-    description: 'Sample description',
+    name: name || 'Untitled product',
+    price: price ?? 0,
+    description: description || '',
+    image: image || '/images/sample.jpg',
+    images: Array.isArray(images) ? images : [],
+    brand: brand || 'Unknown',
+    category: category || 'Uncategorized',
+    countInStock: countInStock ?? 0,
+    sku: sku || '',
+    compareAtPrice: compareAtPrice ?? 0,
+    tags: Array.isArray(tags) ? tags : [],
+    weight: weight ?? 0,
+    dimensions: dimensions || {},
   });
 
   const createdProduct = await product.save();
@@ -159,20 +167,17 @@ const createProduct = asyncHandler(async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, price, description, image, brand, category, countInStock } =
-    req.body;
-
+  const fields = [
+    'name', 'price', 'description', 'image', 'images',
+    'brand', 'category', 'countInStock', 'sku',
+    'compareAtPrice', 'tags', 'isActive', 'weight', 'dimensions',
+  ];
   const product = await Product.findById(req.params.id);
 
   if (product) {
-    product.name = name;
-    product.price = price;
-    product.description = description;
-    product.image = image;
-    product.brand = brand;
-    product.category = category;
-    product.countInStock = countInStock;
-
+    fields.forEach((f) => {
+      if (req.body[f] !== undefined) product[f] = req.body[f];
+    });
     const updatedProduct = await product.save();
     res.json(updatedProduct);
   } else {
@@ -186,7 +191,6 @@ const updateProduct = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
-
   if (product) {
     await Product.deleteOne({ _id: product._id });
     res.json({ message: 'Product removed' });
@@ -222,7 +226,6 @@ const createProductReview = asyncHandler(async (req, res) => {
 
     product.reviews.push(review);
     product.numReviews = product.reviews.length;
-
     product.rating =
       product.reviews.reduce((acc, item) => item.rating + acc, 0) /
       product.reviews.length;
@@ -235,11 +238,14 @@ const createProductReview = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get top rated products
+// @desc    Get top rated IN-STOCK products (powers HeroBanner / Top Sellers)
 // @route   GET /api/products/top
 // @access  Public
 const getTopProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({}).sort({ rating: -1 }).limit(3);
+  // ✅ Filter out out-of-stock so the hero doesn't show a dead CTA
+  const products = await Product.find({ countInStock: { $gt: 0 }, isActive: { $ne: false } })
+    .sort({ rating: -1, numReviews: -1 })
+    .limit(3);
   res.json(products);
 });
 

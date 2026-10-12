@@ -11,9 +11,16 @@ const reviewSchema = mongoose.Schema(
       ref: 'User',
     },
   },
+  { timestamps: true }
+);
+
+const dimensionsSchema = mongoose.Schema(
   {
-    timestamps: true,
-  }
+    length: { type: Number, default: 0 },
+    width: { type: Number, default: 0 },
+    height: { type: Number, default: 0 },
+  },
+  { _id: false }
 );
 
 const productSchema = mongoose.Schema(
@@ -27,10 +34,29 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      trim: true,
+    },
+    sku: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     image: {
       type: String,
       required: true,
     },
+    /**
+     * Optional gallery images. Index 0 is the main hero image;
+     * length 0/1 means "no gallery, use `image` only".
+     */
+    images: [
+      { type: String },
+    ],
     brand: {
       type: String,
       required: true,
@@ -43,6 +69,17 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    /**
+     * Optional list price shown as a strikethrough next to `price`
+     * when on sale. 0 = no compare-at price.
+     */
+    compareAtPrice: {
+      type: Number,
+      default: 0,
+    },
+    tags: [
+      { type: String },
+    ],
     reviews: [reviewSchema],
     rating: {
       type: Number,
@@ -64,12 +101,41 @@ const productSchema = mongoose.Schema(
       required: true,
       default: 0,
     },
+    /**
+     * Soft-delete / hide-from-storefront flag. Hidden products are
+     * still queryable by admin but won't appear in public listings.
+     */
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    weight: {
+      type: Number, // grams
+      default: 0,
+    },
+    dimensions: {
+      type: dimensionsSchema,
+      default: () => ({}),
+    },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const Product = mongoose.model('Product', productSchema);
+// Auto-derive slug from name when missing
+productSchema.pre('validate', function (next) {
+  if (!this.slug && this.name) {
+    this.slug = this.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .slice(0, 80);
+  }
+  next();
+});
 
+// Text index for search (used by /api/products?keyword=)
+productSchema.index({ name: 'text', brand: 'text', description: 'text' });
+
+const Product = mongoose.model('Product', productSchema);
 export default Product;

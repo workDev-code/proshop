@@ -21,7 +21,23 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false,
     },
-    // ✅ ADD: Wishlist - embedded array of Product refs
+    /**
+     * Optional phone (used by saved-address checkout pre-fill).
+     */
+    phone: {
+      type: String,
+      default: '',
+    },
+    /**
+     * Optional avatar URL (otherwise UI renders initials).
+     */
+    avatar: {
+      type: String,
+      default: '',
+    },
+    /**
+     * Wishlist — embedded array of Product refs.
+     */
     wishlist: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -29,26 +45,20 @@ const userSchema = mongoose.Schema(
       },
     ],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Encrypt password using bcrypt
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     next();
   }
-
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
 const User = mongoose.model('User', userSchema);
-
 export default User;
