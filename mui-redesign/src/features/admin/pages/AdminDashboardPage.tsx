@@ -25,6 +25,7 @@ import { AdminSubNav } from '../components/AdminSubNav';
 import { StatCard } from '../components/StatCard';
 import { PriceDisplay } from '../../products/components/PriceDisplay';
 import { LoadingState } from '../../../components/feedback/LoadingState';
+import { RevenueChart, OrdersChart, TopProductsChart, CategoryChart } from '../components/charts';
 import {
   useGetAllOrdersQuery,
   useGetAllUsersQuery,
@@ -133,6 +134,22 @@ export const AdminDashboardPage = () => {
                   </Stack>
                 </CardContent>
               </Card>
+            </Grid>
+          </Grid>
+
+          {/* Charts */}
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <RevenueChart orders={orders} days={30} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <CategoryChart products={products?.products ?? []} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <OrdersChart orders={orders} days={30} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <TopProductsChart products={products?.products ?? []} />
             </Grid>
           </Grid>
 
