@@ -1,30 +1,39 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Box } from '@mui/material';
 import { AppShell } from '../components/layout/AppShell';
+import { RequireAuth } from '../components/auth/RequireAuth';
 import { DesignSystemPage } from '../features/design-system/pages/DesignSystemPage';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage';
 
 export const AppRouter = () => (
   <Routes>
-    {/* Public design system showcase */}
+    {/* ============== PUBLIC ROUTES (no shell) ============== */}
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/register" element={<LoginPage mode="register" />} />
     <Route path="/design-system" element={<DesignSystemPage />} />
 
-    {/* Auth pages (no shell) */}
-    <Route path="/login"    element={<LoginPage />} />
-    <Route path="/register" element={<LoginPage mode="register" />} />
-
-    {/* App shell (TopBar + SideNav) */}
-    <Route element={<AppShell />}>
-      <Route path="/"          element={<DashboardPage />} />
+    {/* ============== PROTECTED ROUTES (with AppShell) ============== */}
+    <Route
+      element={
+        <RequireAuth>
+          <AppShell />
+        </RequireAuth>
+      }
+    >
+      <Route path="/" element={<DashboardPage />} />
       <Route path="/dashboard" element={<Navigate to="/" replace />} />
-      {/* More routes will be added in Phase 2–6 */}
+      {/* Future routes will go here:
+          /search/:keyword  (Phase 3)
+          /product/:id      (Phase 3)
+          /cart             (Phase 4)
+          /checkout         (Phase 4)
+          /orders, /orders/:id
+          /wishlist
+          /profile
+          /admin/*          (Phase 5) */}
     </Route>
 
     {/* Catch-all → home */}
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );
-
-/** Tiny shared style (placeholder) */
-export const _unused = () => <Box />;

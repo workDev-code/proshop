@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -10,21 +11,26 @@ import {
   MenuItem,
   Divider,
   ListItemIcon,
+  ListItemText,
   Tooltip,
   Typography,
+  Chip,
+  Stack,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Search as SearchIcon,
   LightMode as LightIcon,
   DarkMode as DarkIcon,
-  Palette as PaletteIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
   DesignServices as DesignIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { useState } from 'react';
 import { useAppTheme } from '../../theme/ThemeProvider';
+import { useCurrentUser } from '../../features/auth/hooks';
+import { useLogoutMutation } from '../../features/auth/authApi';
+import { useToast } from '../../hooks/useToast';
 
 interface Props {
   onMenuClick: () => void;
@@ -32,11 +38,31 @@ interface Props {
   currentPath?: string;
 }
 
-export const TopBar = ({ onMenuClick, showMenuButton }: Props) => {
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+export const TopBar = ({ onMenuClick, showMenuButton, currentPath }: Props) => {
   const { mode, toggle } = useAppTheme();
   const navigate = useNavigate();
+  const toast = useToast();
+  const { user } = useCurrentUser();
+  const [logoutMutate, logoutState] = useLogoutMutation();
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchor);
+
+  const handleLogout = async () => {
+    setAnchor(null);
+    try {
+      await logoutMutate().unwrap();
+      toast.success('Logged out successfully');
+      navigate('/login', { replace: true });
+    } catch {
+      toast.error('Logout failed. Please try again.');
+    }
+  };
 
   return (
     <AppBar
@@ -110,8 +136,8 @@ export const TopBar = ({ onMenuClick, showMenuButton }: Props) => {
             sx={{ flex: 1, fontSize: '0.875rem' }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                const value = (e.target as HTMLInputElement).value;
-                navigate(`/search/${encodeURIComponent(value)}`);
+                const value = (e.target as HTMLInputElement).value.trim();
+                if (value) navigate(`/search/${encodeURIComponent(value)}`);
               }
             }}
           />
@@ -123,7 +149,7 @@ export const TopBar = ({ onMenuClick, showMenuButton }: Props) => {
             component={Link}
             to="/design-system"
             sx={{ ml: 1 }}
-            color={location?.pathname === '/design-system' ? 'primary' : 'default'}
+            color={currentPath === '/design-system' ? 'primary' : 'default'}
           >
             <DesignIcon />
           </IconButton>
@@ -136,46 +162,109 @@ export const TopBar = ({ onMenuClick, showMenuButton }: Props) => {
           </IconButton>
         </Tooltip>
 
-        {/* User menu (placeholder) */}
-        <Tooltip title="Account">
-          <IconButton onClick={(e) => setAnchor(e.currentTarget)} sx={{ ml: 1 }}>
-            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 14 }}>
-              JD
-            </Avatar>
-          </IconButton>
-        </Tooltip>
-        <Menu
-          anchorEl={anchor}
-          open={open}
-          onClose={() => setAnchor(null)}
-          onClick={() => setAnchor(null)}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        >
-          <Box sx={{ px: 2, py: 1.5, minWidth: 200 }}>
-            <Typography variant="subtitle2">John Doe</Typography>
-            <Typography variant="caption" color="text.secondary">
-              john@email.com
-            </Typography>
-          </Box>
-          <Divider />
-          <MenuItem onClick={() => navigate('/profile')}>
-            <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
-            Profile
-          </MenuItem>
-          <MenuItem onClick={() => navigate('/design-system')}>
-            <ListItemIcon><PaletteIcon fontSize="small" /></ListItemIcon>
-            Design System
-          </MenuItem>
-          <Divider />
-          <MenuItem>
-            <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
-            Logout
-          </MenuItem>
-        </Menu>
-
-        {/* Hidden theme hook reference to silence linter */}
-        <span style={{ display: 'none' }}>{mode === 'dark' && 'd'}</span>
+        {/* User menu */}
+        {user ? (
+          <>
+            <Tooltip title={user.name}>
+              <IconButton
+                onClick={(e) => setAnchor(e.currentTarget)}
+                sx={{ ml: 1 }}
+                disabled={logoutState.isLoading}
+              >
+                <Avatar
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    bgcolor: 'primary.main',
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  {getInitials(user.name)}
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={anchor}
+              open={Boolean(anchor)}
+              onClose={() => setAnchor(null)}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              slotProps={{ paper: { sx: { minWidth: 220, mt: 0.5 } } }}
+            >
+              <Box sx={{ px: 2, py: 1.5 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    {user.name}
+                  </Typography>
+                  {user.isAdmin && (
+                    <Chip
+                      label="Admin"
+                      size="small"
+                      color="primary"
+                      icon={<AdminIcon sx={{ fontSize: 14 }} />}
+                      sx={{ height: 20, fontSize: '0.7rem' }}
+                    />
+                  )}
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  {user.email}
+                </Typography>
+              </Box>
+              <Divider />
+              <MenuItem
+                onClick={() => {
+                  setAnchor(null);
+                  navigate('/profile');
+                }}
+              >
+                <ListItemIcon>
+                  <PersonIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Profile</ListItemText>
+              </MenuItem>
+              {user.isAdmin && (
+                <MenuItem
+                  onClick={() => {
+                    setAnchor(null);
+                    navigate('/admin');
+                  }}
+                >
+                  <ListItemIcon>
+                    <AdminIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Admin dashboard</ListItemText>
+                </MenuItem>
+              )}
+              <MenuItem
+                onClick={() => {
+                  setAnchor(null);
+                  navigate('/design-system');
+                }}
+              >
+                <ListItemIcon>
+                  <DesignIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Design System</ListItemText>
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={handleLogout} disabled={logoutState.isLoading}>
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>
+                  {logoutState.isLoading ? 'Logging out…' : 'Logout'}
+                </ListItemText>
+              </MenuItem>
+            </Menu>
+          </>
+        ) : (
+          <Tooltip title="Sign in">
+            <IconButton component={Link} to="/login" sx={{ ml: 1 }}>
+              <PersonIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </Toolbar>
     </AppBar>
   );
