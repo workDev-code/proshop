@@ -54,7 +54,6 @@ export const PageContainer = ({
         {
           width: '100%',
           maxWidth: resolvedMaxWidth,
-          mx: 'auto', // ← centers horizontally
           px: disableGutters ? 0 : { xs: 2, sm: 3, md: 4 },
           py,
         },
