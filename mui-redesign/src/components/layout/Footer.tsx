@@ -42,8 +42,8 @@ export const Footer = () => (
     component="footer"
     sx={{
       mt: { xs: 6, md: 10 },
-      bgcolor: 'primary.main',
-      color: 'common.white',
+      bgcolor: '#1C1C1A',
+      color: '#F2F0EA',
       pt: { xs: 5, md: 6.5 },
       pb: 3,
     }}
@@ -77,7 +77,7 @@ export const Footer = () => (
               fontSize: 23,
               fontWeight: 800,
               letterSpacing: '-1.3px',
-              color: 'common.white',
+              color: '#F2F0EA',
               textDecoration: 'none',
               display: 'inline-block',
             }}
@@ -146,11 +146,11 @@ export const Footer = () => (
                   component={RouterLink}
                   to={l.to}
                   sx={{
-                    color: 'grey.500',
+                    color: '#A8A89E',
                     fontSize: '0.6875rem',
                     textDecoration: 'none',
                     transition: 'color 200ms ease',
-                    '&:hover': { color: 'common.white' },
+                    '&:hover': { color: '#F2F0EA' },
                   }}
                 >
                   {l.label}
@@ -170,7 +170,7 @@ export const Footer = () => (
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
           gap: 1.5,
-          color: 'grey.500',
+          color: '#A8A89E',
           fontSize: '0.625rem',
           letterSpacing: '0.08em',
         }}

@@ -57,18 +57,34 @@ const getInitials = (name: string): string => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
+/**
+ * Shared 44x44 touch-target icon button style.
+ * - Bumped from 40x40 to 44x44 to meet WCAG 2.5.5 / Apple HIG.
+ * - Added focus-visible outline so keyboard users see a clear ring.
+ * - Added prefers-reduced-motion guard so the hover transition is
+ *   instant when the OS asks for less motion.
+ */
 const roundBtnSx = {
-  width: 40,
-  height: 40,
+  width: 44,
+  height: 44,
   border: '1px solid',
   borderColor: 'divider',
   bgcolor: 'transparent',
   borderRadius: '50%',
-  transition: 'background-color 200ms ease, border-color 200ms ease',
+  transition:
+    'background-color 200ms ease, border-color 200ms ease, transform 200ms ease',
   '&:hover': { bgcolor: 'background.paper', borderColor: 'grey.300' },
-};
+  '&:focus-visible': {
+    outline: '2px solid',
+    outlineColor: '#E8795A',
+    outlineOffset: 2,
+  },
+  '@media (prefers-reduced-motion: reduce)': {
+    transition: 'none',
+  },
+} as const;
 
-/** Round 40px icon button matching the prototype's nav-actions. */
+/** Round 44px icon button matching the prototype's nav-actions. */
 const RoundIcon = ({
   children,
   to,
@@ -93,20 +109,21 @@ const RoundIcon = ({
         <Box
           sx={{
             position: 'absolute',
-            top: -3,
-            right: -3,
-            bgcolor: 'secondary.main',
-            color: 'secondary.contrastText',
+            top: -4,
+            right: -4,
+            bgcolor: '#E8795A',
+            color: '#1C1C1A',
             border: '2px solid',
             borderColor: 'background.paper',
-            height: 18,
-            minWidth: 18,
+            height: 20,
+            minWidth: 20,
+            padding: '0 5px',
             borderRadius: 20,
             fontSize: 10,
             fontWeight: 700,
+            lineHeight: 1,
             display: 'grid',
             placeItems: 'center',
-            px: 0.5,
           }}
         >
           {count > 99 ? '99+' : count}
@@ -176,7 +193,7 @@ export const TopBar = ({
       sx={{
         bgcolor: (theme) =>
           theme.palette.mode === 'dark'
-            ? 'rgba(34,35,31,0.92)'
+            ? 'rgba(28,28,26,0.92)'
             : 'rgba(247,247,244,0.94)',
         color: 'text.primary',
         borderBottom: '1px solid',
@@ -214,7 +231,7 @@ export const TopBar = ({
               whiteSpace: 'nowrap',
             }}
           >
-            Pro<Box component="em" sx={{ fontStyle: 'normal', color: 'secondary.main' }}>S</Box>hop
+            Pro<Box component="em" sx={{ fontStyle: 'normal', color: '#E8795A' }}>S</Box>hop
           </Box>
         )}
 
@@ -233,7 +250,12 @@ export const TopBar = ({
                   color: 'text.secondary',
                   textDecoration: 'none',
                   transition: 'color 200ms ease',
-                  '&:hover, &.active': { color: 'secondary.main' },
+                  '&:hover, &.active': { color: '#E8795A' },
+                  '&:focus-visible': {
+                    outline: '2px solid #E8795A',
+                    outlineOffset: 4,
+                    borderRadius: 1,
+                  },
                 }}
               >
                 {l.label}
@@ -262,10 +284,12 @@ export const TopBar = ({
               transform: 'translateY(-50%)',
               color: 'text.secondary',
               fontSize: 18,
+              pointerEvents: 'none',
             }}
           />
           <InputBase
             placeholder="Search products…"
+            inputProps={{ 'aria-label': 'Search products' }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 const v = (e.target as HTMLInputElement).value.trim();
@@ -285,15 +309,19 @@ export const TopBar = ({
               fontSize: 12,
               transition: 'border-color 200ms ease, box-shadow 200ms ease',
               '&.Mui-focused': {
-                borderColor: 'grey.400',
-                boxShadow: '0 0 0 3px rgba(217,93,57,.08)',
+                borderColor: '#E8795A',
+                boxShadow: '0 0 0 3px rgba(232,121,90,0.18)',
+              },
+              '&:focus-visible': {
+                outline: '2px solid #E8795A',
+                outlineOffset: 2,
               },
             }}
           />
         </Box>
 
         {/* Round icon buttons */}
-        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ ml: { md: 1 } }}>
+        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ ml: { md: 1 } }}>
           <RoundIcon
             ariaLabel="Wishlist"
             title="Wishlist"
@@ -343,16 +371,16 @@ export const TopBar = ({
               <Tooltip title={user.name}>
                 <IconButton
                   onClick={(e) => setAnchor(e.currentTarget)}
-                  aria-label="Account"
-                  sx={{ ml: 0.5 }}
+                  aria-label="Account menu"
+                  sx={{ ...roundBtnSx, ml: 0.25 }}
                   disabled={logoutState.isLoading}
                 >
                   <Avatar
                     sx={{
-                      width: 34,
-                      height: 34,
-                      bgcolor: 'primary.main',
-                      color: 'primary.contrastText',
+                      width: 36,
+                      height: 36,
+                      bgcolor: '#E8795A',
+                      color: '#1C1C1A',
                       fontSize: 13,
                       fontWeight: 700,
                     }}

@@ -14,8 +14,8 @@ const TOPBAR_HEIGHT = 82;
  *
  * Vertical stack matching the approved HTML prototype:
  *
- *   [AnnouncementBar]
- *   [TopBar - sticky]
+ *   [AnnouncementBar — fixed dark #1C1C1A]
+ *   [TopBar - sticky, dark blur]
  *   [main content   - centered, max 1240]
  *   [Footer         - dark]
  *
@@ -26,13 +26,22 @@ const TOPBAR_HEIGHT = 82;
 export const AppShell = () => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  
+
   const [cartOpen, setCartOpen] = useState(false);
   const { totals } = useCart();
   const location = useLocation();
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+    <Box
+      sx={{
+        // Page-wide background tuned to match the fixed-dark announcement
+        // bar so the strip visually extends the page rather than floating
+        // over a lighter band.
+        bgcolor: (t) =>
+          t.palette.mode === 'dark' ? '#1C1C1A' : 'background.default',
+        minHeight: '100vh',
+      }}
+    >
       <AnnouncementBar />
 
       <TopBar

@@ -1,5 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
+import {
+  ThemeProvider as MuiThemeProvider,
+  CssBaseline,
+  GlobalStyles,
+} from '@mui/material';
 import { buildTheme } from './theme';
 
 type Mode = 'light' | 'dark';
@@ -49,6 +53,29 @@ export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
     <Ctx.Provider value={value}>
       <MuiThemeProvider theme={theme}>
         <CssBaseline enableColorScheme />
+        {/* App-wide a11y rules:
+             - Default focus-visible ring uses the brand accent.
+             - prefers-reduced-motion: kill all transitions/animations. */}
+        <GlobalStyles
+          styles={{
+            ':root': {
+              '--proshop-accent': '#E8795A',
+              '--proshop-accent-ink': '#1C1C1A',
+            },
+            '*:focus-visible': {
+              outline: '2px solid var(--proshop-accent)',
+              outlineOffset: 2,
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              '*, *::before, *::after': {
+                animationDuration: '0.01ms !important',
+                animationIterationCount: '1 !important',
+                transitionDuration: '0.01ms !important',
+                scrollBehavior: 'auto !important',
+              },
+            },
+          }}
+        />
         {children}
       </MuiThemeProvider>
     </Ctx.Provider>
