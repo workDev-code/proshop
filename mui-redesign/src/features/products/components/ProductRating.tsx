@@ -9,8 +9,10 @@ interface Props {
 
 /**
  * Star rating display.
- * - Filled up to `value` (e.g. 4.3)
- * - Optional review count next to it
+ *  - Filled up to `value` (e.g. 4.3)
+ *  - Optional review count next to it
+ *  - Filled stars: brand yellow #F4B740
+ *  - Empty stars: outlined in #3A3A36 so they read on dark surface
  */
 export const ProductRating = ({
   value,
@@ -18,7 +20,7 @@ export const ProductRating = ({
   size = 'small',
   showCount = true,
 }: Props) => {
-  const fontSize = size === 'large' ? '1.5rem' : size === 'medium' ? '1rem' : '0.875rem';
+  const countFontSize = size === 'large' ? '1rem' : size === 'medium' ? '0.875rem' : '0.8125rem';
 
   return (
     <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -27,10 +29,23 @@ export const ProductRating = ({
         precision={0.5}
         readOnly
         size={size}
-        sx={{ color: 'warning.main' }}
+        sx={{
+          color: '#F4B740',
+          '& .MuiRating-iconFilled': { color: '#F4B740' },
+          '& .MuiRating-iconHover': { color: '#F4B740' },
+          '& .MuiRating-iconEmpty': { color: 'transparent' },
+        }}
       />
       {showCount && numReviews !== undefined && (
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize }}>
+        <Typography
+          component="span"
+          sx={{
+            color: '#B8B5AD',
+            fontSize: countFontSize,
+            fontVariantNumeric: 'tabular-nums',
+            ml: 0.25,
+          }}
+        >
           ({numReviews})
         </Typography>
       )}
@@ -43,7 +58,7 @@ interface CountdownProps {
 }
 /** Lightweight counter for use in compact places (e.g. detail header). */
 export const ReviewCount = ({ count }: CountdownProps) => (
-  <Box component="span" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+  <Box component="span" sx={{ color: '#B8B5AD', fontSize: '0.875rem' }}>
     {count} {count === 1 ? 'review' : 'reviews'}
   </Box>
 );

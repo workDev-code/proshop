@@ -17,15 +17,14 @@ interface Props {
  *
  *  - Reads initial state from URL: ?category, ?brand, ?inStock, ?sort
  *  - Updates URL on every change → shareable links & back-button support
- *  - Parent pages (HomePage/SearchPage) read the same URL via
- *    useSearchParams and pass the resulting ProductQueryParams to
- *    useGetProductsQuery
- *
- *  Active pill = ink bg + white text + ink border.
- *  Inactive pill = transparent bg + sage border + ink text.
+ *  - Group labels ("Category", "Brand", "Availability") sit above each
+ *    row of chips so the design reads as filter groups, not a single wall.
+ *  - Chips are 36px high, gap 8px, horizontal scroll on mobile.
+ *  - Active chip: orange #E8795A bg + dark #1C1C1A text.
+ *  - Inactive chip: transparent bg + #3A3A36 border + #F5F3EE text.
+ *  - Each chip is an `aria-pressed` toggle button with focus-visible ring.
  *
  *  Falls back to a single "All" pill when no facets are present.
- *  Never renders hardcoded category or brand lists.
  */
 export const ProductFilters = ({ facets, hideSort }: Props) => {
   const [params, setParams] = useSearchParams();
@@ -75,137 +74,235 @@ export const ProductFilters = ({ facets, hideSort }: Props) => {
     (brand ? 1 : 0) +
     (inStock ? 1 : 0);
 
+  // Reusable pill style — explicit dark-mode tokens so it never inverts
+  // in light theme and never washes out in dark theme.
   const pillSx = (active: boolean) => ({
     border: '1px solid',
-    borderColor: active ? 'primary.main' : 'rgba(219, 220, 211, 1)',
-    bgcolor: active ? 'primary.main' : 'transparent',
-    color: active ? 'common.white' : 'text.primary',
+    borderColor: active ? '#E8795A' : '#3A3A36',
+    bgcolor: active ? '#E8795A' : 'transparent',
+    color: active ? '#1C1C1A' : '#F5F3EE',
     borderRadius: 999,
+    height: 36,                     // fixed 36px per design spec
     px: 2,
-    py: 1.125,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 600,
     letterSpacing: '0.02em',
     textTransform: 'none',
     whiteSpace: 'nowrap',
-    transition: 'background-color 200ms ease, border-color 200ms ease, color 200ms ease',
+    flexShrink: 0,
+    transition:
+      'background-color 200ms ease, border-color 200ms ease, color 200ms ease',
     '&:hover': {
-      bgcolor: active ? 'primary.main' : 'rgba(32,33,31,0.06)',
-      borderColor: 'primary.main',
+      bgcolor: active ? '#d96a4b' : 'transparent',
+      borderColor: '#E8795A',
+      color: active ? '#1C1C1A' : '#E8795A',
+    },
+    '&:focus-visible': {
+      outline: '2px solid #E8795A',
+      outlineOffset: 2,
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
     },
   });
+
+  const groupLabelSx = {
+    fontSize: 12,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    color: '#B8B5AD',
+    mb: 1,
+  };
 
   const categories = facets?.categories ?? [];
   const brands = facets?.brands ?? [];
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        flexWrap: 'wrap',
-        mb: { xs: 3, md: 3.125 },
-      }}
-    >
-      {/* Categories */}
-      <Button
-        onClick={() => setCategory('')}
-        sx={pillSx(!category)}
-        disableRipple
-      >
-        All
-      </Button>
-      {categories.map((c) => (
-        <Button
-          key={c}
-          onClick={() => setCategory(category === c ? '' : c)}
-          sx={pillSx(category === c)}
-          disableRipple
-        >
-          {c}
-        </Button>
-      ))}
-
-      {/* Brand segment - inline */}
-      {brands.length > 0 && (
-        <>
-          <Box sx={{ width: 1, height: 24, bgcolor: 'divider', mx: 1 }} />
-          {brands.slice(0, 6).map((b) => (
-            <Button
-              key={b}
-              onClick={() => setBrand(brand === b ? '' : b)}
-              sx={pillSx(brand === b)}
-              disableRipple
-            >
-              {b}
-            </Button>
-          ))}
-        </>
-      )}
-
-      {/* In-stock toggle */}
-      <Box sx={{ width: 1, height: 24, bgcolor: 'divider', mx: 1 }} />
-      <Button
-        onClick={setInStock}
-        sx={pillSx(inStock)}
-        disableRipple
-      >
-        In stock
-      </Button>
-
-      <Box sx={{ flexGrow: 1 }} />
-
-      {/* Sort dropdown */}
-      {!hideSort && (
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Box component="span" sx={{ fontSize: 10, color: 'text.secondary', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            Sort
-          </Box>
+    <Box sx={{ mb: { xs: 3, md: 3.5 } }}>
+      {/* Group 1: Category */}
+      {(categories.length > 0 || true) && (
+        <Box sx={{ mb: 2 }}>
+          <Box sx={groupLabelSx}>Category</Box>
           <Box
-            component="select"
-            value={sort}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSort(e.target.value as SortOption)}
             sx={{
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 999,
-              bgcolor: 'background.paper',
-              px: 1.5,
-              py: 0.875,
-              fontSize: 11,
-              fontWeight: 600,
-              fontFamily: 'inherit',
-              color: 'text.primary',
-              cursor: 'pointer',
-              outline: 'none',
-              '&:focus': { borderColor: 'primary.main' },
+              display: 'flex',
+              gap: 1,
+              flexWrap: { xs: 'nowrap', md: 'wrap' },
+              overflowX: { xs: 'auto', md: 'visible' },
+              pb: { xs: 1, md: 0 },
+              // Hide scrollbar on mobile for a cleaner pill bar
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
             }}
           >
-            {(Object.keys(SORT_LABELS) as SortOption[]).map((k) => (
-              <option key={k} value={k}>
-                {SORT_LABELS[k]}
-              </option>
+            <Button
+              onClick={() => setCategory('')}
+              aria-pressed={!category}
+              disableRipple
+              sx={pillSx(!category)}
+            >
+              All
+            </Button>
+            {categories.map((c) => (
+              <Button
+                key={c}
+                onClick={() => setCategory(category === c ? '' : c)}
+                aria-pressed={category === c}
+                disableRipple
+                sx={pillSx(category === c)}
+              >
+                {c}
+              </Button>
             ))}
           </Box>
-        </Stack>
+        </Box>
       )}
 
-      {/* Clear */}
+      {/* Group 2: Brand */}
+      {brands.length > 0 && (
+        <Box sx={{ mb: 2 }}>
+          <Box sx={groupLabelSx}>Brand</Box>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              flexWrap: { xs: 'nowrap', md: 'wrap' },
+              overflowX: { xs: 'auto', md: 'visible' },
+              pb: { xs: 1, md: 0 },
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
+            }}
+          >
+            {brands.slice(0, 6).map((b) => (
+              <Button
+                key={b}
+                onClick={() => setBrand(brand === b ? '' : b)}
+                aria-pressed={brand === b}
+                disableRipple
+                sx={pillSx(brand === b)}
+              >
+                {b}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {/* Group 3: Availability + Sort */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box>
+          <Box sx={groupLabelSx}>Availability</Box>
+          <Button
+            onClick={setInStock}
+            aria-pressed={inStock}
+            disableRipple
+            sx={pillSx(inStock)}
+          >
+            In stock
+          </Button>
+        </Box>
+
+        {!hideSort && (
+          <Stack
+            direction="row"
+            alignItems="baseline"
+            spacing={1.5}
+            sx={{ mt: { xs: 0, md: 3 } /* offset for group label */ }}
+          >
+            <Box
+              component="label"
+              htmlFor="sort-select"
+              sx={{
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#B8B5AD',
+                cursor: 'pointer',
+              }}
+            >
+              Sort
+            </Box>
+            <Box
+              component="select"
+              id="sort-select"
+              value={sort}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setSort(e.target.value as SortOption)
+              }
+              aria-label="Sort products"
+              sx={{
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
+                height: 40,
+                border: '1px solid #3A3A36',
+                borderRadius: 999,
+                bgcolor: '#2F2F2C',
+                px: 2.5,
+                pr: 4,
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                color: '#F5F3EE',
+                cursor: 'pointer',
+                outline: 'none',
+                backgroundImage:
+                  'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 20\' fill=\'%23B8B5AD\'%3E%3Cpath d=\'M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+                backgroundSize: '14px',
+                transition: 'border-color 200ms ease, box-shadow 200ms ease',
+                '&:hover': { borderColor: '#E8795A' },
+                '&:focus-visible': {
+                  borderColor: '#E8795A',
+                  boxShadow: '0 0 0 3px rgba(232, 121, 90, 0.18)',
+                },
+                '@media (prefers-reduced-motion: reduce)': {
+                  transition: 'none',
+                },
+              }}
+            >
+              {(Object.keys(SORT_LABELS) as SortOption[]).map((k) => (
+                <option key={k} value={k} style={{ background: '#1C1C1A' }}>
+                  {SORT_LABELS[k]}
+                </option>
+              ))}
+            </Box>
+          </Stack>
+        )}
+      </Box>
+
+      {/* Clear all (only when at least one filter is active) */}
       {activeCount > 0 && (
-        <Button
-          startIcon={<ClearIcon sx={{ fontSize: 14 }} />}
-          onClick={clearAll}
-          sx={{
-            ...pillSx(false),
-            color: 'secondary.main',
-            borderColor: 'secondary.main',
-            '&:hover': { bgcolor: 'rgba(217,93,57,0.08)' },
-          }}
-          disableRipple
-        >
-          Clear
-        </Button>
+        <Box sx={{ mt: 2 }}>
+          <Button
+            startIcon={<ClearIcon sx={{ fontSize: 16 }} />}
+            onClick={clearAll}
+            disableRipple
+            sx={{
+              ...pillSx(false),
+              color: '#E8795A',
+              borderColor: '#E8795A',
+              '&:hover': {
+                bgcolor: 'rgba(232, 121, 90, 0.10)',
+                color: '#E8795A',
+                borderColor: '#E8795A',
+              },
+            }}
+          >
+            Clear all filters
+          </Button>
+        </Box>
       )}
     </Box>
   );

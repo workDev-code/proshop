@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
+import { ImageOutlined as ImageIcon } from '@mui/icons-material';
 import type { Product } from '../types';
 
 interface Props {
   src: string;
   alt: string;
   product?: Product;
-  /** aspect ratio of the image container (default 1/1) */
+  /** aspect ratio of the image container (default 4/5 per design spec) */
   aspectRatio?: string;
   /** When true, render full-size for detail page */
   large?: boolean;
@@ -17,17 +18,17 @@ interface Props {
  *
  *  1. Tries the URL from the seed data
  *  2. If it ends in .jpg, swaps to .svg (we ship SVG assets for these products)
- *  3. If loading fails, renders a clean branded placeholder with brand color
- *     and the first letter of the product name
+ *  3. If loading fails, renders a clean gradient placeholder with a generic
+ *     image icon — does NOT duplicate the product name (avoids the visual
+ *     bug where fallback looked like a literal mockup).
  */
 export const ProductImage = ({
   src,
   alt,
   product,
-  aspectRatio = '1 / 1',
+  aspectRatio = '4 / 5',
 }: Props) => {
   const [errored, setErrored] = useState(false);
-  // Map .jpg → .svg for the products we ship SVG versions of
   const finalSrc = src?.replace(/\.jpg$/, '.svg') ?? src;
 
   if (errored || !finalSrc) {
@@ -39,8 +40,11 @@ export const ProductImage = ({
       sx={{
         position: 'relative',
         aspectRatio,
-        bgcolor: 'action.hover',
+        // Surface-2 base so any sub-pixel gap below the image is consistent
+        // with the card surface (no gray stripe showing through).
+        bgcolor: '#2F2F2C',
         overflow: 'hidden',
+        width: '100%',
       }}
     >
       <Box
@@ -67,10 +71,9 @@ interface FallbackProps {
 }
 
 /**
- * Branded placeholder shown when the real image fails to load.
- * - Gradient background based on brand initial (deterministic color)
- * - Big product initial letter
- * - Product name + brand below
+ * Gradient + image-icon placeholder. We deliberately do NOT render the
+ * product name or brand inside the image (that was the "T / FIELD" bug
+ * from the prototype which duplicated the info card below).
  */
 const BRAND_COLORS: Record<string, [string, string]> = {
   apple: ['#1a1a2e', '#374151'],
@@ -80,12 +83,11 @@ const BRAND_COLORS: Record<string, [string, string]> = {
   amazon: ['#0c0a1f', '#1e1b4b'],
 };
 
-const DEFAULT_COLORS: [string, string] = ['#1e293b', '#0f172a'];
+const DEFAULT_COLORS: [string, string] = ['#2F2F2C', '#1C1C1A'];
 
 const FallbackImage = ({ product, alt, aspectRatio }: FallbackProps) => {
   const brand = product?.brand?.toLowerCase() ?? '';
   const colors = BRAND_COLORS[brand] ?? DEFAULT_COLORS;
-  const initial = (product?.name?.[0] ?? alt?.[0] ?? '?').toUpperCase();
 
   return (
     <Box
@@ -93,11 +95,10 @@ const FallbackImage = ({ product, alt, aspectRatio }: FallbackProps) => {
       aria-label={alt}
       sx={{
         aspectRatio,
+        width: '100%',
         background: `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 100%)`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'grid',
+        placeItems: 'center',
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
@@ -105,52 +106,18 @@ const FallbackImage = ({ product, alt, aspectRatio }: FallbackProps) => {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08), transparent 50%)',
+            'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06), transparent 50%)',
         },
       }}
     >
-      <Typography
+      <ImageIcon
+        aria-hidden
         sx={{
-          fontSize: { xs: '4rem', sm: '5rem', md: '6rem' },
-          fontWeight: 800,
-          color: 'rgba(255,255,255,0.15)',
-          lineHeight: 1,
-          letterSpacing: '-0.05em',
-          userSelect: 'none',
+          fontSize: { xs: 48, md: 64 },
+          color: 'rgba(255,255,255,0.18)',
+          position: 'relative',
         }}
-      >
-        {initial}
-      </Typography>
-      {product && (
-        <Box sx={{ mt: 2, textAlign: 'center', position: 'relative' }}>
-          <Typography
-            sx={{
-              fontSize: { xs: '0.625rem', sm: '0.75rem' },
-              fontWeight: 700,
-              color: 'rgba(255,255,255,0.6)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-            }}
-          >
-            {product.brand}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
-              color: 'rgba(255,255,255,0.5)',
-              mt: 0.5,
-              maxWidth: '80%',
-              mx: 'auto',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {product.name}
-          </Typography>
-        </Box>
-      )}
+      />
     </Box>
   );
 };

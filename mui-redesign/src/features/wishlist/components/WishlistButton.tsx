@@ -21,8 +21,10 @@ interface Props {
 
 /**
  * Heart icon button that toggles product in/out of the current user's wishlist.
+ *  - 36x36 round button (per design spec)
+ *  - Background: rgba(0,0,0,0.5) for contrast against any product image
+ *  - Active state: filled heart in brand accent #E8795A
  *  - Hidden if user not logged in (unless showForAnonymous)
- *  - Filled = in wishlist; outlined = not in wishlist
  *  - Click triggers optimistic update + invalidates the wishlist cache
  */
 export const WishlistButton = ({
@@ -48,6 +50,9 @@ export const WishlistButton = ({
   if (!isAuthenticated && !showForAnonymous) return null;
 
   const displayed = optimistic !== null ? optimistic : inWishlist;
+  const ariaLabel = displayed
+    ? 'Remove from wishlist'
+    : 'Add to wishlist';
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -75,29 +80,42 @@ export const WishlistButton = ({
   };
 
   return (
-    <Tooltip title={displayed ? 'Remove from wishlist' : 'Add to wishlist'}>
+    <Tooltip title={ariaLabel}>
       <span>
         <IconButton
           onClick={handleClick}
-          size={size}
+          aria-label={ariaLabel}
+          aria-pressed={displayed}
           disabled={isLoading}
+          size={size}
           sx={{
-            color: displayed ? 'error.main' : 'text.secondary',
-            bgcolor: 'background.paper',
-            boxShadow: 1,
+            width: 36,
+            height: 36,
+            color: displayed ? '#E8795A' : '#F5F3EE',
+            bgcolor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            transition:
+              'background-color 200ms ease, transform 200ms ease, color 200ms ease',
             '&:hover': {
-              bgcolor: 'background.paper',
-              transform: 'scale(1.05)',
+              bgcolor: 'rgba(0, 0, 0, 0.7)',
+              transform: 'scale(1.06)',
             },
-            transition: 'all 200ms ease',
+            '&:focus-visible': {
+              outline: '2px solid #E8795A',
+              outlineOffset: 2,
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: 'none',
+            },
           }}
         >
           {isLoading ? (
-            <CircularProgress size={18} color="inherit" />
+            <CircularProgress size={16} sx={{ color: 'inherit' }} />
           ) : displayed ? (
-            <FavoriteIcon fontSize={size === 'large' ? 'medium' : 'small'} />
+            <FavoriteIcon sx={{ fontSize: 18 }} />
           ) : (
-            <FavoriteBorderIcon fontSize={size === 'large' ? 'medium' : 'small'} />
+            <FavoriteBorderIcon sx={{ fontSize: 18 }} />
           )}
         </IconButton>
       </span>

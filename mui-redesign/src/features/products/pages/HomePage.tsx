@@ -83,11 +83,18 @@ export const HomePage = () => {
         component="section"
         id="featured"
         sx={{
-          bgcolor: 'rgba(239, 239, 233, 0.6)',
+          // Solid surface so the section reads as a "card panel" on the
+          // dark page, avoiding the washed-out rgba-cream gray bug.
+          bgcolor: '#262624',
+          border: '1px solid #3A3A36',
           borderRadius: { xs: '20px', md: '24px' },
-          py: { xs: 6, md: 8.75 },
+          // 40px padding per design spec.
+          py: { xs: 5, md: 5 },
           px: { xs: 3, md: 5 },
           mb: { xs: 6, md: 9 },
+          // offset by sticky-header height so the title is not hidden under
+          // the TopBar when jumping from a hash link.
+          scrollMarginTop: { xs: 90, md: 98 },
         }}
       >
         <Stack
@@ -98,18 +105,23 @@ export const HomePage = () => {
           sx={{ mb: { xs: 2.5, md: 3 } }}
         >
           <Box>
-            <Typography
-              sx={{
-                fontSize: '0.625rem',
-                fontWeight: 700,
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                color: 'secondary.main',
-                mb: 1.25,
-              }}
-            >
-              Featured
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
+              <Box
+                aria-hidden
+                sx={{ width: 10, height: 10, bgcolor: '#E8795A', borderRadius: '2px' }}
+              />
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: '#E8795A',
+                }}
+              >
+                Featured
+              </Typography>
+            </Stack>
             <Typography
               component="h2"
               sx={{
@@ -118,14 +130,17 @@ export const HomePage = () => {
                 fontSize: 'clamp(1.75rem, 3vw, 2.375rem)',
                 lineHeight: 1.1,
                 letterSpacing: '-0.04em',
-                color: 'text.primary',
+                color: '#F5F3EE',
                 m: 0,
               }}
             >
               The everyday edit
             </Typography>
             {list && (
-              <Typography sx={{ mt: 1.25, fontSize: 12, color: 'text.secondary' }}>
+              <Typography
+                component="p"
+                sx={{ mt: 1.25, fontSize: 14, color: '#B8B5AD' }}
+              >
                 {list.total} {list.total === 1 ? 'product' : 'products'} in the collection
               </Typography>
             )}
@@ -135,18 +150,24 @@ export const HomePage = () => {
             href="#featured"
             onClick={(e: React.MouseEvent) => { e.preventDefault(); navigate('/?sort=newest'); }}
             sx={{
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 700,
-              color: 'text.primary',
+              color: '#F5F3EE',
               textDecoration: 'none',
-              borderBottom: '1px solid',
-              borderColor: 'text.primary',
+              borderBottom: '1px solid #F5F3EE',
               pb: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
               gap: 1.25,
               whiteSpace: 'nowrap',
               cursor: 'pointer',
+              transition: 'color 200ms ease, border-color 200ms ease',
+              '&:hover': { color: '#E8795A', borderColor: '#E8795A' },
+              '&:focus-visible': {
+                outline: '2px solid #E8795A',
+                outlineOffset: 4,
+                borderRadius: 1,
+              },
             }}
           >
             View all
