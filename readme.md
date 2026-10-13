@@ -1,8 +1,8 @@
 # ProShop eCommerce Platform (v3)
 
-> A full-featured MERN eCommerce platform with a redesigned dark-themed storefront
-> and admin panel — built on **React 18 + MUI 6 + RTK Query** for the SPA and
-> **Express + Mongoose** for the API.
+> MERN eCommerce with a redesigned dark-theme storefront and admin panel — built
+> on **React 18 + MUI 6 + RTK Query** for the SPA and **Express + Mongoose** for
+> the API.
 
 <p align="center">
   <img alt="Stack" src="https://img.shields.io/badge/MERN-3.0-13aa52?logo=mongodb&logoColor=white">
@@ -13,18 +13,98 @@
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue">
 </p>
 
-A complete eCommerce application featuring a shopping cart, reviews, admin panel,
-PayPal + card checkout, plus a **Wishlist**, **coupon system**, **advanced filter + sort**,
-**category/brand/address/analytics** entities, a full **Design System Showcase**, and
-end-to-end **GitHub Actions CI**.
+<p align="center">
+  <img src="./docs/screenshots/01-home-desktop-dark.jpg" alt="ProShop storefront — home page in dark theme, full scrollable view including hero, category grid, featured products, editorial cards, newsletter and footer" width="100%">
+</p>
 
-## 🌟 Highlights
+A complete eCommerce application: shopping cart, reviews, admin panel, PayPal +
+card checkout, **Wishlist**, **discount coupons**, **advanced filter + sort**,
+**Category / Brand / Address / Analytics** entities, a full **Design System
+Showcase**, and end-to-end **GitHub Actions CI**.
+
+## 📸 Screenshots
+
+All 25 screenshots are reproducible — run `npm run screenshots`. They are taken
+against the **demo build** (in-memory mock backend, no MongoDB required) so the
+output never exposes real user data.
+
+### Storefront — Desktop dark (1440 × 900, full page)
+
+| | |
+|---|---|
+| ![Home](./docs/screenshots/01-home-desktop-dark.jpg) | **Home** — Announcement bar · Topbar · Hero (`Good things. Better everyday.`) · Trust badges · Category grid · The everyday edit · Feature card · Editorial cards · Newsletter · Footer |
+| ![Shop](./docs/screenshots/02-shop-desktop-dark.jpg) | **Shop scrolled to "The everyday edit"** — category eyebrow, URL-driven filter chips (Category / Brand / Availability), 4-col product grid with 4/5 aspect-ratio images, pagination |
+| ![Shop with filter](./docs/screenshots/03-shop-filter-desktop-dark.jpg) | **Shop with active filters** — `?category=Footwear&brand=Field&inStock=true` applied, results filtered to the matching products, orange "Footwear" chip selected |
+| ![Product detail](./docs/screenshots/04-product-detail-desktop-dark.png) | **Product detail** — Breadcrumb · Image gallery · Brand · Title · Star rating + review count · Sale price + compareAtPrice strikethrough · Color & size selectors · Quantity · Add to bag + Wishlist · Tabs (Description / Specs / Reviews) · Reviews list |
+| ![Cart](./docs/screenshots/05-cart-desktop-dark.png) | **Cart** — empty state with "Continue shopping" CTA |
+| ![Checkout](./docs/screenshots/06-checkout-desktop-dark.png) | **Checkout** — multi-step form (Shipping · Payment · Place Order) |
+| ![Orders](./docs/screenshots/07-orders-desktop-dark.png) | **My orders** — list of orders with status pills (Delivered · Cancelled · Shipped …) and per-order action buttons |
+| ![Order detail](./docs/screenshots/08-order-detail-desktop-dark.png) | **Order detail** — items, prices, shipping address, payment method, status timeline |
+| ![Wishlist](./docs/screenshots/09-wishlist-desktop-dark.png) | **Wishlist** — grid of saved products, "Move to cart" / "Remove" actions |
+| ![Profile](./docs/screenshots/10-profile-desktop-dark.png) | **Profile** — name, email, phone, avatar, password change |
+| ![Login](./docs/screenshots/11-login-desktop-dark.png) | **Login** — email + password, demo credentials hint, dark theme |
+| ![Design system](./docs/screenshots/12-design-system-desktop-dark.png) | **Design system** — public `/design-system` route with 25+ components |
+
+### Admin — Desktop dark (1440 × 900, full page)
+
+| | |
+|---|---|
+| ![Admin dashboard](./docs/screenshots/13-admin-dashboard-dark.png) | **Admin dashboard** — dark sidebar + light topbar, KPI cards (Revenue · Orders · Products · AOV), Top products list, Revenue-by-month chart |
+| ![Admin products](./docs/screenshots/14-admin-products-dark.png) | **Admin products** — DataGrid with image · name · price · category · brand · stock · rating · status, filter + search, "+ New product" CTA |
+| ![Admin orders](./docs/screenshots/15-admin-orders-dark.png) | **Admin orders** — list with status pills + Mark shipped / delivered / cancel actions |
+| ![Admin analytics](./docs/screenshots/16-admin-analytics-dark.png) | **Admin analytics** — overview + top-products + revenue-by-month |
+
+### Storefront — Desktop light (1440 × 900)
+
+| | |
+|---|---|
+| ![Home light](./docs/screenshots/17-home-desktop-light.jpg) | **Home, light theme** — same layout, paper background `#f7f7f4` instead of dark |
+| ![Login light](./docs/screenshots/18-login-desktop-light.png) | **Login, light theme** |
+
+### Storefront — Mobile dark (375 × 812, full page)
+
+| | |
+|---|---|
+| ![Home mobile](./docs/screenshots/19-home-mobile-dark.jpg) | **Home, mobile** — single column, hero stacks, mobile nav |
+| ![Shop mobile](./docs/screenshots/20-shop-mobile-dark.jpg) | **Shop scrolled to "The everyday edit"** — horizontally scrollable filter chips, 2-col product grid |
+| ![Product mobile](./docs/screenshots/21-product-mobile-dark.png) | **Product detail, mobile** |
+| ![Cart mobile](./docs/screenshots/22-cart-mobile-dark.png) | **Cart, mobile** |
+
+### Storefront — Mobile light
+
+| | |
+|---|---|
+| ![Home mobile light](./docs/screenshots/23-home-mobile-light.jpg) | **Home, mobile, light theme** |
+
+### Storefront — Tablet dark (768 × 1024, full page)
+
+| | |
+|---|---|
+| ![Home tablet](./docs/screenshots/24-home-tablet-dark.jpg) | **Home, tablet** |
+| ![Shop tablet](./docs/screenshots/25-shop-tablet-dark.jpg) | **Shop scrolled to "The everyday edit", tablet** |
+
+> 📝 Long full-page captures are encoded as JPEG to stay under ~600 KB.
+> All other shots are PNG (under 500 KB each). See `scripts/screenshots.cjs`
+> for the optimization pipeline.
+
+### Not captured
+
+- **404 page** — the SPA's catch-all `<Route path="*">` redirects to `/`, so
+  there is no dedicated 404 component to screenshot. Skipped by design.
+- **Newsletter error / success inline states** — those are micro-interactions
+  inside the form; they would need a separate Playwright interaction script
+  (click submit with an empty field, wait for the aria-live region). Tracked
+  for a future `screenshots:interactions` task.
+- **Cart drawer slide-in** — currently triggered by `TopBar` click; same
+  reason as above (interaction required).
+
+## 🌟 Features
 
 - 🎨 **Redesigned dark-theme storefront + admin** — flat layout, no storefront
   sidebar, announcement bar + topbar + main + footer, Manrope 800 headlines,
-  terracotta accent (`#E8795A`), solid `#262624` surface, `#1C1C1A` page bg.
-- 🗂️ **New entities** — `Category`, `Brand`, `Address`, `Analytics` (overview /
-  top-products / revenue-by-month) for the UI that customers actually see.
+  terracotta accent `#E8795A`, solid `#262624` surface, `#1C1C1A` page bg.
+- 🗂️ **New entities** — `Category`, `Brand`, `Address`, `Analytics` (overview
+  / top-products / revenue-by-month).
 - 📦 **Order lifecycle** — `pending → paid → shipped → delivered | cancelled`
   with server-side status sync; pre-save hook keeps legacy `isPaid` /
   `isDelivered` working for back-compat.
@@ -32,8 +112,8 @@ end-to-end **GitHub Actions CI**.
 - 🛍️ **Storefront** — Hero · TrustBadges · CategoryGrid · Featured products
   with URL-driven filter chips · FeatureCard · EditorialCards · Newsletter.
 - 👨‍💼 **Admin shell** — Dashboard with charts (KPI + bar/line) · Product CRUD ·
-  Order list with status pills + mark-shipped / mark-delivered / cancel · User
-  list with aggregates · Coupon CRUD · Category CRUD · Brand CRUD.
+  Order list with status pills + mark-shipped / mark-delivered / cancel ·
+  User list with aggregates · Coupon CRUD · Category CRUD · Brand CRUD.
 - ⭐ **Wishlist** with heart toggle, dedicated page, header badge, optimistic UI.
 - 🎟️ **Discount Coupons** with server-side validation (per-user limits,
   max-discount cap, expiry). Order stores a coupon snapshot for audit.
@@ -43,50 +123,14 @@ end-to-end **GitHub Actions CI**.
 - 🛠️ **GitHub Actions CI** with 3 jobs: backend-test (MongoDB 7 service) ·
   frontend-check (typecheck + lint + build) · root-build.
 - 📦 **Dependabot** for backend / frontend / CI groups.
-- 🎨 **Design System Showcase** at `/design-system` (25+ components, public route).
+- 🎨 **Design System Showcase** at `/design-system` (25+ components, public).
 
-<!-- toc -->
-
-- [🌟 Highlights](#-highlights)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
-  * [New collections (v3)](#new-collections-v3)
-  * [Enriched existing models](#enriched-existing-models)
-- [API Endpoints](#api-endpoints)
-  * [New in v3 — Categories, Brands, Addresses, Analytics](#new-in-v3--categories-brands-addresses-analytics)
-  * [New in v3 — Order lifecycle](#new-in-v3--order-lifecycle)
-  * [Existing — Products, Users, Orders, Auth, Coupons, Wishlist, Uploads](#existing--products-users-orders-auth-coupons-wishlist-uploads)
-- [Order Status Lifecycle](#order-status-lifecycle)
-- [Seed Database](#seed-database)
-  * [Demo logins (seeded)](#demo-logins-seeded)
-- [Environment Variables](#environment-variables)
-  * [`backend/.env` (or root `.env`)](#backendenv-or-root-env)
-  * [`mui-redesign/.env`](#mui-redesignenv)
-- [Install & Run](#install--run)
-- [Demo Mode (no backend)](#demo-mode-no-backend)
-- [CI / CD](#ci--cd)
-- [Design System & Tokens](#design-system--tokens)
-  * [Color tokens (dark theme)](#color-tokens-dark-theme)
-  * [Typography](#typography)
-  * [Spacing scale](#spacing-scale)
-  * [Accessibility commitments](#accessibility-commitments)
-  * [Live showcase](#live-showcase)
-- [Build & Deploy](#build--deploy)
-  * [Production build](#production-build)
-  * [Deployment matrix](#deployment-matrix)
-  * [Render environment](#render-environment)
-  * [Vercel environment](#vercel-environment)
-
-<!-- tocstop -->
-
-## Tech Stack
+## 🧱 Tech Stack
 
 **Frontend** (`mui-redesign/`)
 - React 18 + TypeScript + Vite 5
 - MUI 6 (Material UI) + Emotion + MUI X Charts + MUI X DataGrid
-- Redux Toolkit + RTK Query (no manual thunks, all 4 new entity slices
-  mirror real backend endpoints)
+- Redux Toolkit + RTK Query
 - React Router v6 (lazy-loaded routes)
 - React Hook Form + Zod validation
 - Google Fonts: **Manrope** (headlines) + **DM Sans** (body)
@@ -102,68 +146,104 @@ end-to-end **GitHub Actions CI**.
 - Jest + supertest + babel-jest (ESM transform) — 19/19 tests
 - GitHub Actions (3-job CI)
 - Dependabot
+- Playwright + sharp (screenshot pipeline — see [`scripts/screenshots.cjs`](./scripts/screenshots.cjs))
 
-## Project Structure
+## ⚙️ Install & Run
+
+```bash
+# 1. Install root + frontend
+npm install
+npm install --prefix mui-redesign
+
+# 2. Configure env (copy and edit as needed)
+cp .env.example .env
+cp mui-redesign/.env.example mui-redesign/.env
+
+# 3. Start MongoDB locally OR set MONGO_URI to Atlas
+#    docker run -d -p 27017:27017 --name proshop-mongo mongo:7
+#    brew services start mongodb-community
+
+# 4. Seed the database (idempotent)
+npm run seed           # uses default seed key
+npm run seed:fresh     # wipe + reinsert (full demo dataset)
+
+# 5. Run both servers
+npm run dev            # backend :5000 + frontend :5170
+```
+
+Then open:
+- Storefront → <http://localhost:5173>
+- Admin panel → <http://localhost:5173/admin>
+
+### Environment variables
+
+**Root `.env` (or `backend/.env`)**
+
+```bash
+NODE_ENV=development
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/proshop
+JWT_SECRET=replace-me-with-a-long-random-string
+PAGINATION_LIMIT=8
+SEED_KEY=proshop-seed-2026          # default if unset
+PAYPAL_CLIENT_ID=your-paypal-client-id
+PAYPAL_CLIENT_SECRET=your-paypal-client-secret
+```
+
+**`mui-redesign/.env`**
+
+```bash
+# Use the live Express + MongoDB backend (default)
+VITE_DEMO_MODE=false
+VITE_API_BASE_URL=/api              # Vite dev server proxies to :5000
+
+# Use the in-memory mock backend (no DB needed)
+VITE_DEMO_MODE=true
+```
+
+### Demo logins (seeded)
+
+| Email              | Password | Role     | Used in screenshots |
+|--------------------|----------|----------|---------------------|
+| `admin@email.com`  | `123456` | Admin    | Yes (`admin` login) |
+| `jane@email.com`   | `123456` | Customer | Yes (`jane` login)  |
+
+> The Login page reads `VITE_DEMO_MODE` and shows the right credential set.
+> Demo-mode credentials live in `mui-redesign/src/demo/demoCredentials.ts`;
+> backend credentials are seeded by `npm run seed`.
+
+## 🗂️ Project Structure
 
 ```
 proshop-v2/
 ├── backend/                   # Express + Mongoose API
 │   ├── server.js
-│   ├── controllers/           # 10 controllers (incl. new analytics + seed)
-│   │   ├── productController.js
-│   │   ├── orderController.js
-│   │   ├── userController.js
-│   │   ├── couponController.js
-│   │   ├── wishlistController.js
-│   │   ├── categoryController.js   # NEW
-│   │   ├── brandController.js      # NEW
-│   │   ├── addressController.js    # NEW
-│   │   ├── analyticsController.js  # NEW
-│   │   └── seedController.js       # demo dataset
+│   ├── controllers/           # 10 controllers (incl. analytics + seed)
 │   ├── models/                # 7 Mongoose models
-│   │   ├── productModel.js    # +slug, sku, compareAtPrice, images[], tags[], isActive, weight, dimensions
-│   │   ├── userModel.js       # +phone, avatar, wishlist[]
-│   │   ├── orderModel.js      # +status enum, tracking, cancelReason
-│   │   ├── couponModel.js
-│   │   ├── categoryModel.js   # NEW
-│   │   ├── brandModel.js      # NEW
-│   │   └── addressModel.js    # NEW
-│   └── routes/                # 10 route files
+│   ├── routes/                # 10 route files
+│   ├── middleware/            # auth, error handler, ObjectId validator
+│   └── data/                  # legacy seed data (used by data:import)
 │
 ├── mui-redesign/              # React 18 + MUI 6 + RTK Query SPA
 │   ├── src/
 │   │   ├── app/               # routes, providers
-│   │   ├── components/
-│   │   │   ├── layout/        # AppShell, TopBar, AnnouncementBar, Footer,
-│   │   │   │                  # CartDrawer, PageContainer, PageHeader
-│   │   │   └── feedback/      # LoadingState, EmptyState, ErrorState,
-│   │   │                      # Pagination, StatusPill
+│   │   ├── components/        # layout + feedback (shared)
 │   │   ├── theme/             # tokens, palette, typography, shadows,
 │   │   │                      # components, ThemeProvider, GlobalStyles
-│   │   ├── features/
-│   │   │   ├── auth/          # login, register, hooks
-│   │   │   ├── products/      # api, types, HomePage, ProductDetailPage,
-│   │   │   │                  # components (Card, Filters, Image, Rating…)
-│   │   │   ├── categories/    # NEW — api + types
-│   │   │   ├── brands/        # NEW — api + types
-│   │   │   ├── addresses/     # NEW — api + types
-│   │   │   ├── analytics/     # NEW — api + types
-│   │   │   ├── orders/        # api, types, OrderListPage, OrderDetailPage
-│   │   │   ├── cart/          # drawer + /cart page
-│   │   │   ├── checkout/
-│   │   │   ├── wishlist/
-│   │   │   ├── profile/
-│   │   │   ├── admin/         # AdminShell, AdminSidebar, AdminTopbar,
-│   │   │   │                  # dashboard, product/user/order/coupon CRUD
-│   │   │   └── design-system/ # /design-system showcase
-│   │   ├── demo/              # mockBaseQuery (836 lines mirroring 17 endpoints)
-│   │   │                      # demoCredentials, mockData
+│   │   ├── features/          # auth, products, cart, checkout, orders,
+│   │   │                      # wishlist, profile, admin, design-system,
+│   │   │                      # categories, brands, addresses, analytics
+│   │   ├── demo/              # mockBaseQuery (mirrors 17 endpoints)
 │   │   ├── hooks/             # useToast, etc.
 │   │   └── store/             # api/index.ts, slices
-│   ├── vite.config.ts         # proxies /api → :5000
-│   └── tsconfig.json
+│   └── vite.config.ts         # proxies /api → :5000
 │
-├── docs/                      # architecture diagrams, ERD
+├── scripts/
+│   ├── seed.js                # POST /api/seed wrapper
+│   └── screenshots.cjs        # Playwright + sharp screenshot pipeline
+│
+├── docs/
+│   └── screenshots/           # generated by `npm run screenshots`
 │
 ├── .github/
 │   ├── workflows/ci.yml       # 3-job GitHub Actions pipeline
@@ -171,51 +251,95 @@ proshop-v2/
 │   └── PULL_REQUEST_TEMPLATE/  # standard PR template
 │
 ├── babel.config.json          # ESM transform for Jest
-├── package.json               # root — concurrently, jest, etc.
+├── package.json               # root — concurrently, jest, scripts
 └── readme.md                  # you are here
 ```
 
-## Database Schema
+## 📜 Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start backend (`:5000`) + frontend (`:5173`) concurrently |
+| `npm run server` | Backend only (nodemon) |
+| `npm run client` | Frontend only (Vite) |
+| `npm test` | Run 19 Jest tests |
+| `npm run build` | Install frontend deps (if needed) + production build |
+| `npm run seed` | Hit `POST /api/seed` (idempotent) |
+| `npm run seed:fresh` | Hit `POST /api/seed?fresh=true` (wipe + reinsert) |
+| `npm run screenshots` | Build demo bundle + capture all screenshots into `docs/screenshots/` |
+| `npm run screenshots:fast` | Skip the demo rebuild if you just changed the script |
+| `npm run generate-toc` | Regenerate the `
+
+<!-- toc -->
+
+  * [Capturing screenshots](#capturing-screenshots)
+- [🗃️ Database Schema](#%F0%9F%97%83%EF%B8%8F-database-schema)
+  * [New collections (v3)](#new-collections-v3)
+  * [Enriched existing models](#enriched-existing-models)
+- [🔌 API Endpoints](#%F0%9F%94%8C-api-endpoints)
+  * [New in v3 — Categories, Brands, Addresses, Analytics](#new-in-v3--categories-brands-addresses-analytics)
+  * [New in v3 — Order lifecycle](#new-in-v3--order-lifecycle)
+  * [Existing — Products, Users, Orders, Auth, Coupons, Wishlist, Uploads, Seed](#existing--products-users-orders-auth-coupons-wishlist-uploads-seed)
+- [🔁 Order Status Lifecycle](#%F0%9F%94%81-order-status-lifecycle)
+- [🌱 Seed Database](#%F0%9F%8C%B1-seed-database)
+- [🚀 CI / CD](#%F0%9F%9A%80-ci--cd)
+- [🎨 Design System & Tokens](#%F0%9F%8E%A8-design-system--tokens)
+  * [Color tokens (dark theme)](#color-tokens-dark-theme)
+  * [Typography](#typography)
+  * [Spacing scale](#spacing-scale)
+  * [Accessibility commitments](#accessibility-commitments)
+  * [Live showcase](#live-showcase)
+- [📦 Build & Deploy](#%F0%9F%93%A6-build--deploy)
+  * [Production build](#production-build)
+  * [Deployment matrix](#deployment-matrix)
+  * [Render environment](#render-environment)
+  * [Vercel environment](#vercel-environment)
+- [📋 Roadmap / Known issues](#%F0%9F%93%8B-roadmap--known-issues)
+
+<!-- tocstop -->
+
+` block in this file |
+
+### Capturing screenshots
+
+The `npm run screenshots` script:
+
+1. Builds `mui-redesign/` in `--mode demo` (single-file HTML, no backend needed).
+2. Spins up a tiny static file server on a random port.
+3. Launches Chromium via Playwright (system `google-chrome`), creates a
+   context per (viewport, theme) pair, logs in when needed, navigates
+   via the History API so the in-memory mock auth state isn't lost.
+4. For each shot: waits for `document.fonts.ready` + `networkidle`, injects
+   CSS to disable all transitions/animations (so cards don't show mid-hover),
+   then captures full-page.
+5. Optimizes with `sharp`: aggressive PNG palette, then downscale to
+   1400px → 1000px → JPEG (`.jpg`) until under 500 KB.
+
+The output is **deterministic per shot tuple** (viewport × theme × route ×
+login state) — two consecutive runs produce identical file sizes.
+
+Override defaults via env:
+
+```bash
+BACKEND_URL=https://my-api.example npm run seed:fresh
+npm run screenshots -- --no-build   # skip the demo rebuild
+```
+
+## 🗃️ Database Schema
 
 ### New collections (v3)
 
 ```js
 // Category
-{
-  name:        { type: String, required, unique, trim },
-  slug:        { type: String, required, unique, lowercase },
-  description: String,
-  image:       String,
-  isActive:    { type: Boolean, default: true },
-  productCount:{ type: Number, default: 0 },
-  timestamps: true,
-}
+{ name, slug, description, image, isActive, productCount, timestamps }
 
 // Brand
-{
-  name:        { type: String, required, unique, trim },
-  slug:        { type: String, required, unique, lowercase },
-  logo:        String,
-  description: String,
-  isActive:    { type: Boolean, default: true },
-  productCount:{ type: Number, default: 0 },
-  timestamps: true,
-}
+{ name, slug, logo, description, isActive, productCount, timestamps }
 
 // Address
 {
-  user:        { type: ObjectId, ref: 'User', required },
-  label:       String,                      // 'Home', 'Work', …
-  fullName:    String,
-  phone:       String,
-  line1:       { type: String, required },
-  line2:       String,
-  city:        { type: String, required },
-  state:       String,
-  postalCode:  { type: String, required },
-  country:     { type: String, default: 'US' },
-  isDefault:   { type: Boolean, default: false },
-  timestamps: true,
+  user, label, fullName, phone, line1, line2,
+  city, state, postalCode, country, isDefault, timestamps,
 }
 ```
 
@@ -223,105 +347,86 @@ proshop-v2/
 
 ```js
 // Product (additions)
-{
-  slug:            { type: String, unique, lowercase, index },
-  sku:             { type: String, unique, sparse },
-  compareAtPrice:  Number,          // > price → "Sale" pill + strikethrough
-  images:          [String],        // gallery (first item is primary)
-  tags:            [String],        // e.g. ['new', 'bestseller']
-  isActive:        { type: Boolean, default: true },
-  weight:          Number,          // grams
-  dimensions: { length: Number, width: Number, height: Number },
-}
+{ slug, sku, compareAtPrice, images[], tags[], isActive, weight, dimensions }
 
 // User (additions)
-{ phone: String, avatar: String }
+{ phone, avatar }
 
 // Order (additions)
 {
-  status: {
-    type: String,
-    enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled'],
-    default: 'pending',
-  },
-  trackingNumber:  String,
-  carrier:         String,
-  shippedAt:       Date,
-  cancelledAt:     Date,
-  cancelReason:    String,
-  notes:           String,
-  // pre-save hook: syncs legacy isPaid / isDelivered from status
-  // so older client code still works.
+  status:        ['pending', 'paid', 'shipped', 'delivered', 'cancelled'],
+  trackingNumber, carrier, shippedAt, cancelledAt, cancelReason, notes,
+  // pre-save hook syncs legacy isPaid / isDelivered from status.
 }
 ```
 
-## API Endpoints
+## 🔌 API Endpoints
 
 ### New in v3 — Categories, Brands, Addresses, Analytics
 
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
-| GET    | `/api/categories`         | List active categories (with productCount)      | Public |
-| GET    | `/api/categories/:idOrSlug` | Get one                                      | Public |
-| POST   | `/api/categories`         | Create                                         | Admin  |
-| PUT    | `/api/categories/:id`     | Update                                         | Admin  |
-| DELETE | `/api/categories/:id`     | Delete                                         | Admin  |
-| GET    | `/api/brands`             | List active brands (with productCount)          | Public |
-| GET    | `/api/brands/:idOrSlug`   | Get one                                        | Public |
-| POST   | `/api/brands`             | Create                                         | Admin  |
-| PUT    | `/api/brands/:id`         | Update                                         | Admin  |
-| DELETE | `/api/brands/:id`         | Delete                                         | Admin  |
-| GET    | `/api/addresses`          | Current user's saved addresses                  | Private |
-| POST   | `/api/addresses`          | Add address                                     | Private |
-| PUT    | `/api/addresses/:id`      | Update                                          | Private |
-| PUT    | `/api/addresses/:id/default` | Mark as default (unsets others)              | Private |
-| DELETE | `/api/addresses/:id`      | Delete                                          | Private |
-| GET    | `/api/analytics/overview?days=30`  | KPIs (revenue, orders, AOV, paid-customer rate) | Admin |
-| GET    | `/api/analytics/top-products?limit=5` | Top-selling products (filters stock>0 + isActive) | Admin |
-| GET    | `/api/analytics/revenue-by-month?months=7` | Monthly revenue series                | Admin |
+| GET    | `/api/categories`                | List active categories (with productCount)      | Public |
+| GET    | `/api/categories/:idOrSlug`      | Get one                                         | Public |
+| POST   | `/api/categories`                | Create                                          | Admin  |
+| PUT    | `/api/categories/:id`            | Update                                          | Admin  |
+| DELETE | `/api/categories/:id`            | Delete                                          | Admin  |
+| GET    | `/api/brands`                    | List active brands (with productCount)          | Public |
+| GET    | `/api/brands/:idOrSlug`          | Get one                                         | Public |
+| POST   | `/api/brands`                    | Create                                          | Admin  |
+| PUT    | `/api/brands/:id`                | Update                                          | Admin  |
+| DELETE | `/api/brands/:id`                | Delete                                          | Admin  |
+| GET    | `/api/addresses`                 | Current user's saved addresses                  | Private |
+| POST   | `/api/addresses`                 | Add                                             | Private |
+| PUT    | `/api/addresses/:id`             | Update                                          | Private |
+| PUT    | `/api/addresses/:id/default`     | Mark as default                                 | Private |
+| DELETE | `/api/addresses/:id`             | Delete                                          | Private |
+| GET    | `/api/analytics/overview?days=30`   | KPIs (revenue, orders, AOV, paid-customer rate) | Admin |
+| GET    | `/api/analytics/top-products?limit=5` | Top sellers (filters `stock>0 && isActive`) | Admin |
+| GET    | `/api/analytics/revenue-by-month?months=7` | Monthly revenue series              | Admin |
 
 ### New in v3 — Order lifecycle
 
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
-| PUT    | `/api/orders/:id/ship`    | Mark shipped (set status + trackingNumber + carrier) | Admin |
+| PUT    | `/api/orders/:id/ship`    | Mark shipped (status + tracking + carrier)     | Admin |
 | PUT    | `/api/orders/:id/deliver` | Mark delivered                                | Admin |
-| PUT    | `/api/orders/:id/cancel`  | Cancel order + release coupon usageCount      | Admin |
+| PUT    | `/api/orders/:id/cancel`  | Cancel + release coupon usageCount             | Admin |
 
-### Existing — Products, Users, Orders, Auth, Coupons, Wishlist, Uploads
+### Existing — Products, Users, Orders, Auth, Coupons, Wishlist, Uploads, Seed
 
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
-| GET    | `/api/products`           | List + filter + sort + paginate (see below)   | Public |
-| GET    | `/api/products/top`       | Top products (filters `countInStock>0 && isActive`) | Public |
-| GET    | `/api/products/:id`       | Get one                                       | Public |
-| POST   | `/api/products`           | Create                                         | Admin  |
-| PUT    | `/api/products/:id`       | Update (uses req.body — fixed hardcoded bug)   | Admin  |
-| DELETE | `/api/products/:id`       | Delete                                         | Admin  |
-| POST   | `/api/users`              | Register                                       | Public |
-| POST   | `/api/users/login`        | Login (returns JWT cookie)                     | Public |
-| POST   | `/api/users/logout`       | Logout                                         | Private |
-| GET    | `/api/users/profile`      | Current user                                   | Private |
-| PUT    | `/api/users/profile`      | Update profile (name, email, phone, avatar, password) | Private |
-| GET    | `/api/users`              | List all (with `wishlistCount`, `ordersCount`, `totalSpent`) | Admin |
-| GET    | `/api/users/:id`          | Get one                                        | Admin |
-| PUT    | `/api/users/:id`          | Update (toggle admin, etc.)                    | Admin |
-| DELETE | `/api/users/:id`          | Delete                                         | Admin  |
-| GET    | `/api/orders/myorders`    | Current user's orders                          | Private |
-| GET    | `/api/orders/:id`         | Get one                                        | Private |
-| POST   | `/api/orders`             | Place order (auto increments coupon usageCount) | Private |
-| PUT    | `/api/orders/:id/pay`     | Mark paid                                      | Private |
-| GET    | `/api/orders`             | List all (filters by status)                   | Admin  |
-| POST   | `/api/coupons/validate`   | Validate + compute discount (server-side)      | Private |
+| GET    | `/api/products`                 | List + filter + sort + paginate                 | Public |
+| GET    | `/api/products/top`             | Top products                                    | Public |
+| GET    | `/api/products/:id`             | Get one                                         | Public |
+| POST   | `/api/products`                 | Create                                          | Admin  |
+| PUT    | `/api/products/:id`             | Update                                          | Admin  |
+| DELETE | `/api/products/:id`             | Delete                                          | Admin  |
+| POST   | `/api/users`                    | Register                                        | Public |
+| POST   | `/api/users/login`              | Login (returns JWT cookie)                      | Public |
+| POST   | `/api/users/logout`             | Logout                                          | Private |
+| GET    | `/api/users/profile`            | Current user                                    | Private |
+| PUT    | `/api/users/profile`            | Update profile                                  | Private |
+| GET    | `/api/users`                    | List (with `wishlistCount`, `ordersCount`, `totalSpent`) | Admin |
+| GET    | `/api/users/:id`                | Get one                                         | Admin  |
+| PUT    | `/api/users/:id`                | Update (toggle admin, etc.)                     | Admin  |
+| DELETE | `/api/users/:id`                | Delete                                          | Admin  |
+| GET    | `/api/orders/myorders`          | Current user's orders                           | Private |
+| GET    | `/api/orders/:id`               | Get one                                         | Private |
+| POST   | `/api/orders`                   | Place order (auto increments coupon usageCount) | Private |
+| PUT    | `/api/orders/:id/pay`           | Mark paid                                       | Private |
+| GET    | `/api/orders`                   | List all (filterable by status)                 | Admin  |
+| POST   | `/api/coupons/validate`         | Validate + compute discount (server-side)       | Private |
 | GET / POST / PUT / DELETE | `/api/coupons[/:id]` | Full CRUD                              | Admin  |
-| GET    | `/api/users/wishlist`     | Get wishlist (populated)                       | Private |
-| POST   | `/api/users/wishlist/:productId` | Add (idempotent)                       | Private |
-| DELETE | `/api/users/wishlist/:productId` | Remove                              | Private |
-| DELETE | `/api/users/wishlist`     | Clear                                          | Private |
-| POST   | `/api/upload`             | Single file upload via multer                  | Admin  |
-| POST   | `/api/seed?fresh=true`    | Seed/reset demo dataset (see below)            | Admin  |
+| GET    | `/api/users/wishlist`           | Get wishlist (populated)                        | Private |
+| POST   | `/api/users/wishlist/:productId` | Add (idempotent)                              | Private |
+| DELETE | `/api/users/wishlist/:productId` | Remove                                         | Private |
+| DELETE | `/api/users/wishlist`           | Clear                                           | Private |
+| POST   | `/api/upload`                   | Single file upload (multer)                     | Admin  |
+| POST   | `/api/seed?fresh=true`          | Seed/reset demo dataset                         | Admin  |
 
-## Order Status Lifecycle
+## 🔁 Order Status Lifecycle
 
 ```
                    (place order)
@@ -345,117 +450,33 @@ proshop-v2/
 - Admin UI surfaces 5 status tones: pending (warning) · paid (success) ·
   shipped (info) · delivered (success) · cancelled (error).
 
-## Seed Database
-
-A one-shot endpoint populates a **complete demo dataset** (4 categories,
-4 brands, 12 products, 3 users, 4 coupons, 6 saved addresses, 6 orders
-covering all 5 statuses):
+## 🌱 Seed Database
 
 ```bash
-# Fresh seed (drops + reinserts everything)
-curl -X POST -H "X-Seed-Key: proshop-seed-2026" \
-  "http://localhost:5000/api/seed?fresh=true"
-
 # Idempotent (upsert)
 curl -X POST -H "X-Seed-Key: proshop-seed-2026" \
   "http://localhost:5000/api/seed"
+
+# Fresh seed (drops + reinserts everything)
+curl -X POST -H "X-Seed-Key: proshop-seed-2026" \
+  "http://localhost:5000/api/seed?fresh=true"
 ```
 
-Override the key via the `SEED_KEY` env var. Default is `proshop-seed-2026`.
-
-### Demo logins (seeded)
-
-| Email              | Password | Role     |
-|--------------------|----------|----------|
-| `admin@email.com`  | `123456` | Admin    |
-| `john@email.com`   | `123456` | Customer |
-| `jane@email.com`   | `123456` | Customer |
-
-> The legacy `pnpm run data:import` script is deprecated — the new endpoint
-> is the only supported way to populate the database in v3.
-
-## Environment Variables
-
-### `backend/.env` (or root `.env`)
+Or via the convenience wrapper:
 
 ```bash
-NODE_ENV=development
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/proshop
-JWT_SECRET=replace-me-with-a-long-random-string
-PAGINATION_LIMIT=8
-# Optional
-SEED_KEY=proshop-seed-2026          # default if unset
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_CLIENT_SECRET=your-paypal-client-secret
+npm run seed           # idempotent
+npm run seed:fresh     # wipe + reinsert
 ```
 
-### `mui-redesign/.env`
+The seeder populates 4 categories, 4 brands, 12 products, 3 users, 4 coupons,
+6 saved addresses, 6 orders covering all 5 statuses. Override the key via the
+`SEED_KEY` env var. Default is `proshop-seed-2026`.
 
-```bash
-# Use the live Express + MongoDB backend (default)
-VITE_DEMO_MODE=false
-VITE_API_BASE_URL=/api              # Vite dev server proxies to :5000
+> The legacy `pnpm run data:import` script is deprecated — it produces an
+> incomplete dataset (no `Category` / `Brand` / `Address` / `Analytics` data).
 
-# Use the in-memory mock backend (no DB needed)
-VITE_DEMO_MODE=true
-```
-
-The Login page reads `VITE_DEMO_MODE` and shows the right credential set:
-- `VITE_DEMO_MODE=false` → BACKEND_ACCOUNTS (real seeded users)
-- `VITE_DEMO_MODE=true`  → DEMO_ACCOUNTS (mock only)
-
-## Install & Run
-
-```bash
-# 1. Install root + frontend
-npm install
-npm install --prefix mui-redesign
-
-# 2. Start MongoDB locally (or set MONGO_URI to Atlas)
-#    brew services start mongodb-community
-#    # or:
-#    docker run -d -p 27017:27017 --name proshop-mongo mongo:7
-
-# 3. Seed the database
-npm run seed   # convenience wrapper around POST /api/seed?fresh=true
-
-# 4. Run both servers (Express :5000 + Vite :5173)
-npm run dev
-```
-
-Other scripts:
-
-```bash
-npm run server         # backend only
-npm run client         # frontend only
-npm test               # 19 Jest tests
-npm run build          # production build of mui-redesign
-```
-
-Open <http://localhost:5173> for the storefront or
-<http://localhost:5173/admin> for the admin panel (sign in as
-`admin@email.com`).
-
-## Demo Mode (no backend)
-
-`mui-redesign` ships with an **in-memory mock backend** that mirrors all
-17 backend endpoints. Useful for:
-
-- Reviewing the UI in any environment without MongoDB
-- Demos and screenshots
-- Offline development on a plane
-
-```bash
-# Build + run the demo bundle
-npm run build:demo --prefix mui-redesign
-npm run preview:demo --prefix mui-redesign   # serves at :4173
-```
-
-`mockBaseQuery.ts` (~836 lines) is kept in lock-step with the real backend,
-so demo mode is always API-faithful — only the persistence layer is mocked.
-
-## CI / CD
+## 🚀 CI / CD
 
 GitHub Actions runs on every push to `main` and every PR. Three parallel jobs:
 
@@ -472,7 +493,7 @@ Dependabot keeps dependencies fresh in 3 groups (`backend`, `frontend`,
 
 PR template at [`.github/PULL_REQUEST_TEMPLATE/`](./.github/PULL_REQUEST_TEMPLATE/).
 
-## Design System & Tokens
+## 🎨 Design System & Tokens
 
 Visual identity follows a **flat editorial** aesthetic (think Aritzia /
 Muji / Studio Neat). The full source of truth lives in
@@ -502,27 +523,24 @@ Muji / Studio Neat). The full source of truth lives in
 
 - Section vertical rhythm: 64px mobile, 96px desktop (`mb: { xs: 8, md: 12 }`)
 - Container max-width: 1240px storefront, 1200px footer, 1600px admin
-- Touch targets: ≥44×44px (Apple HIG) for icon buttons, ≥40×40 for nav,
-  ≥32×32 for footer links
+- Touch targets: ≥44×44px for icon buttons, ≥40×40 for nav, ≥32×32 for footer
 
 ### Accessibility commitments
 
 - WCAG AA contrast on all text (verified against the dark surface)
 - `prefers-reduced-motion` honored globally via `GlobalStyles`
-- `:focus-visible` outline = 2px accent, 2px offset — set as a global
-  default in `ThemeProvider`
+- `:focus-visible` outline = 2px accent, 2px offset — set as a global default
 - All form controls have `<label>` (sr-only if hidden visually)
 - All icon-only buttons have `aria-label`
 - All toggle buttons (filter chips, wishlist) have `aria-pressed`
 - Pagination exposes `aria-current="page"`, `aria-label`, `aria-disabled`
-- Skip-to-content link in `AppShell`
 
 ### Live showcase
 
 Open <http://localhost:5173/design-system> to browse 25+ components with
 click-to-copy code snippets. Public route — share the URL with reviewers.
 
-## Build & Deploy
+## 📦 Build & Deploy
 
 ### Production build
 
@@ -563,5 +581,15 @@ PAGINATION_LIMIT=8
 VITE_API_BASE_URL=https://your-app.onrender.com/api
 VITE_DEMO_MODE=false
 ```
+
+## 📋 Roadmap / Known issues
+
+- 🟡 **Newsletter inline states** (loading / error / success) require a
+  Playwright interaction script to capture; tracked in a future
+  `screenshots:interactions` task.
+- 🟡 **Cart drawer slide-in** is a click-triggered micro-interaction; same
+  status as above.
+- 🟢 **No 404 page** — the catch-all route redirects to `/`. Adding a
+  dedicated 404 component is a small future task.
 
 MIT

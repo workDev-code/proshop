@@ -16,7 +16,9 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "seed": "node scripts/seed.js",
-    "seed:fresh": "node scripts/seed.js --fresh"
+    "seed:fresh": "node scripts/seed.js --fresh",
+    "screenshots": "node scripts/screenshots.cjs",
+    "screenshots:fast": "node scripts/screenshots.cjs --no-build"
   },
   "author": "Brad Traversy",
   "license": "MIT",
@@ -39,6 +41,8 @@
     "jest": "^30.4.2",
     "markdown-toc": "^1.2.0",
     "nodemon": "^2.0.21",
+    "playwright": "^1.49.0",
+    "sharp": "^0.35.5",
     "supertest": "^7.2.2"
   }
 }
