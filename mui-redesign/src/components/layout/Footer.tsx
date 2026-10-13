@@ -37,38 +37,62 @@ const COLS: Col[] = [
 
 const SOCIALS = ['IG', 'FB', 'TW', 'PI'];
 
+/**
+ * Storefront footer.
+ *  - Container max-width 1200px (same as rest of site) centered
+ *  - 4-col grid: brand 2fr + 3 link columns 1fr
+ *  - mobile: 2-col, then 1-col stacked
+ *  - gap 48px
+ *  - Body text 14px (no font <12px anywhere)
+ *  - Link hit-area ≥32px via minHeight + flex centering
+ *  - safe-area-inset-bottom for iOS notches
+ */
 export const Footer = () => (
   <Box
     component="footer"
     sx={{
-      mt: { xs: 6, md: 10 },
+      mt: { xs: 8, md: 12 },
       bgcolor: '#1C1C1A',
-      color: '#F2F0EA',
-      pt: { xs: 5, md: 6.5 },
-      pb: 3,
+      color: '#F5F3EE',
+      pt: { xs: 5, md: 7 },
+      // safe-area for iOS notch + at least 32px cushion
+      pb: { xs: 4, md: 5 },
+      paddingBottom: {
+        xs: 'calc(32px + env(safe-area-inset-bottom))',
+        md: 'calc(40px + env(safe-area-inset-bottom))',
+      },
     }}
   >
     <Box
       sx={{
         width: '100%',
-        maxWidth: 1240,
+        maxWidth: 1200,
         mx: 'auto',
-        px: { xs: 2, sm: 3, md: '28px' },
+        px: { xs: 2, sm: 3, md: '24px' },
       }}
     >
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: {
-            xs: 'repeat(2, 1fr)',
-            md: '1.5fr 1fr 1fr 1fr',
+            xs: '1fr 1fr',
+            sm: '1fr 1fr 1fr',
+            md: '2fr 1fr 1fr 1fr',
           },
-          gap: { xs: 4, md: 8.5 },
-          pb: { xs: 4, md: 5.5 },
+          gap: { xs: 4, sm: 5, md: '48px' },
+          pb: { xs: 4, md: 6 },
         }}
       >
         {/* Brand column */}
-        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'auto' } }}>
+        <Box
+          sx={{
+            gridColumn: {
+              xs: '1 / -1',
+              sm: '1 / -1',
+              md: 'auto',
+            },
+          }}
+        >
           <Typography
             component={RouterLink}
             to="/"
@@ -77,19 +101,26 @@ export const Footer = () => (
               fontSize: 23,
               fontWeight: 800,
               letterSpacing: '-1.3px',
-              color: '#F2F0EA',
+              color: '#F5F3EE',
               textDecoration: 'none',
               display: 'inline-block',
+              '&:hover': { color: '#E8795A' },
+              '&:focus-visible': {
+                outline: '2px solid #E8795A',
+                outlineOffset: 4,
+                borderRadius: 1,
+              },
             }}
           >
-            Pro<Box component="em" sx={{ fontStyle: 'normal', color: 'secondary.light' }}>S</Box>hop
+            Pro<Box component="em" sx={{ fontStyle: 'normal', color: '#E8795A' }}>S</Box>hop
           </Typography>
           <Typography
+            component="p"
             sx={{
-              maxWidth: 260,
-              color: 'grey.500',
-              fontSize: '0.75rem',
-              lineHeight: 1.8,
+              maxWidth: 280,
+              color: '#B8B5AD',
+              fontSize: 14,
+              lineHeight: 1.6,
               my: 2,
             }}
           >
@@ -104,17 +135,30 @@ export const Footer = () => (
                 href="#"
                 aria-label={s}
                 sx={{
-                  width: 32,
-                  height: 32,
-                  border: '1px solid #454740',
+                  width: 36,
+                  height: 36,
+                  border: '1px solid #3A3A36',
                   borderRadius: '50%',
                   display: 'grid',
                   placeItems: 'center',
-                  fontSize: '0.625rem',
-                  color: 'grey.400',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: '#B8B5AD',
                   textDecoration: 'none',
-                  transition: 'background-color 200ms ease, color 200ms ease',
-                  '&:hover': { color: 'common.white', borderColor: 'grey.300' },
+                  transition:
+                    'background-color 200ms ease, color 200ms ease, border-color 200ms ease',
+                  '&:hover': {
+                    color: '#E8795A',
+                    borderColor: '#E8795A',
+                    bgcolor: 'rgba(232, 121, 90, 0.10)',
+                  },
+                  '&:focus-visible': {
+                    outline: '2px solid #E8795A',
+                    outlineOffset: 2,
+                  },
+                  '@media (prefers-reduced-motion: reduce)': {
+                    transition: 'none',
+                  },
                 }}
               >
                 {s}
@@ -127,30 +171,47 @@ export const Footer = () => (
         {COLS.map((col) => (
           <Box key={col.heading}>
             <Typography
-              variant="h6"
+              component="h3"
               sx={{
-                fontSize: '0.6875rem',
+                fontSize: 12,
                 fontWeight: 700,
-                letterSpacing: '0.1em',
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase',
+                color: '#F5F3EE',
                 mb: 2,
-                mt: '5px',
+                mt: '6px',
               }}
             >
               {col.heading}
             </Typography>
-            <Stack spacing={1.5}>
+            <Stack spacing={0}>
               {col.links.map((l) => (
                 <Box
                   key={l.label}
                   component={RouterLink}
                   to={l.to}
                   sx={{
-                    color: '#A8A89E',
-                    fontSize: '0.6875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    minHeight: 32, // hit-area ≥32px per design spec
+                    color: '#B8B5AD',
+                    fontSize: 14,
+                    lineHeight: 1.5,
                     textDecoration: 'none',
                     transition: 'color 200ms ease',
-                    '&:hover': { color: '#F2F0EA' },
+                    '&:hover': {
+                      color: '#F5F3EE',
+                      textDecoration: 'underline',
+                      textUnderlineOffset: 3,
+                    },
+                    '&:focus-visible': {
+                      outline: '2px solid #E8795A',
+                      outlineOffset: 2,
+                      borderRadius: 1,
+                    },
+                    '@media (prefers-reduced-motion: reduce)': {
+                      transition: 'none',
+                    },
                   }}
                 >
                   {l.label}
@@ -164,19 +225,25 @@ export const Footer = () => (
       {/* Bottom bar */}
       <Box
         sx={{
-          borderTop: '1px solid #41423c',
-          pt: 2.5,
+          borderTop: '1px solid #3A3A36',
+          pt: 3,
+          pb: 1,
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           gap: 1.5,
-          color: '#A8A89E',
-          fontSize: '0.625rem',
-          letterSpacing: '0.08em',
+          color: '#B8B5AD',
+          fontSize: 12,
+          letterSpacing: '0.04em',
         }}
       >
-        <Box>© {new Date().getFullYear()} ProShop. All rights reserved.</Box>
-        <Box sx={{ letterSpacing: '0.12em' }}>Visa · Mastercard · Amex · PayPal</Box>
+        <Box>
+          © {new Date().getFullYear()} ProShop. All rights reserved.
+        </Box>
+        <Box sx={{ letterSpacing: '0.08em' }}>
+          Visa · Mastercard · Amex · PayPal
+        </Box>
       </Box>
     </Box>
   </Box>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Stack } from '@mui/material';
 import type { Product } from '../types';
 
 interface Props {
@@ -13,9 +13,12 @@ interface Props {
  * Matches `.feature-panel` / `.feature-image` / `.feature-copy` from
  * the approved HTML prototype.
  *
- *  - 24px radius, beige #dedfd5 background
- *  - 370px min-height
- *  - Eyebrow + Manrope 800 h2 + paragraph + dark pill CTA
+ *  - 24px radius, SOLID --surface (#262624) background (was rgba beige
+ *    that washed out to gray on dark)
+ *  - 460px min-height
+ *  - Eyebrow: 10x10 accent square + uppercase "Less, chosen better"
+ *  - Manrope 800 h2 + paragraph (#B8B5AD 16-18px lh 1.6) + orange CTA
+ *  - Padding 40-48px on content; CTA never flush against edge
  */
 export const FeatureCard = ({ product }: Props) => {
   const [imgErr, setImgErr] = useState(false);
@@ -29,21 +32,21 @@ export const FeatureCard = ({ product }: Props) => {
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-        minHeight: { xs: 0, md: 370 },
+        minHeight: { xs: 0, md: 460 },
         borderRadius: { xs: '18px', md: '24px' },
         overflow: 'hidden',
-        bgcolor: 'rgba(222, 223, 213, 0.7)', // beige #dedfd5
-        border: '1px solid',
-        borderColor: 'divider',
+        bgcolor: '#262624',           // --surface
+        border: '1px solid #3A3A36',  // --border
       }}
     >
       {/* Image left */}
       <Box
         sx={{
           position: 'relative',
-          minHeight: { xs: 235, md: 370 },
+          minHeight: { xs: 240, md: 460 },
           overflow: 'hidden',
-          bgcolor: 'rgba(210, 215, 202, 0.6)',
+          // Deep neutral so any sub-pixel gap below the image stays dark
+          bgcolor: '#1C1C1A',
         }}
       >
         {product && src && !imgErr ? (
@@ -66,7 +69,7 @@ export const FeatureCard = ({ product }: Props) => {
               position: 'absolute',
               inset: 0,
               background:
-                'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent 65%)',
+                'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), transparent 65%)',
             }}
           />
         )}
@@ -79,31 +82,37 @@ export const FeatureCard = ({ product }: Props) => {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'flex-start',
-          px: { xs: 4, sm: 6, md: '12%' },
-          py: { xs: 5, sm: 6, md: 0 },
+          // 40-48px padding all around (was 0 on desktop Y axis)
+          px: { xs: 4, sm: 5, md: 6 },
+          py: { xs: 5, sm: 6, md: 6 },
         }}
       >
-        <Typography
+        {/* Eyebrow: 10x10 accent square + uppercase label, flex + gap 10 */}
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1.25}
           sx={{
-            fontSize: '0.625rem',
+            color: '#E8795A',
+            fontSize: 12,
             fontWeight: 700,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color: 'secondary.main',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.25,
-            '&::before': {
-              content: '""',
-              display: 'inline-block',
-              width: 24,
-              height: 1,
-              bgcolor: 'currentColor',
-            },
+            mb: 2,
           }}
         >
+          <Box
+            aria-hidden
+            sx={{
+              width: 10,
+              height: 10,
+              bgcolor: 'currentColor',
+              borderRadius: '2px',
+              flexShrink: 0,
+            }}
+          />
           Less, chosen better
-        </Typography>
+        </Stack>
 
         <Typography
           component="h2"
@@ -111,11 +120,11 @@ export const FeatureCard = ({ product }: Props) => {
             fontFamily: '"Manrope", sans-serif',
             fontWeight: 800,
             fontSize: 'clamp(1.8125rem, 3.2vw, 2.625rem)',
-            lineHeight: 1.12,
+            lineHeight: 1.1,
             letterSpacing: '-0.045em',
-            color: 'text.primary',
-            mt: 2,
-            mb: 0,
+            color: '#F5F3EE',
+            m: 0,
+            mb: 2.5,
           }}
         >
           Buy fewer things.
@@ -126,12 +135,11 @@ export const FeatureCard = ({ product }: Props) => {
 
         <Typography
           sx={{
-            fontSize: '0.8125rem',
-            lineHeight: 1.8,
-            color: 'text.secondary',
-            maxWidth: 370,
-            mt: 2.5,
-            mb: 3,
+            color: '#B8B5AD',
+            fontSize: { xs: 16, md: 18 },
+            lineHeight: 1.6,
+            maxWidth: 460,
+            mb: 4,
           }}
         >
           We believe the best products don&rsquo;t need to shout. We look for
@@ -143,7 +151,6 @@ export const FeatureCard = ({ product }: Props) => {
           component={RouterLink}
           to={link}
           variant="contained"
-          color="primary"
           size="large"
           endIcon={
             <Box component="span" sx={{ fontSize: 14, lineHeight: 1 }}>
@@ -151,13 +158,31 @@ export const FeatureCard = ({ product }: Props) => {
             </Box>
           }
           sx={{
-            bgcolor: 'primary.main',
-            color: 'common.white',
-            px: 2.75,
-            py: 1.75,
+            // Orange CTA — was primary.main cream + white (invisible)
+            bgcolor: '#E8795A',
+            color: '#1C1C1A',
+            px: 3,            // 24px
+            py: 1.75,         // 14px
+            borderRadius: 999,
+            fontSize: 14,
+            fontWeight: 600,
+            textTransform: 'none',
+            letterSpacing: 0,
+            boxShadow: '0 6px 18px rgba(232, 121, 90, 0.28)',
+            transition:
+              'transform 220ms ease, box-shadow 220ms ease, background-color 220ms ease',
             '&:hover': {
-              bgcolor: 'secondary.main',
+              bgcolor: '#d96a4b',
               transform: 'translateY(-2px)',
+              boxShadow: '0 10px 24px rgba(232, 121, 90, 0.38)',
+            },
+            '&:focus-visible': {
+              outline: '2px solid #F5F3EE',
+              outlineOffset: 3,
+            },
+            '&:active': { transform: 'translateY(0)' },
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: 'none',
             },
           }}
         >

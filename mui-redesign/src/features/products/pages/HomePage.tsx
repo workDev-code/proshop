@@ -221,20 +221,20 @@ export const HomePage = () => {
 
       {/* 5. Feature card */}
       {featureCardProduct && (
-        <Box sx={{ mb: { xs: 6, md: 9 } }}>
+        <Box sx={{ mb: { xs: 8, md: 12 } }}>
           <FeatureCard product={featureCardProduct} />
         </Box>
       )}
 
       {/* 6. Editorial cards */}
       {editorialItems.length > 0 && (
-        <Box sx={{ mb: { xs: 6, md: 9 } }}>
+        <Box sx={{ mb: { xs: 8, md: 12 } }}>
           <EditorialCards items={editorialItems} />
         </Box>
       )}
 
       {/* 7. Newsletter */}
-      <Box sx={{ mb: { xs: 6, md: 9 } }}>
+      <Box sx={{ mb: { xs: 8, md: 12 } }}>
         <Newsletter />
       </Box>
     </Box>

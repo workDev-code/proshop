@@ -13,11 +13,16 @@ interface Props {
  * Matches `.editorial` / `.editorial-card` / `.editorial-copy` from
  * the approved HTML prototype.
  *
- *  - Image background, dark left-to-right gradient overlay
- *  - Eyebrow + Manrope h3 + text-link in white
- *  - The whole card is a Link to /product/:id
+ *  - Solid --surface panel so it does not wash out on dark.
+ *  - BOTTOM-only gradient overlay (transparent → rgba(0,0,0,0.65))
+ *    so the white copy sits on a darkened band, image stays full color
+ *    on top half.
+ *  - 1-card mode: the only card spans both columns (no empty half).
+ *  - Kicker 12px, title 24-28px, "Read the story" 14px underlined.
+ *  - Card hover: image scale(1.03), accent-tinted border.
+ *  - focus-visible outline accent for keyboard users.
  *
- *  Skips rendering entirely when no items are provided (no mock fallback).
+ *  Skips rendering entirely when no items are provided.
  */
 export const EditorialCards = ({ items }: Props) => {
   if (items.length === 0) return null;
@@ -29,11 +34,19 @@ export const EditorialCards = ({ items }: Props) => {
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', md: '1.15fr 0.85fr' },
-        gap: { xs: 2, md: 2.25 },
+        gap: { xs: 2.25, md: 2.25 },
       }}
     >
       {items.map((p, i) => (
-        <EditorialCard key={p._id} product={p} index={i} />
+        <Box
+          key={p._id}
+          sx={{
+            // If only one editorial item, let it span the full width
+            gridColumn: items.length === 1 ? { md: '1 / -1' } : 'auto',
+          }}
+        >
+          <EditorialCard product={p} index={i} />
+        </Box>
       ))}
     </Box>
   );
@@ -63,20 +76,33 @@ const EditorialCard = ({ product, index }: CardProps) => {
     <Box
       component={RouterLink}
       to={`/product/${product._id}`}
+      aria-label={`${title} — read the story`}
       sx={{
         position: 'relative',
-        borderRadius: { xs: '16px', md: '20px' },
-        minHeight: { xs: 235, md: 270 },
-        overflow: 'hidden',
-        bgcolor: 'rgba(222, 223, 213, 0.7)',
         display: 'block',
+        borderRadius: { xs: '16px', md: '20px' },
+        minHeight: { xs: 240, md: 320 },
+        height: '100%',
+        overflow: 'hidden',
+        bgcolor: '#262624',
+        border: '1px solid #3A3A36',
         textDecoration: 'none',
-        color: 'common.white',
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'transform 250ms ease, box-shadow 250ms ease',
-        '&:hover': { transform: 'translateY(-2px)' },
-        '&:hover .editorial-img': { transform: 'scale(1.04)' },
+        color: '#F5F3EE',
+        transition:
+          'transform 280ms ease, box-shadow 280ms ease, border-color 280ms ease',
+        '&:hover': {
+          transform: 'translateY(-3px)',
+          boxShadow: '0 18px 40px rgba(0, 0, 0, 0.35)',
+          borderColor: 'rgba(232, 121, 90, 0.40)',
+        },
+        '&:hover .editorial-img': { transform: 'scale(1.03)' },
+        '&:focus-visible': {
+          outline: '2px solid #E8795A',
+          outlineOffset: 3,
+        },
+        '@media (prefers-reduced-motion: reduce)': {
+          transition: 'none',
+        },
       }}
     >
       {src && !imgErr ? (
@@ -94,6 +120,9 @@ const EditorialCard = ({ product, index }: CardProps) => {
             objectFit: 'cover',
             transition: 'transform 500ms ease',
             display: 'block',
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: 'none',
+            },
           }}
         />
       ) : (
@@ -103,19 +132,20 @@ const EditorialCard = ({ product, index }: CardProps) => {
             position: 'absolute',
             inset: 0,
             background:
-              'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), transparent 65%)',
+              'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), transparent 65%)',
           }}
         />
       )}
 
-      {/* Dark gradient overlay (left → right) */}
+      {/* Bottom-only gradient: transparent on top half, dark on bottom half.
+          This keeps the image visible while the copy band stays legible. */}
       <Box
         aria-hidden
         sx={{
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(90deg, rgba(22,24,20,0.63) 0%, transparent 95%)',
+            'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.78) 100%)',
         }}
       />
 
@@ -123,21 +153,22 @@ const EditorialCard = ({ product, index }: CardProps) => {
         sx={{
           position: 'absolute',
           zIndex: 2,
-          left: { xs: 23, md: 30 },
-          top: '50%',
-          transform: 'translateY(-50%)',
-          maxWidth: 280,
-          color: 'common.white',
+          left: { xs: 24, md: 32 },
+          right: { xs: 24, md: 32 },
+          bottom: { xs: 24, md: 32 },
+          color: '#F5F3EE',
         }}
       >
         <Stack
           direction="row"
-          spacing={1}
+          spacing={1.25}
           sx={{
-            fontSize: '0.5625rem',
-            letterSpacing: '0.16em',
+            color: '#B8B5AD',
+            fontSize: 12,
+            letterSpacing: '0.12em',
             textTransform: 'uppercase',
             fontWeight: 600,
+            mb: 1.5,
           }}
         >
           <span>
@@ -150,13 +181,13 @@ const EditorialCard = ({ product, index }: CardProps) => {
           sx={{
             fontFamily: '"Manrope", sans-serif',
             fontWeight: 800,
-            fontSize: { xs: '1.375rem', md: '1.6875rem' },
+            fontSize: { xs: 22, md: 28 },
             lineHeight: 1.12,
             letterSpacing: '-0.04em',
-            color: 'common.white',
-            mt: 1.5,
-            mb: 1.5,
+            color: '#F5F3EE',
             m: 0,
+            mb: 2,
+            maxWidth: 480,
           }}
         >
           {title}
@@ -165,12 +196,19 @@ const EditorialCard = ({ product, index }: CardProps) => {
         <Box
           component="span"
           sx={{
-            display: 'inline-block',
-            fontSize: '0.6875rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.5,
+            fontSize: 14,
             fontWeight: 600,
-            borderBottom: '1px solid rgba(255,255,255,0.7)',
-            pb: 0.625,
-            color: 'common.white',
+            color: '#F5F3EE',
+            borderBottom: '1px solid rgba(245, 243, 238, 0.7)',
+            pb: 0.75,
+            transition: 'color 200ms ease, border-color 200ms ease',
+            '.parent:hover &': {
+              color: '#E8795A',
+              borderColor: '#E8795A',
+            },
           }}
         >
           Read the story ↗
