@@ -14,7 +14,9 @@
     "build": "npm install --prefix mui-redesign && npm run build --prefix mui-redesign",
     "generate-toc": "markdown-toc -i readme.md",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles",
-    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch"
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "seed": "node scripts/seed.js",
+    "seed:fresh": "node scripts/seed.js --fresh"
   },
   "author": "Brad Traversy",
   "license": "MIT",
